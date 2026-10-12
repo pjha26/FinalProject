@@ -1,0 +1,11 @@
+.venv/
+.runtime/
+.cache/
+__pycache__/
+*.py[cod]
+third_party/
+checkpoints/
+data/
+runs/
+tmp/
+.pytest_cache/
