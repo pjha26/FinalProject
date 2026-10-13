@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 
 import project
-from src.carla_capture import CarlaCapture, CaptureSettings, FrameSynchronizer, collect_scene, replay_scene, scene_path
+from src.carla_capture import CarlaCapture, CaptureSettings, FrameSynchronizer, classify_depth_convention, collect_scene, replay_scene, scene_path
 from src.metrics import compute_metrics
 from src.model import load_model, predict
 from src.preprocess import camera_intrinsics, decode_depth, decode_rgb, preprocess_rgb, resize_intrinsics, PREPROCESSING_ID
@@ -232,6 +232,19 @@ class ReplayAndSafetyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 project.safe_extract(archive, Path(temporary) / "output", max_bytes=4)
 
+    def test_official_nested_windows_server_layout(self):
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            root = Path(temporary)
+            archive = root / "official_layout.zip"
+            with zipfile.ZipFile(archive, "w") as stream:
+                stream.writestr("WindowsNoEditor/", "")
+                stream.writestr("WindowsNoEditor/CarlaUE4.exe", b"layout fixture; never executed")
+                stream.writestr("WindowsNoEditor/LICENSE", "fixture")
+            with patch("project.ROOT", root), patch("project.shutil.disk_usage", return_value=SimpleNamespace(free=64 * 1024 ** 3)):
+                project.install_server(archive)
+            self.assertTrue((root / ".runtime" / "carla" / "CarlaUE4.exe").is_file())
+            self.assertTrue((root / ".runtime" / "carla" / "download_provenance.json").is_file())
+
     def test_colorization_is_fixed_and_numerical_input_unchanged(self):
         rgb = np.zeros((480, 640, 3), dtype=np.uint8)
         inverse = np.full((192, 640), 0.1, dtype=np.float32)
@@ -240,6 +253,138 @@ class ReplayAndSafetyTests(unittest.TestCase):
         self.assertEqual(image.shape, (524, 1920, 3))
         np.testing.assert_array_equal(inverse, original)
         np.testing.assert_array_equal(image, render_frame(rgb, inverse))
+
+
+class DepthGeometryTests(unittest.TestCase):
+    def test_axial_and_ray_depth_are_distinguished(self):
+        for expected in ("camera_axis_z", "ray_distance"):
+            samples = []
+            for distance in (5, 10, 20):
+                for factor in (1.0, np.sqrt(1.25), np.sqrt(1.25)):
+                    samples.append({"axis_m": distance, "ray_m": distance * factor,
+                                    "measured_m": distance if expected == "camera_axis_z" else distance * factor})
+            self.assertEqual(classify_depth_convention(samples)["convention"], expected)
+
+    def test_center_only_or_invalid_geometry_cannot_pass(self):
+        center = [{"axis_m": 10, "ray_m": 10, "measured_m": 10}] * 9
+        with self.assertRaises(ValueError):
+            classify_depth_convention(center)
+        noisy = [{"axis_m": 10, "ray_m": 12, "measured_m": 20}] * 9
+        with self.assertRaises(ValueError):
+            classify_depth_convention(noisy)
+        with self.assertRaises(ValueError):
+            classify_depth_convention([])
+
+
+class SceneAuditTests(unittest.TestCase):
+    def test_audit_checks_timing_geometry_and_identity(self):
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            scene = Path(temporary)
+            pose = json.dumps({"location": dict(x=0, y=0, z=1.7), "rotation": dict(pitch=0, yaw=0, roll=0)})
+            rows = []
+            for index, frame_id in enumerate((20, 21)):
+                rgb_path, depth_path = "{:08d}.png".format(frame_id), "{:08d}.npy".format(frame_id)
+                Image.fromarray(np.zeros((480, 640, 3), dtype=np.uint8)).save(scene / rgb_path)
+                np.save(scene / depth_path, np.full((480, 640), 10, dtype=np.float32), allow_pickle=False)
+                rows.append(dict(scene_id=scene.name, frame_id=frame_id, simulation_timestamp=2 + index * 0.1,
+                                 rgb_path=rgb_path, depth_path=depth_path, ego_transform=pose, sensor_transform=pose))
+            metadata = {"schema_version": 1, "status": "complete", "preprocessing_id": PREPROCESSING_ID,
+                        "scene_id": scene.name, "settings": {"width": 640, "height": 480, "fov": 90},
+                        "intrinsics": camera_intrinsics(640, 480).tolist(), "captured_frames": 2, "depth_units": "metres"}
+            project.write_json(scene / "metadata.json", metadata)
+            def save_rows():
+                with (scene / "frames.csv").open("w", newline="") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+                    writer.writeheader()
+                    writer.writerows(rows)
+            save_rows()
+            args = SimpleNamespace(scene=str(scene), output=str(scene / "audit.json"))
+            project.audit_scene(args)
+            self.assertEqual(json.loads((scene / "audit.json").read_text())["frames"], 2)
+            rows[1]["simulation_timestamp"] = 2.5
+            save_rows()
+            with self.assertRaisesRegex(ValueError, "timing"):
+                project.audit_scene(args)
+            rows[1]["simulation_timestamp"] = 2.1
+            rows[1]["depth_path"] = rows[0]["depth_path"]
+            save_rows()
+            with self.assertRaisesRegex(ValueError, "filename"):
+                project.audit_scene(args)
+            metadata["intrinsics"][0][0] = 1
+            project.write_json(scene / "metadata.json", metadata)
+            with self.assertRaisesRegex(ValueError, "intrinsics"):
+                project.audit_scene(args)
+
+
+class VideoInputTests(unittest.TestCase):
+    def test_local_video_stream_color_bounds_and_end_of_file(self):
+        import cv2
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            video = Path(temporary) / "fixture.avi"
+            writer = cv2.VideoWriter(str(video), cv2.VideoWriter_fourcc(*"MJPG"), 10, (800, 600))
+            self.assertTrue(writer.isOpened(), "MJPG codec unavailable")
+            try:
+                for _ in range(3):
+                    writer.write(np.full((600, 800, 3), [0, 0, 240], dtype=np.uint8))
+            finally:
+                writer.release()
+            records = list(project.video_frames(SimpleNamespace(source="video", video=str(video), frames=10)))
+            self.assertEqual(len(records), 3)
+            self.assertEqual(records[0]["rgb"].shape, (480, 640, 3))
+            self.assertGreater(records[0]["rgb"][0, 0, 0], 230)
+            self.assertLess(records[0]["rgb"][0, 0, 2], 10)
+            self.assertIsNone(records[0]["camera"])
+            self.assertEqual(records[-1]["frame_id"], 3)
+
+    def test_camera_released_on_early_stop_and_read_failure(self):
+        capture = MagicMock()
+        capture.isOpened.return_value = True
+        capture.get.return_value = 30
+        capture.read.return_value = (True, np.zeros((48, 64, 3), dtype=np.uint8))
+        args = SimpleNamespace(source="webcam", camera=0, frames=10, fps=10)
+        with patch("cv2.VideoCapture", return_value=capture):
+            records = project.video_frames(args)
+            next(records)
+            records.close()
+        capture.release.assert_called_once()
+        capture.reset_mock()
+        capture.read.return_value = (False, None)
+        with patch("cv2.VideoCapture", return_value=capture):
+            with self.assertRaisesRegex(RuntimeError, "stopped"):
+                list(project.video_frames(args))
+        capture.release.assert_called_once()
+
+    def test_invalid_inputs_and_unavailable_camera(self):
+        with self.assertRaisesRegex(ValueError, "local video"):
+            list(project.video_frames(SimpleNamespace(source="video", video="https://example.com/a.mp4", frames=1)))
+        with self.assertRaisesRegex(ValueError, "nonnegative"):
+            list(project.video_frames(SimpleNamespace(source="webcam", camera=-1, frames=1)))
+        capture = MagicMock()
+        capture.isOpened.return_value = False
+        with patch("cv2.VideoCapture", return_value=capture):
+            with self.assertRaisesRegex(ValueError, "Cannot open"):
+                list(project.video_frames(SimpleNamespace(source="webcam", camera=0, frames=1)))
+        capture.release.assert_called_once()
+
+    def test_camera_demo_saves_relative_maps_without_fake_accuracy(self):
+        record = dict(frame_id=1, rgb=np.zeros((48, 64, 3), dtype=np.uint8), camera=None, input_fps=30)
+        maps = {"inverse_depth": np.ones((192, 640), dtype=np.float32), "relative_depth": np.ones((192, 640), dtype=np.float32)}
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            output = Path(temporary) / "demo"
+            args = SimpleNamespace(source="webcam", frames=1, headless=True, output=output, checkpoint=project.BASELINE, device="cpu", fps=60)
+            clock = [0.0]
+            with patch("project.video_frames", return_value=(r for r in [record])), patch("src.model.load_model", return_value=SimpleNamespace(checkpoint=project.BASELINE)), patch("project.timed_prediction", return_value=(maps, None, 1, 2)):
+                with patch("project.time.perf_counter", side_effect=lambda: clock[0]), patch("project.time.sleep", side_effect=lambda delay: clock.__setitem__(0, clock[0] + delay)):
+                    project.demo(args)
+            summary = json.loads((output / "summary.json").read_text())
+            self.assertEqual(summary["frames"], 1)
+            self.assertIn("no ground-truth", summary["metrics_scaling"])
+            self.assertEqual(json.loads((output / "metrics.json").read_text()), [])
+            self.assertTrue((output / "relative_depth.npy").is_file())
+            with (output / "runtime.csv").open() as stream:
+                timing = next(csv.DictReader(stream))
+            self.assertEqual(float(timing["capture_to_display_ms"]), 0)
+            self.assertGreater(float(timing["full_cycle_ms"]), 0)
 
 
 class ModelTests(unittest.TestCase):

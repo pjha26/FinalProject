@@ -1,0 +1,103 @@
+# Hardware-Friendly Implementation Plan
+
+Updated: 13 October 2026. Duration: ten working days in five phases of two days each. Practical prototype review: 15 October 2026.
+
+## Scope decision
+
+The user's latest instruction supersedes the supplied PDF as the implementation constraint. Preserve RGB-only monocular depth prediction, live visualization, overlays, numerical outputs, and measured performance. Target GTX 1650 to RTX 3050 laptops with 4 GB VRAM and 8-16 GB RAM. Hardware compatibility is demonstrated per machine; it is not a promise of unlimited performance.
+
+The default demo uses a webcam or local driving video. CARLA remains an optional simulator integration, because its native server failed under memory pressure on the current 8 GB laptop. A video replay is a perception demonstration, not an interactive 3D simulator or autonomous vehicle controller. No control/braking decisions should use these uncalibrated predictions.
+
+## Model and resource decision
+
+- Use the existing official Monodepth2 monocular ResNet-18 checkpoint at 640x192, batch size one, evaluation/inference mode. A warmed image prediction already ran in about 23 ms model time on the local GTX 1650. This is one observation, not sustained application FPS.
+- Avoid larger ResNet-50 models, large transformers, simultaneous model training and demo execution, and a mandatory CARLA server.
+- Stream one decoded video frame at a time; reduce the display input to fit within 640x480. The model always receives 640x192 RGB float32 in [0,1], retaining its original internal normalization.
+- Default webcam/video processing ceiling: 10 FPS. Reduce to 5 FPS if responsiveness suffers. This ceiling limits work; it does not guarantee 10 FPS. Local video is sequential replay, slowed if inference cannot keep up; no frame-dropping or native-speed claim.
+- Limit PyTorch CPU threads to two. Keep outputs local. Save first-frame numerical arrays and preview plus per-frame timing and a summary, rather than every full-size tensor.
+- Reuse installed OpenCV, Pillow, NumPy, PyTorch, and pygame. The lightweight inference route does not import or connect to the CARLA server.
+- A smaller candidate exists: the official [Lite-Mono](https://github.com/noahzn/Lite-Mono) table lists a 2.2M-parameter tiny variant. It is not installed, integrated, or benchmarked here. Do not switch models immediately before the review when the current ResNet-18 checkpoint already runs on the target GPU. Replace it only after an isolated accuracy/runtime comparison and a passing compatibility gate.
+
+Official model source and pretrained assets: [Monodepth2](https://github.com/nianticlabs/monodepth2). The [SemanticDepth reference](https://github.com/pablopalafox/semantic-depth) informs the project concept; it is not a runtime dependency.
+
+## Preserved features and honest limitations
+
+| Feature | Implementation / acceptance |
+|---|---|
+| Single RGB image to depth | Existing `infer`; finite numerical maps and saved composite preview |
+| Live RGB perception | New webcam source in `demo`; must pass a physical-camera rehearsal |
+| Driving footage perception | New local-video source in `demo`; sequential bounded-memory processing |
+| RGB / depth / overlay | Existing shared visualization used by all sources |
+| Relative numerical depth | First-frame `.npy` arrays; no calibrated metre claims |
+| Runtime performance | Per-frame CSV and wall-clock summary; GPU allocation reported separately |
+| Accuracy metrics | Existing formulas; publish scores only against aligned real depth GT |
+| CARLA simulation | Optional existing path; native live validation remains incomplete |
+| Project-specific training | Optional later experiment; no claim of new trained weights until actually trained |
+
+## Ten-day schedule
+
+| Phase | Days | File | Accepted result |
+|---|---|---|---|
+| 1 | 1-2 | [Foundation](phases/phase_01_foundation/implementation.md) | Verified small-model image/video path; camera code and tests; device rehearsal |
+| 2 | 3-4 | [Inputs and data](phases/phase_02_data/implementation.md) | Real driving clip, camera checks, frozen input manifest and repeatable demo |
+| 3 | 5-6 | [Model and integration](phases/phase_03_training/implementation.md) | Stable hardware profile; optional controlled fine-tuning or smaller-model experiment |
+| 4 | 7-8 | [Evaluation](phases/phase_04_evaluation/implementation.md) | Measured performance and available GT evaluation; documented failure cases |
+| 5 | 9-10 | [Delivery](phases/phase_05_delivery/implementation.md) | Rehearsed demo, reproducible setup, report, and final evidence |
+
+Day numbers refer to the existing ten-day project schedule, not ten extra days from this update. Before 15 October, prioritize the Phase 1/2 demonstration gates; defer experiments that could disturb the working prototype. Each later phase is a plan, not a completion claim.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    W[Live webcam] --> P[Bounded RGB frame / shared preprocessing]
+    V[Local driving video replay] --> P
+    I[Saved RGB image] --> P
+    C[Optional CARLA / scene replay] --> P
+    P --> M[Monodepth2 ResNet-18 / 640 x 192 / batch 1]
+    M --> D[Relative depth and inverse depth]
+    D --> O[RGB + depth + overlay display]
+    D --> N[Numerical NPY / preview / runtime CSV]
+    G[Optional aligned GT depth] --> E[Accuracy evaluation]
+    D --> E
+```
+
+## Shared contracts: prevent phase transitions from breaking the demo
+
+1. Keep the existing CLI commands and `src/model.py`, `src/preprocess.py`, and `src/visualize.py` interfaces. Preserve optional CARLA/replay callers when changing webcam/video behavior.
+2. Input records carry `frame_id`, RGB HWC uint8, and `camera` (None for an uncalibrated webcam/video). Available arrival time and source FPS are metadata, not ground truth.
+3. `load_model(checkpoint, device)` returns the existing encoder/decoder model. `predict` returns finite positive `inverse_depth` and `relative_depth` tensors with shape 1x1x192x640; callers receive numerical values before colorization.
+4. The original baseline checkpoint/source hashes remain immutable. Experiments use separate ignored checkpoint directories. Changing encoder architecture requires a compatible loader and tests; `--checkpoint` alone does not support Lite-Mono.
+5. New outputs use a new directory. Never overwrite a previous run. Preserve `preview.png`, `inverse_depth.npy`, `relative_depth.npy`, `runtime.csv`, `metrics.json`, and `summary.json` for demos; image inference has its existing subset.
+6. With no GT, metrics stay empty and the summary explicitly reports unavailability. Median-aligned metrics are diagnostics, not calibrated sensor distances.
+7. Every handoff runs the regression suite and a real-checkpoint fixed-input smoke test. Keep a known-working command, environment, checkpoint, and input manifest. A failed optional experiment must not replace the baseline.
+8. Keep logs, weights, footage, downloaded runtimes, and private camera captures ignored. Stage source/documentation only, at most ten files for the current update. The user authorized publishing the Phase 1 work to `pjha26/FinalProject` in no more than four commits; future publication requires user authorization.
+
+## Setup and demonstration commands
+
+From the project directory in PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe project.py check --output runs/hardware_check.json
+.\.venv\Scripts\python.exe project.py assets
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe project.py infer --image data/fixtures/test_image.jpg --device cuda --output runs/review_image
+.\.venv\Scripts\python.exe project.py demo --source webcam --camera 0 --device cuda --frames 600 --fps 10 --output runs/review_webcam
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --device cuda --frames 300 --fps 10 --output runs/review_video
+```
+
+The real driving clip must be supplied and licensed appropriately; `data/demo/driving.mp4` is an example path, not an included asset. Close the window or press Escape to finish. Use a fresh output path for each run. Use `--headless` for automated video checks, `--device cpu` for a slower fallback, or `--fps 5` to reduce work. Camera permissions/device indices must be checked on each laptop.
+
+For a fresh machine, create a compatible Python 3.8 environment and install the pinned `requirements.txt`; see README. Existing requirements still include optional CARLA tooling for compatibility. Do not transfer `.venv` between laptops; rebuild it there. The NVIDIA driver must support the pinned CUDA build; a separate CUDA toolkit is not needed for these packaged inference wheels.
+
+## Acceptance gates and evidence
+
+- **G1 functional:** regression checks pass; an actual checkpoint processes an image and a decoded video, with positive finite numerical output. Synthetic clips validate plumbing only.
+- **G2 demonstration:** a real camera or permitted real driving video runs for at least 60 seconds on the presentation laptop, without a crash. Camera movement must change the output. Record observed FPS and memory, including display overhead.
+- **G3 resource:** measure the target laptop separately. Record CPU/RAM/GPU/VRAM, input size, device, frame count, cap, elapsed time, and peak memory. PyTorch allocated GPU bytes are not total process VRAM or system RAM. Check Windows Task Manager as well.
+- **G4 quality:** inspect near/far objects, sunlight/shadows, flat surfaces, sky and reflective objects. Evaluate accuracy only on documented aligned GT samples with a fixed protocol and counts. Webcam indoor scenes may differ substantially from the KITTI driving training distribution.
+- **G5 delivery:** rerun the accepted command after any change; freeze the checkpoint/configuration and keep image/video fallbacks for the review. A continuous camera rehearsal and the friend's RTX 3050 are not assumed verified by local video tests.
+
+## Current state
+
+Already verified before adaptation: local GTX 1650 image inference and numerical/core regression checks. Implemented in this adaptation: bounded webcam/video input, default camera demo, FPS cap, camera release on exit/failure, first-frame numerical demo exports, and optional simulator diagnostics. Validation results and remaining hardware gates are recorded in README and local ignored run summaries. Full GT benchmarks, new fine-tuning, and successful CARLA native camera capture are not complete.

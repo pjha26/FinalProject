@@ -1,4 +1,4 @@
-"""Phase 1 commands: assets, environment check, inference, capture, and replay."""
+"""Low-memory RGB depth demos, image inference, and optional CARLA tools."""
 import argparse
 import csv
 import hashlib
@@ -20,7 +20,7 @@ REVISION = "b017a8164fae339b0ce01f3a9e5048104d5abd0e"
 BASELINE = ROOT / "checkpoints" / "baseline_mono_640x192"
 MODEL_URL = "https://storage.googleapis.com/niantic-lon-static/research/monodepth2/mono_640x192.zip"
 MODEL_MD5 = "a964b8356e08a02d009609d9e3928f7c"
-SERVER_URL = "https://carla-releases.b-cdn.net/Windows/CARLA_0.9.13.zip"
+SERVER_URL = "https://carla-releases.s3.us-east-005.backblazeb2.com/Windows/CARLA_0.9.13.zip"
 
 
 def write_json(path, value):
@@ -157,11 +157,16 @@ def install_server(local_archive=None):
     archive = Path(local_archive).resolve() if local_archive else download(SERVER_URL, ROOT / ".cache" / "CARLA_0.9.13.zip")
     if not archive.is_file():
         raise FileNotFoundError("CARLA archive does not exist: " + str(archive))
+    with zipfile.ZipFile(archive) as package:
+        names = package.namelist()
+        nested = "WindowsNoEditor/CarlaUE4.exe" in names
+        if nested and any(not name.startswith("WindowsNoEditor/") for name in names):
+            raise ValueError("CARLA archive has a conflicting root layout")
     server.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=server.parent) as temporary:
         staged = Path(temporary) / "server"
         print("Extracting CARLA 0.9.13...", flush=True)
-        safe_extract(archive, staged, max_bytes=32 * 1024 ** 3)
+        safe_extract(archive, staged, strip_root=nested, max_bytes=32 * 1024 ** 3)
         if not (staged / "CarlaUE4.exe").is_file():
             raise FileNotFoundError("Expected Windows server executable missing from official archive")
         write_json(staged / "download_provenance.json", {"version": "0.9.13", "source_url": SERVER_URL if not local_archive else "user-supplied official archive",
@@ -173,7 +178,7 @@ def install_server(local_archive=None):
 def environment_report(args):
     report = {"schema_version": 1, "python": sys.version, "platform": platform.platform(),
               "disk_free_gib": round(shutil.disk_usage(ROOT).free / 1024 ** 3, 2), "dependencies": {}}
-    for name in ("torch", "torchvision", "numpy", "PIL", "cv2", "pygame", "carla"):
+    for name in ("torch", "torchvision", "numpy", "PIL", "cv2", "pygame"):
         try:
             module = importlib.import_module(name)
             report["dependencies"][name] = getattr(module, "__version__", "imported")
@@ -187,18 +192,19 @@ def environment_report(args):
             report["gpu"] = torch.cuda.get_device_name(0)
             report["gpu_vram_mib"] = torch.cuda.get_device_properties(0).total_memory // 1024 ** 2
         report["cuda_build"] = torch.version.cuda
-    except (ImportError, RuntimeError) as error:
+    except (ImportError, RuntimeError, OSError) as error:
         report["cuda_error"] = str(error)
-    try:
-        import carla
-        client = carla.Client(args.host, args.port)
-        client.set_timeout(3)
-        report["carla_client"] = client.get_client_version()
-        report["carla_server"] = client.get_server_version()
-        report["maps"] = client.get_available_maps()
-    except (ImportError, RuntimeError) as error:
-        report["carla_server_error"] = str(error)
-    report["phase1_status"] = "diagnostics_only; tests, baseline inference and both town pilots are separate gates"
+    if getattr(args, "carla", False):
+        try:
+            import carla
+            client = carla.Client(args.host, args.port)
+            client.set_timeout(3)
+            report["carla_client"] = client.get_client_version()
+            report["carla_server"] = client.get_server_version()
+            report["maps"] = client.get_available_maps()
+        except (ImportError, RuntimeError, OSError) as error:
+            report["carla_server_error"] = str(error)
+    report["phase1_status"] = "diagnostics only; webcam/video workflow does not require CARLA"
     write_json(args.output, report)
     print(json.dumps(report, indent=2))
 
@@ -252,6 +258,100 @@ def capture_settings(args):
     return CaptureSettings(host=args.host, port=args.port, map=args.map, seed=args.seed)
 
 
+def audit_scene(args):
+    """Audit stored sensor identity/timing; this is not a model accuracy benchmark."""
+    import numpy as np
+    from src.carla_capture import replay_scene
+    from src.preprocess import camera_intrinsics
+
+    scene = Path(args.scene)
+    metadata = json.loads((scene / "metadata.json").read_text(encoding="utf-8"))
+    if (metadata["settings"]["width"], metadata["settings"]["height"]) != (640, 480):
+        raise ValueError("CARLA pilot must use 640x480 cameras")
+    expected_k = camera_intrinsics(640, 480, metadata["settings"].get("fov", 90))
+    matrix = np.asarray(metadata["intrinsics"], dtype=np.float64)
+    if matrix.shape != (3, 3) or not np.allclose(matrix, expected_k, rtol=0, atol=1e-6):
+        raise ValueError("Pilot intrinsics do not match the capture configuration")
+    if metadata.get("depth_units") != "metres":
+        raise ValueError("Pilot depth units must be metres")
+    previous_frame = previous_time = None
+    frames, finite_valid_pixels, timestamps = 0, 0, []
+    for record in replay_scene(scene):
+        frame_id, timestamp = record["frame_id"], float(record["simulation_timestamp"])
+        if not np.isfinite(timestamp):
+            raise ValueError("Nonfinite simulation timestamp")
+        if previous_frame is not None:
+            if frame_id != previous_frame + 1 or not np.isclose(timestamp - previous_time, 0.1, atol=1e-4, rtol=0):
+                raise ValueError("Pilot contains dropped frames or incorrect 10 Hz simulation timing")
+        for key in ("rgb_path", "depth_path"):
+            if int(Path(record[key]).stem) != frame_id:
+                raise ValueError("Sensor filename does not match recorded frame ID")
+        for key in ("ego_transform", "sensor_transform"):
+            transform = json.loads(record[key])
+            values = [transform["location"][k] for k in ("x", "y", "z")] + [transform["rotation"][k] for k in ("pitch", "yaw", "roll")]
+            if not np.isfinite(values).all():
+                raise ValueError("Invalid pose metadata")
+        if record["depth"].max() > 1000.001:
+            raise ValueError("Depth exceeds CARLA's raw encoding range")
+        finite_valid_pixels += int(((record["depth"] > 1e-3) & (record["depth"] < 80)).sum())
+        previous_frame, previous_time = frame_id, timestamp
+        timestamps.append(timestamp)
+        frames += 1
+    if frames == 0 or finite_valid_pixels == 0:
+        raise ValueError("Pilot has no frames or no valid evaluation-range ground truth")
+    report = {"schema_version": 1, "status": "pass", "scene": str(scene.resolve()), "frames": frames,
+              "frame_pairs": "matched IDs and numerical dimensions", "simulation_hz": 10,
+              "valid_depth_pixels_below_80m": finite_valid_pixels,
+              "simulation_span_seconds": timestamps[-1] - timestamps[0],
+              "manifest_sha256": file_hash(scene / "metadata.json"), "frame_index_sha256": file_hash(scene / "frames.csv"),
+              "scope": "stored-frame integrity and simulation timing; not wall-clock FPS or model accuracy"}
+    write_json(args.output, report)
+    print(json.dumps(report, indent=2))
+
+
+def video_frames(args):
+    """Stream a local video or camera without retaining decoded frames."""
+    import cv2
+
+    if args.source == "video":
+        path = Path(getattr(args, "video", "") or "")
+        if not path.is_file():
+            raise ValueError("--video must name an existing local video file")
+        source = str(path.resolve())
+    else:
+        source = getattr(args, "camera", 0)
+        if source < 0:
+            raise ValueError("--camera must be a nonnegative device index")
+    capture = cv2.VideoCapture(source)
+    try:
+        if not capture.isOpened():
+            raise ValueError("Cannot open {} input; check the file or camera permission/device index".format(args.source))
+        if args.source == "webcam":
+            capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            capture.set(cv2.CAP_PROP_FPS, getattr(args, "fps", 10))
+            capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        native_fps = capture.get(cv2.CAP_PROP_FPS)
+        native_fps = native_fps if 0 < native_fps <= 240 else 0
+        for index in range(args.frames):
+            ok, frame = capture.read()
+            arrival = time.perf_counter()
+            if not ok:
+                if args.source == "webcam":
+                    raise RuntimeError("Camera stopped supplying frames")
+                break
+            if frame is None or frame.ndim != 3 or frame.shape[2] != 3 or min(frame.shape[:2]) == 0:
+                raise ValueError("Invalid decoded RGB frame")
+            height, width = frame.shape[:2]
+            scale = min(640 / width, 480 / height, 1)
+            if scale < 1:
+                frame = cv2.resize(frame, (max(1, round(width * scale)), max(1, round(height * scale))), interpolation=cv2.INTER_AREA)
+            yield {"frame_id": index + 1, "rgb": cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
+                   "camera": None, "arrival_timestamp": arrival, "input_fps": native_fps}
+    finally:
+        capture.release()
+
+
 def demo(args):
     import numpy as np
     from PIL import Image
@@ -263,33 +363,41 @@ def demo(args):
 
     if args.source == "replay" and not args.scene:
         raise ValueError("--scene is required for replay")
+    fps_limit = getattr(args, "fps", 10)
+    if not 0 < fps_limit <= 60:
+        raise ValueError("--fps must be between 0 (exclusive) and 60")
+    import torch
+    torch.set_num_threads(2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     model = load_model(args.checkpoint, args.device)
-    display = None
-    if not args.headless:
-        import pygame
-        pygame.init()
-        display = pygame.display.set_mode((1280, 360))
-        pygame.display.set_caption("Monodepth2 - RGB-only relative depth")
-    capture = None
+    display = capture = records = None
+    if getattr(getattr(model, "device", None), "type", None) == "cuda":
+        torch.cuda.reset_peak_memory_stats(model.device)
     try:
+        if not args.headless:
+            import pygame
+            pygame.init()
+            display = pygame.display.set_mode((1280, 360))
+            pygame.display.set_caption("RGB depth demo - close window or press Escape to stop")
         if args.source == "carla":
             settings = capture_settings(args)
             capture = CarlaCapture(settings).__enter__()
             camera = {"width": 640, "height": 480, "intrinsics": camera_intrinsics(640, 480, 90).tolist()}
             records = (dict(capture.next_frame(), camera=camera) for _ in range(args.frames))
-        else:
+        elif args.source == "replay":
             records = replay_scene(args.scene)
+        else:
+            records = video_frames(args)
         rows, metrics, start = [], [], time.perf_counter()
         cycle_start = start
         for index, record in enumerate(records):
             if index >= args.frames:
                 break
-            if display is not None and any(event.type == pygame.QUIT for event in pygame.event.get()):
+            if display is not None and any(event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE) for event in pygame.event.get()):
                 break
             frame_start = time.perf_counter()
-            arrival_start = record["arrival_timestamp"] if args.source == "carla" else frame_start
+            arrival_start = record.get("arrival_timestamp", frame_start)
             maps, _, model_ms, processing_ms = timed_prediction(model, record["rgb"], record["camera"])
             gt = record.get("depth")
             measured = None
@@ -301,7 +409,7 @@ def demo(args):
                 except ValueError as error:
                     metrics.append({"frame_id": record["frame_id"], "status": "invalid", "error": str(error)})
             elapsed = time.perf_counter() - start
-            caption = "Relative depth | frame {} | {} | {:.1f} completed FPS".format(record["frame_id"], model.checkpoint.name, len(rows) / max(elapsed, 1e-9))
+            caption = "{} | Relative depth | frame {} | {:.1f} completed FPS".format(args.source, record["frame_id"], len(rows) / max(elapsed, 1e-9))
             if measured:
                 caption += " | GT-aligned AbsRel {:.3f}, RMSE {:.2f} m".format(measured["abs_rel"], measured["rmse"])
             else:
@@ -309,13 +417,19 @@ def demo(args):
             preview = render_frame(record["rgb"], maps["inverse_depth"], caption)
             if index == 0:
                 Image.fromarray(preview).save(output / "preview.png")
+                for name, values in maps.items():
+                    np.save(output / (name + ".npy"), values, allow_pickle=False)
             if display is not None:
                 surface = pygame.surfarray.make_surface(preview.transpose(1, 0, 2))
                 display.blit(pygame.transform.smoothscale(surface, display.get_size()), (0, 0))
                 pygame.display.flip()
+            display_end = time.perf_counter()
+            if args.source in ("webcam", "video"):
+                playback_fps = min(fps_limit, record["input_fps"]) if record["input_fps"] else fps_limit
+                time.sleep(max(0, 1 / playback_fps - (time.perf_counter() - cycle_start)))
             cycle_end = time.perf_counter()
             rows.append({"frame_id": record["frame_id"], "model_ms": model_ms, "processing_ms": processing_ms,
-                         "capture_to_display_ms": (cycle_end - arrival_start) * 1000,
+                         "capture_to_display_ms": (display_end - arrival_start) * 1000,
                          "full_cycle_ms": (cycle_end - cycle_start) * 1000})
             cycle_start = cycle_end
         elapsed = time.perf_counter() - start
@@ -328,9 +442,17 @@ def demo(args):
         write_json(output / "metrics.json", metrics)
         write_json(output / "summary.json", {"schema_version": 1, "source": args.source, "checkpoint": str(model.checkpoint),
                    "frames": len(rows), "wall_seconds": elapsed, "processed_fps": len(rows) / elapsed,
-                   "headless": args.headless, "depth_units": "relative", "metrics_scaling": "GT median alignment; diagnostic only"})
+                   "headless": args.headless, "depth_units": "relative; not calibrated metres",
+                   "input_fps": record.get("input_fps"), "fps_limit": fps_limit,
+                   "model_input": [192, 640], "batch_size": 1,
+                   "device": str(getattr(model, "device", "unknown")),
+                   "pytorch_peak_allocated_mib": round(torch.cuda.max_memory_allocated(model.device) / 1024 ** 2, 2) if getattr(getattr(model, "device", None), "type", None) == "cuda" else None,
+                   "video_playback": "sequential frames capped at source FPS and --fps; slower playback when processing is slower" if args.source == "video" else None,
+                   "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth"})
         print("Demo completed:", len(rows), "frames; output:", output)
     finally:
+        if records is not None:
+            records.close()
         if display is not None:
             pygame.quit()
         if capture is not None:
@@ -343,25 +465,36 @@ def parser():
     commands.add_parser("assets", help="Download pinned upstream source and trusted baseline weights")
     server = commands.add_parser("install-server", help="Download/extract official Windows CARLA 0.9.13")
     server.add_argument("--archive", help="Use an already downloaded official Windows release ZIP")
-    check = commands.add_parser("check", help="Save environment, CUDA and CARLA connectivity diagnostics")
+    check = commands.add_parser("check", help="Save environment/CUDA diagnostics; CARLA is optional")
     check.add_argument("--output", default="runs/phase1_environment.json")
+    check.add_argument("--carla", action="store_true", help="Also probe an optional CARLA server")
     inference = commands.add_parser("infer", help="Predict one RGB image and save numerical maps and preview")
     inference.add_argument("--image", required=True)
     inference.add_argument("--output", default="runs/baseline_image")
     collect = commands.add_parser("collect", help="Record an exclusive, synchronized CARLA scene")
     collect.add_argument("--output", required=True)
-    playback = commands.add_parser("demo", help="Live CARLA or recorded-scene replay through shared inference")
-    playback.add_argument("--source", choices=("carla", "replay"), required=True)
+    playback = commands.add_parser("demo", help="Low-memory webcam/video depth demo; optional CARLA/replay")
+    playback.add_argument("--source", choices=("webcam", "video", "carla", "replay"), default="webcam")
+    playback.add_argument("--camera", type=int, default=0, help="Local webcam index")
+    playback.add_argument("--video", help="Local video file (required for --source video)")
+    playback.add_argument("--fps", type=float, default=10, help="Webcam/video processing ceiling (default 10 FPS)")
     playback.add_argument("--scene")
     playback.add_argument("--headless", action="store_true")
     playback.add_argument("--output", default="runs/demo")
-    for child in (check, collect, playback):
+    audit = commands.add_parser("audit-scene", help="Check pilot frame IDs, numerical depth, poses and 10 Hz timing")
+    audit.add_argument("--scene", required=True)
+    audit.add_argument("--output", required=True)
+    geometry = commands.add_parser("calibrate-depth", help="Check static-facade sensor depth at 5/10/20 metres")
+    geometry.add_argument("--output", required=True)
+    for child in (check, collect, playback, geometry):
         child.add_argument("--host", default="127.0.0.1")
         child.add_argument("--port", type=int, default=2000)
     for child in (collect, playback):
         child.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
         child.add_argument("--seed", type=int, default=42)
         child.add_argument("--frames", type=int, default=100)
+    geometry.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
+    geometry.add_argument("--seed", type=int, default=42)
     for child in (inference, playback):
         child.add_argument("--checkpoint", default=str(BASELINE))
         child.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
@@ -385,6 +518,11 @@ def main():
         print(json.dumps(collect_scene(args.output, capture_settings(args), args.frames), indent=2))
     elif args.command == "demo":
         demo(args)
+    elif args.command == "audit-scene":
+        audit_scene(args)
+    elif args.command == "calibrate-depth":
+        from src.carla_capture import check_depth_geometry
+        print(json.dumps(check_depth_geometry(capture_settings(args), args.output), indent=2))
 
 
 if __name__ == "__main__":

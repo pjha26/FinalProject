@@ -1,110 +1,106 @@
 # Real-Time Monocular Depth Estimation
 
-Final-year project: Monodepth2 RGB-only relative-depth inference with CARLA 0.9.13, following the supplied project PDF. Development is organized into five two-day phases.
+Hardware-friendly final-year prototype: RGB camera or local driving video -> Monodepth2 ResNet-18 -> relative depth -> RGB/depth/overlay display and measured FPS.
 
-## Phase 1 status
+The user's updated scope replaces the PDF constraints. The default workflow targets GTX 1650 to RTX 3050 laptops with 4 GB VRAM and 8-16 GB RAM. CARLA is optional. Its server failed during earlier sensor attempts on the current 8 GB PC; changing the input source removes that simulator memory requirement.
 
-**PARTIAL: software foundation and CUDA baseline verified; live simulator gates are pending.**
+## Current implementation
 
-- Python 3.8.20, PyTorch 2.0.1 + CUDA 11.8, torchvision 0.15.2, and CARLA client 0.9.13 are installed in the project-local `.venv`.
-- Official monocular `mono_640x192` weights were downloaded and matched the upstream archive checksum. Source revision: `b017a8164fae339b0ce01f3a9e5048104d5abd0e`.
-- Inference succeeds on the NVIDIA GTX 1650. The single warmed-up baseline observation was about 23 ms model time; this is **not** an integrated FPS benchmark or a KITTI accuracy result.
-- The 25-test suite covers numerical decoding/metrics, resize geometry, frame synchronization, archive/checkpoint safety, replay, cleanup, and real-checkpoint repeatability.
-- The official Windows CARLA server download returned HTTP 403 at the release CDN and S3 origin. The server is not installed; Town04/05 pilots, real sensor timing, interruption behavior, and the static-wall depth-convention check remain unverified.
-- The pinned source contains the official 697-frame Eigen list. KITTI raw image/LiDAR assets, ResNet-50 comparison weights, and NYU samples are not downloaded. KITTI's current raw-data page requires a user login; prepare those assets before the relevant later phases.
+- Official monocular `mono_640x192` ResNet-18 checkpoint; checksum-checked, pinned upstream source. Existing image inference ran on the local GTX 1650.
+- Shared 640x192, batch-one model inference. One-frame webcam/video decoding, display input bounded to 640x480, two PyTorch CPU threads and a default 10 FPS workload ceiling.
+- Webcam is the default demo source. Local video, saved-image inference and the previous optional CARLA/scene-replay commands remain available.
+- RGB, relative depth and overlay; first-frame preview and numerical arrays; per-frame runtime CSV and JSON summary. Escape/close releases camera/window. Local video finishes normally at EOF.
+- No GT scores invented for camera/video. Output depth is relative, not calibrated metres. KITTI-trained monocular weights can perform poorly on indoor webcam scenes.
+- Resource and model tests are described below. A video fixture validates the pipeline; a physical-camera rehearsal and the friend's RTX 3050 must be checked separately.
 
-Generated previews, numerical arrays, environment diagnostics, source provenance, and baseline weight manifests remain local under ignored `runs/`, `third_party/`, `data/`, and `checkpoints/` directories. They are not staged as source changes.
+## Setup
 
-## Install and run
-
-Run from this project directory in PowerShell. Python 3.8 is deliberate for the pinned CARLA client; do not install these packages into the desktop app's bundled Python.
+The current machine already has `.venv`, dependencies, official weights and source. On another laptop install Python 3.8.20 and a suitable NVIDIA driver, then create a new environment:
 
 ```powershell
-$env:UV_PYTHON_INSTALL_DIR = Join-Path (Get-Location) '.runtime\python'
-uv venv --python 3.8 --managed-python --cache-dir .cache\uv .venv
-uv pip install --python .venv\Scripts\python.exe --cache-dir .cache\uv --index-strategy unsafe-best-match -r requirements.txt
+py -3.8 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe project.py assets
-.\.venv\Scripts\python.exe project.py check
+.\.venv\Scripts\python.exe project.py check --output runs/hardware_check.json
+```
+
+The pinned PyTorch wheels include CUDA 11.8 runtime libraries; no separate toolkit is required for inference. `requirements.txt` retains optional CARLA client tooling for compatibility, but camera/video inference needs no CARLA installation/server. Rebuild `.venv` on your friend's laptop; don't copy the environment folder. Source and model downloads require Internet during setup; prepared inference runs locally.
+
+## Run the practical demo
+
+From this project folder in PowerShell:
+
+```powershell
+# Webcam: default camera index 0, around 60 seconds at the 10 FPS ceiling
+.\.venv\Scripts\python.exe project.py demo --source webcam --camera 0 --device cuda --frames 600 --fps 10 --output runs/review_webcam_01
+
+# Driving footage: replace this example path with a real local clip
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --device cuda --frames 300 --fps 10 --output runs/review_video_01
+
+# Verified single-image fallback
+.\.venv\Scripts\python.exe project.py infer --image data/fixtures/test_image.jpg --device cuda --output runs/review_image_01
+```
+
+Close the window or press **Escape** to stop. Use a different output directory each time: existing runs are intentionally never overwritten. Camera access requires Windows camera permission and an available device; try `--camera 1` if the intended device is not index 0. The driving video example is not bundled. A video is processed sequentially, capped at its native FPS and --fps; processing below that rate slows replay rather than dropping frames.
+
+If the laptop struggles, use `--fps 5`, close unused apps after saving your work, and keep CARLA stopped. `--device cpu` is a slower fallback. `--headless` omits the window for automated tests. A 10 FPS cap is a ceiling, not a promised minimum.
+
+Demo outputs:
+
+| File | Meaning |
+|---|---|
+| `preview.png` | First processed frame: RGB / relative depth / overlay |
+| `inverse_depth.npy`, `relative_depth.npy` | First-frame numerical model outputs, 192x640, uncalibrated scale |
+| `runtime.csv` | Per-frame model, processing, arrival-to-display and full-cycle timing |
+| `summary.json` | Source, checkpoint, device, frame count, wall time, observed FPS, input rate and PyTorch peak allocated GPU bytes |
+| `metrics.json` | Empty when no GT exists; diagnostic GT-aligned results for compatible recorded scenes |
+
+Timing includes first-frame overhead; the displayed FPS uses already-completed frames. The summary is the completed run measurement. PyTorch allocated GPU memory excludes driver/runtime/other applications; inspect total VRAM and RAM in Task Manager as well. Outputs, camera footage, weights and downloaded runtimes stay ignored by Git.
+
+## Architecture and phase transitions
+
+```mermaid
+flowchart LR
+    A[Webcam / local video / RGB image] --> B[Bounded RGB frame and preprocessing]
+    B --> C[ResNet-18 depth model / 640 x 192 / batch 1]
+    C --> D[Relative depth and inverse depth]
+    D --> E[RGB + depth + overlay / FPS]
+    D --> F[NPY / preview / runtime evidence]
+    G[Optional CARLA or scene replay] --> B
+```
+
+The [master plan](IMPLEMENTATION_PLAN.md) and [Phase 1](phases/phase_01_foundation/implementation.md), [Phase 2](phases/phase_02_data/implementation.md), [Phase 3](phases/phase_03_training/implementation.md), [Phase 4](phases/phase_04_evaluation/implementation.md), [Phase 5](phases/phase_05_delivery/implementation.md) now use the revised hardware scope. Baseline hashes, preprocessing, prediction shapes and existing CLI commands remain the handoff contracts. Later model experiments use separate checkpoints and must pass the working demo gate before adoption.
+
+## Verification and remaining work
+
+```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe project.py infer --image data\fixtures\test_image.jpg --output runs\baseline_image
 ```
 
-`assets` downloads the fixed upstream revision, retains its license, applies one recorded torchvision constructor compatibility patch, verifies the official model ZIP checksum, and records SHA-256 file identities. Image tensors stay in `[0,1]`; the upstream encoder performs its own normalization exactly once. The official test image is a baseline fixture, not a CARLA recording.
+Tests cover RGB ordering/resizing, numerical metrics and geometry, source/checkpoint safety, scene replay, camera release and input failure, local video decoding/EOF, demo outputs, and actual checkpoint repeatability where assets are present. A mocked webcam does not prove physical-camera operation.
 
-Output directories for inference, capture, and replay must be new; completed results and baseline weights are never overwritten implicitly. Use a different `--output` path for another run.
+Local validation on 13 October 2026: **33 regression checks passed**. The actual checkpoint processed a 100-frame synthetic driving-image clip on the GTX 1650: **8.33 FPS headless** at a 10 FPS ceiling, **25.21 ms median model time**, **685.86 MiB peak process working-set RAM**, and **106.34 MiB peak PyTorch allocated GPU memory**. A separate displayed 30-frame run completed at **6.98 FPS**, including startup overhead. These short synthetic runs validate integration, not real driving quality or a 60-second live rehearsal. Evidence is local under `runs/lightweight_video_validation/` and `runs/lightweight_display_validation/`.
 
-## CARLA server and pilot capture
+The physical webcam attempt at camera index 0 failed to open; permission/device availability is unresolved. No full KITTI/NYU accuracy benchmark, new project-trained weights or successful native CARLA sensor pilot has been completed. The RTX 3050 laptop has not been measured. Before the 15 October review, rehearse a real webcam or permitted driving clip for 60 seconds on the presentation laptop.
 
-The Python client is not the simulator server. Obtain the **official Windows 0.9.13 archive** from the [CARLA release](https://github.com/carla-simulator/carla/releases/tag/0.9.13). A local archive can be installed when network downloads are blocked:
+## Optional simulator tools
+
+These existing commands remain available for a suitable machine; they are not needed for the new default demo:
 
 ```powershell
+.\.venv\Scripts\python.exe project.py check --carla --host 127.0.0.1 --port 2000 --output runs/carla_check.json
 .\.venv\Scripts\python.exe project.py install-server
-# Or install an official release ZIP already downloaded on another machine:
-.\.venv\Scripts\python.exe project.py install-server --archive 'C:\path\CARLA_0.9.13.zip'
-Start-Process -FilePath '.runtime\carla\CarlaUE4.exe' -ArgumentList '-quality-level=Low','-RenderOffScreen','-carla-rpc-port=2000' -WindowStyle Hidden
-.\.venv\Scripts\python.exe project.py check
-.\.venv\Scripts\python.exe project.py collect --map Town04 --frames 100 --output data\carla\scenes\Town04_pilot
-.\.venv\Scripts\python.exe project.py collect --map Town05 --frames 100 --output data\carla\scenes\Town05_pilot
+.\.venv\Scripts\python.exe project.py collect --map Town04 --frames 100 --output data/carla/scenes/pilot_new
+.\.venv\Scripts\python.exe project.py demo --source carla --map Town04 --frames 100 --output runs/carla_new
+.\.venv\Scripts\python.exe project.py demo --source replay --scene data/carla/scenes/valid_scene --frames 100 --output runs/replay_new
+.\.venv\Scripts\python.exe project.py audit-scene --scene data/carla/scenes/valid_scene --output runs/scene_audit.json
+.\.venv\Scripts\python.exe project.py calibrate-depth --map Town04 --output runs/depth_geometry.json
 ```
 
-The local GPU has 4 GB VRAM. CARLA plus inference must be tested, not assumed feasible; a department GPU is the preferred fallback. Collection and training should not compete on this GPU. Package installation needs substantial free storage and may fail if the official host denies the download.
+The native simulator must be started separately for live capture. Existing failed zero-frame scene folders are partial and rejected by replay. Geometry/audit unit tests do not replace real sensor validation. Do not restart CARLA on the memory-constrained PC just to run webcam/video depth.
 
-Capture uses synchronous 0.1-second steps, 640x480 cameras, ClearNoon, an ego autopilot, and identical RGB/depth camera mounts. It checks server/client versions, matches frames and snapshots by ID, records decoded depth and pose metadata, and marks failed recordings partial. It owns a Traffic Manager on port 8001. Exit stops/destroys owned actors, disables that manager, and restores the loaded map's previous world settings/weather. Loading Town04/05 changes the map; use a dedicated simulator session.
+## References and Git
 
-No live depth measurement claim is made until the sensor pilot and static-wall depth-convention check pass. Depth-camera ground truth is for evaluation, never the model input.
+Model implementation/pretrained assets: [official Monodepth2](https://github.com/nianticlabs/monodepth2), pinned source revision `b017a8164fae339b0ce01f3a9e5048104d5abd0e`. Original license remains in the downloaded source. Conceptual reference: [SemanticDepth](https://github.com/pablopalafox/semantic-depth). [Lite-Mono](https://github.com/noahzn/Lite-Mono) is a possible later smaller-model experiment, not a currently supported checkpoint architecture.
 
-## Replay and live display
-
-```powershell
-.\.venv\Scripts\python.exe project.py demo --source replay --scene data\carla\scenes\Town04_pilot --frames 100 --output runs\pilot_replay
-.\.venv\Scripts\python.exe project.py demo --source replay --scene data\carla\scenes\Town04_pilot --frames 100 --headless --output runs\pilot_replay_headless
-.\.venv\Scripts\python.exe project.py demo --source carla --map Town04 --frames 100 --output runs\pilot_live
-```
-
-All prediction commands accept `--checkpoint <directory>` and `--device auto|cpu|cuda`. Closing the display exits cleanly. Numerical depth arrays remain separate from the fixed-scale plasma color display. Replay writes a preview, `runtime.csv`, diagnostic metrics, and summary. Live/replay use the same preprocessing and model functions.
-
-The primary output is **relative depth**, not calibrated metres. Optional CARLA errors use explicitly labeled per-frame GT median alignment. These diagnostic metrics are not the final KITTI Eigen evaluator: the full split/crop/protocol is a later-phase deliverable. Headless throughput is distinguished from displayed throughput.
-
-## Stable interfaces and phase continuity
-
-To meet the requested ten-file Phase 1 limit, commands are consolidated in `project.py` instead of separate thin `scripts/*.py` wrappers. Configuration defaults live in ordinary arguments and `CaptureSettings`; the actual run configuration is written to manifests/reports. Shared source module names remain compatible with the plan. This documented C01/C09 layout adjustment must be retained in later phases, rather than adding a second pipeline.
-
-| Planned action | Implemented command |
-|---|---|
-| Check environment | `project.py check` |
-| Acquire source and baseline | `project.py assets` |
-| Single-image prediction | `project.py infer` |
-| CARLA scene collection | `project.py collect` |
-| Live/replay visualization | `project.py demo` |
-| Tests | `python -m unittest discover -s tests -v` |
-
-Shared contract v1:
-
-- `preprocess_rgb(rgb, camera)` receives native HWC uint8 **RGB**, returning float32 `1x3x192x640` values in `[0,1]` and resized 3x3 intrinsics. Its ID is `rgb_bilinear_192x640_monodepth2_internal_v1`.
-- `load_model(checkpoint_dir, device)` strictly loads ResNet-18 encoder/depth files; `predict(model, tensor)` accepts batch dimension B and returns `inverse_depth` / `relative_depth` tensors `Bx1x192x640`. GT is not accepted.
-- Sigmoid output converts to bounded inverse depth with model bounds 0.1/100; evaluation's 80 m limit is separate. Display uses fixed inverse-depth bounds 0.01/10, without changing numerical predictions.
-- `CaptureSettings` records host, map, seed, camera geometry, timeout, and Traffic Manager port. `metadata.json` schema 1 plus `frames.csv`, `rgb/*.png`, and float32 `depth/*.npy` form a scene.
-- Intrinsics follow the actual resize sampling convention. Default 90-degree image intrinsics are a diagnostic assumption when camera metadata is absent, not KITTI calibration.
-- `compute_metrics` implements AbsRel, SqRel, RMSE, natural-log RMSE, and a1/a2/a3 on valid numerical depth, with explicit median alignment. Empty/invalid inputs are errors rather than zero scores.
-- Baseline and future trained checkpoints live in different directories. Never replace original weights, regenerate frozen splits implicitly, or change the normalization/units without updating every caller and regression fixture.
-- Run all earlier tests and reproduce the baseline before accepting each phase. Actual GPU/simulator integration checks are separate from mocks and synthetic replay tests.
-
-## Phase 1 handoff
-
-| Gate | Actual state |
-|---|---|
-| Local Python/pinned packages/CUDA | Verified |
-| Trusted pretrained checkpoint and finite/repeatable prediction | Verified |
-| Numerical and mock lifecycle/replay regression checks | Verified |
-| CARLA server and real Town04/05 synchronized pilots | Blocked by server package download |
-| Static-wall depth convention and real interruption cleanup | Not run |
-| Full KITTI assets/benchmark and training | Not created; later phases |
-| Independent teammate reproduction / lab GPU booking | Requires the project team |
-
-Handoff identities are in `third_party/monodepth2/provenance.json`, `checkpoints/baseline_mono_640x192/manifest.json`, and `runs/phase1_environment.json`; the baseline observation is in `runs/phase1_baseline/summary.json`. Keep these with the local snapshot. Phase 2 may prepare independent work, but should not collect a full dataset until the real sensor/depth-geometry gate passes.
-
-Only the ten Phase 1 implementation files are intended to be staged in this change. Existing local planning documents are left unstaged. No commit or GitHub push is performed by setup or any project command.
-
-## Attribution
-
-This project uses the [official Monodepth2 implementation](https://github.com/nianticlabs/monodepth2), Godard et al., ICCV 2019. The downloaded source retains its original LICENSE and copyright notices; review its non-commercial terms before redistribution. The supplied SemanticDepth repository is conceptual reference only. KITTI downloads follow the [official raw-data access requirements](https://www.cvlibs.net/datasets/kitti/raw_data.php).
+The Phase 1 update contains ten source/documentation files, including the six plan files. The user authorized committing and pushing this work to `pjha26/FinalProject` in no more than four Phase 1 commits. Keep generated datasets, weights, runtimes and run evidence local; future publication requires user authorization.

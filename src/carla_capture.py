@@ -79,6 +79,105 @@ def transform_dict(transform):
             "rotation": {k: getattr(transform.rotation, k) for k in ("pitch", "yaw", "roll")}}
 
 
+def classify_depth_convention(samples):
+    """Distinguish axial depth from ray length using off-axis geometric references."""
+    values = np.array([[row["measured_m"], row["axis_m"], row["ray_m"]] for row in samples], dtype=np.float64)
+    if values.ndim != 2 or len(values) < 6 or not np.isfinite(values).all() or (values <= 0).any():
+        raise ValueError("Insufficient finite positive depth geometry samples")
+    if np.sum(values[:, 2] - values[:, 1] > 0.25) < 3:
+        raise ValueError("Off-axis samples are required to distinguish depth conventions")
+    errors = {name: np.abs(values[:, 0] - values[:, column]) for name, column in (("camera_axis_z", 1), ("ray_distance", 2))}
+    passed = [name for name, error in errors.items() if float(error.max()) <= 0.15]
+    if len(passed) != 1:
+        raise ValueError("Depth samples do not uniquely match a geometric convention within 0.15 m")
+    return {"convention": passed[0], "max_error_m": {name: float(error.max()) for name, error in errors.items()},
+            "tolerance_m": 0.15, "samples": len(samples)}
+
+
+def check_depth_geometry(settings, output):
+    """Probe a static facade at 5/10/20 m; depth GT never supervises the model."""
+    import carla
+
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=False)
+    with CarlaCapture(settings) as capture:
+        capture.vehicle.set_autopilot(False, settings.traffic_manager_port)
+        capture.vehicle.set_simulate_physics(False)
+        world = capture.world
+        origin = capture.vehicle.get_location()
+        boxes = sorted(world.get_level_bbs(carla.CityObjectLabel.Buildings), key=lambda box: box.location.distance(origin))
+        probes, sync = {}, FrameSynchronizer()
+        for name in ("rgb", "depth"):
+            blueprint = world.get_blueprint_library().find("sensor.camera." + name)
+            for key, value in {"image_size_x": 640, "image_size_y": 480, "fov": 90, "sensor_tick": 0.1, "lens_k": 0, "lens_kcube": 0}.items():
+                blueprint.set_attribute(key, str(value))
+            probes[name] = world.spawn_actor(blueprint, carla.Transform(carla.Location(z=100)))
+            capture.actors.append(probes[name])
+            probes[name].listen(lambda image, sensor_name=name: sync.put(sensor_name, image))
+
+        def tick():
+            base = capture.next_frame()
+            return sync.get_pair(base["frame_id"], settings.timeout)
+
+        last_failure = "No suitable building facade found"
+        for box in boxes[:20]:
+            if min(box.extent.x, box.extent.y) < 2 or box.extent.z < 2:
+                continue
+            yaw = np.deg2rad(box.rotation.yaw)
+            for local_normal, extent in (((1, 0), box.extent.x), ((-1, 0), box.extent.x), ((0, 1), box.extent.y), ((0, -1), box.extent.y)):
+                nx = local_normal[0] * np.cos(yaw) - local_normal[1] * np.sin(yaw)
+                ny = local_normal[0] * np.sin(yaw) + local_normal[1] * np.cos(yaw)
+                normal = carla.Vector3D(x=float(nx), y=float(ny), z=0)
+                face = carla.Location(x=box.location.x + float(nx) * extent, y=box.location.y + float(ny) * extent,
+                                      z=box.location.z - box.extent.z + 2)
+                hits = world.cast_ray(face + normal * 30, face - normal * 2)
+                if not hits or hits[0].label not in (carla.CityObjectLabel.Buildings, carla.CityObjectLabel.Walls):
+                    continue
+                wall = hits[0].location
+                samples = []
+                for distance in (5, 10, 20):
+                    position = wall + normal * distance
+                    rotation = carla.Rotation(yaw=float(np.rad2deg(np.arctan2(-ny, -nx))))
+                    transform = carla.Transform(position, rotation)
+                    for probe in probes.values():
+                        probe.set_transform(transform)
+                    for _ in range(3):
+                        pair = tick()
+                    depth = decode_depth(pair["depth"].raw_data, 640, 480)
+                    forward, right, up = transform.get_forward_vector(), transform.get_right_vector(), transform.get_up_vector()
+                    for u, v in ((320, 240), (160, 240), (480, 240)):
+                        direction = forward + right * ((u - 320) / 320) - up * ((v - 240) / 320)
+                        direction = direction / direction.length()
+                        reference = world.cast_ray(position, position + direction * 80)
+                        if not reference or reference[0].label not in (carla.CityObjectLabel.Buildings, carla.CityObjectLabel.Walls):
+                            continue
+                        delta = reference[0].location - position
+                        axis = delta.x * forward.x + delta.y * forward.y + delta.z * forward.z
+                        if axis <= 0 or axis >= 80:
+                            continue
+                        samples.append({"requested_center_distance_m": distance, "u": u, "v": v, "frame_id": pair["depth"].frame,
+                                        "measured_m": float(depth[v, u]), "axis_m": axis, "ray_m": delta.length()})
+                if set(row["requested_center_distance_m"] for row in samples if row["u"] == 320) != {5, 10, 20}:
+                    continue
+                try:
+                    result = classify_depth_convention(samples)
+                except ValueError as error:
+                    last_failure = str(error)
+                    continue
+                center_error = max(abs(row["axis_m"] - row["requested_center_distance_m"]) for row in samples if row["u"] == 320)
+                if center_error > 0.15:
+                    last_failure = "Facade center ray differs from requested distance"
+                    continue
+                result.update(schema_version=1, status="pass", map=settings.map, facade_point=dict(x=wall.x, y=wall.y, z=wall.z),
+                              center_distance_max_error_m=center_error, samples_detail=samples,
+                              scope="CARLA sensor geometry using static collision raycasts; not predicted metric depth")
+                Image.fromarray(decode_rgb(pair["rgb"].raw_data, 640, 480)).save(output / "facade_rgb.png")
+                np.save(output / "depth_20m.npy", depth, allow_pickle=False)
+                (output / "summary.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+                return result
+        raise RuntimeError("Depth geometry check failed: " + last_failure)
+
+
 class CarlaCapture:
     def __init__(self, settings):
         self.settings = settings
@@ -96,7 +195,9 @@ class CarlaCapture:
             self.client.set_timeout(cfg.timeout)
             if self.client.get_server_version().split("-")[0] != "0.9.13" or self.client.get_client_version().split("-")[0] != "0.9.13":
                 raise RuntimeError("Both CARLA server and client must be 0.9.13")
-            self.world = self.client.load_world(cfg.map)
+            self.world = self.client.get_world()
+            if self.world.get_map().name.rsplit("/", 1)[-1] != cfg.map:
+                self.world = self.client.load_world(cfg.map)
             self.previous_settings = self.world.get_settings()
             self.previous_weather = self.world.get_weather()
             settings = self.world.get_settings()
