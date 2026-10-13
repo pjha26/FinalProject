@@ -29,3 +29,25 @@ Phase 1 numerical image/video gates must pass. Independent clip preparation can 
 Deliver a frozen input manifest, working demo command, qualitative examples, fallback image/video, and a real 60-second camera/video run. Provide any GT dataset protocol and actual sample count, or clearly mark accuracy pending. No mandated tens-of-thousands-frame CARLA collection.
 
 Phase 3 uses the same baseline/input files and output schema. Keep private media out of Git. A new input must not alter checkpoint normalization or model resolution.
+
+## Implemented on 14 October 2026
+
+- `project.py prepare-demo` acquires the pinned Udacity driving clip and repository MIT license, checks trusted file hashes, decodes every frame, writes a first-frame RGB fallback and freezes `data/demo/input_manifest.json`.
+- Actual input: 1,260 frames, 1280x720, 25 FPS, 50.4 source seconds. Playback below 25 FPS is intentionally slowed sequential replay; a minute of application wall time does not imply a minute of unique source footage.
+- `project.py verify-demo` checks video/license/image identity, actual decode count/rate/dimensions, preprocessing and baseline checkpoint hashes. Relative filenames keep the manifest usable on another laptop.
+- `demo --manifest` validates the selected video/model pair before inference and records the manifest checksum. Existing unmanifested webcam/video, image and optional CARLA/replay commands remain compatible.
+- Tests cover portable manifest reuse, altered media/model/metadata, unsafe paths, incomplete decoding, resolution changes and a mismatched selected video.
+
+```powershell
+.\.venv\Scripts\python.exe project.py prepare-demo
+.\.venv\Scripts\python.exe project.py verify-demo
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 600 --fps 10 --output runs/driving_review_01
+.\.venv\Scripts\python.exe project.py infer --image data/demo/driving_first_frame.png --device cuda --output runs/driving_fallback_01
+```
+
+Transfer current source plus the pinned model/source and `data/demo` folders; rebuild `.venv`, verify inputs and rehearse on the friend's laptop. See README for the transfer checklist. The user authorized staging and a local Phase 2 commit; pushing this phase requires separate authorization.
+
+Local validation passed on 14 October 2026: **39 regression checks**, plus **350 displayed real-video CUDA inferences over 71.58 seconds** on the 8 GB GTX 1650 PC. Observed throughput was **4.89 FPS under a 5 FPS ceiling**; peak process working-set RAM was **620.13 MiB**, and peak PyTorch allocated GPU memory was **106.34 MiB**. These memory figures are not total system RAM/VRAM. The processed frames cover 14 source seconds. Evidence: ignored `runs/phase2_real_driving_rehearsal/validation.json`, runtime CSV, summary, preview and numerical arrays. Reproduce using `--frames 350 --fps 5` with a fresh output folder.
+
+**Acceptance status:** local input preparation, integrity checks and displayed real-video rehearsal passed. Presentation-machine acceptance remains pending: rebuild/verify/rehearse on the friend's RTX 3050 laptop. The physical webcam is also unverified. No aligned GT assets are provided by this video, so metric accuracy is explicitly unavailable.

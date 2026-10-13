@@ -26,6 +26,39 @@ py -3.8 -m venv .venv
 
 The pinned PyTorch wheels include CUDA 11.8 runtime libraries; no separate toolkit is required for inference. `requirements.txt` retains optional CARLA client tooling for compatibility, but camera/video inference needs no CARLA installation/server. Rebuild `.venv` on your friend's laptop; don't copy the environment folder. Source and model downloads require Internet during setup; prepared inference runs locally.
 
+## Phase 2: repeatable real driving input and laptop transfer
+
+Develop on the current PC and rehearse on the presentation laptop. Keep the same source, model weights, input and preprocessing on both; rebuild the environment on each machine and measure performance separately.
+
+Prepare the approximately 24 MiB [Udacity driving sample](https://github.com/udacity/CarND-Advanced-Lane-Lines). Its repository license is MIT; the preparation command retains the license and pins the source revision and file hashes. No CARLA server is needed:
+
+```powershell
+.\.venv\Scripts\python.exe project.py prepare-demo
+.\.venv\Scripts\python.exe project.py verify-demo
+```
+
+Preparation creates ignored local `data/demo/driving.mp4`, `UDACITY_LICENSE.txt`, `driving_first_frame.png`, and `input_manifest.json`. The real clip has 1,260 decoded frames, 1280x720 resolution, 25 FPS and 50.4 seconds of source footage. The portable manifest records source/license identity, decoded dimensions/count/rate, preprocessing, and baseline weight hashes. Re-running preparation verifies the existing manifest rather than replacing accepted inputs. Modified media, fallback images, model weights or incompatible metadata are rejected.
+
+For the practical rehearsal, use the manifest with the shared demo:
+
+```powershell
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 600 --fps 10 --output runs/driving_rehearsal_01
+.\.venv\Scripts\python.exe project.py infer --image data/demo/driving_first_frame.png --device cuda --output runs/driving_image_fallback_01
+```
+
+The demo validates the clip before opening its window and records the manifest SHA256 in the run summary. This sample is video replay with live depth computation, not an interactive simulator, and has no ground-truth depth. At a 10 FPS ceiling, 600 sequential frames take at least 60 seconds and cover 24 seconds of the original 25 FPS footage; replay slows rather than skipping frames. Verification/startup time is separate from the summary's processing wall time.
+
+To move to your friend's laptop:
+
+1. Transfer the current source (`project.py`, `requirements.txt`, `src/`, and `tests/`), plus `checkpoints/baseline_mono_640x192/`, `third_party/monodepth2/`, and `data/demo/`. Keep licenses/provenance manifests with the copied assets. Phase 2 changes are local until separately committed/pushed; cloning GitHub alone does not obtain unpublished changes.
+2. Rebuild `.venv` using the setup commands. Do not copy `.venv`, `.runtime`, or `.cache`. Alternatively, with the updated source and Internet access, run `project.py assets` and `project.py prepare-demo` to obtain matching assets.
+3. Run `project.py check --output runs/friend_hardware.json`, `project.py verify-demo`, and the regression suite. Confirm CUDA is available, then run the same displayed rehearsal with a fresh output folder.
+4. Keep the laptop plugged in; verify a full minute of stable display. Use `--fps 5` if necessary. Retain each laptop's summary/runtime evidence separately and test webcam permissions independently if using that input.
+
+Phase 2 local validation and remaining presentation-machine gates are recorded in the [Phase 2 plan](phases/phase_02_data/implementation.md). GT evaluation and any project-specific training remain separate later work.
+
+On 14 October, all **39 regression checks passed**. A displayed real-video CUDA rehearsal on this 8 GB / GTX 1650 PC processed **350 frames in 71.58 seconds**, at **4.89 FPS under a 5 FPS cap**. Peak process working-set RAM was **620.13 MiB** and PyTorch peak allocated GPU memory **106.34 MiB**; these are not total system RAM or total VRAM. The 350 sequential frames cover 14 source seconds at the original 25 FPS. Evidence is local in `runs/phase2_real_driving_rehearsal/`. To reproduce the accepted workload, use the manifest-based command above with `--frames 350 --fps 5` and a new output directory. The friend's laptop and physical webcam remain unverified.
+
 ## Run the practical demo
 
 From this project folder in PowerShell:
@@ -34,14 +67,14 @@ From this project folder in PowerShell:
 # Webcam: default camera index 0, around 60 seconds at the 10 FPS ceiling
 .\.venv\Scripts\python.exe project.py demo --source webcam --camera 0 --device cuda --frames 600 --fps 10 --output runs/review_webcam_01
 
-# Driving footage: replace this example path with a real local clip
+# Driving footage: prepared with project.py prepare-demo, or supplied locally
 .\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --device cuda --frames 300 --fps 10 --output runs/review_video_01
 
 # Verified single-image fallback
 .\.venv\Scripts\python.exe project.py infer --image data/fixtures/test_image.jpg --device cuda --output runs/review_image_01
 ```
 
-Close the window or press **Escape** to stop. Use a different output directory each time: existing runs are intentionally never overwritten. Camera access requires Windows camera permission and an available device; try `--camera 1` if the intended device is not index 0. The driving video example is not bundled. A video is processed sequentially, capped at its native FPS and --fps; processing below that rate slows replay rather than dropping frames.
+Close the window or press **Escape** to stop. Use a different output directory each time: existing runs are intentionally never overwritten. Camera access requires Windows camera permission and an available device; try `--camera 1` if the intended device is not index 0. The driving video is downloaded by `prepare-demo`, not stored in Git. A video is processed sequentially, capped at its native FPS and --fps; processing below that rate slows replay rather than dropping frames.
 
 If the laptop struggles, use `--fps 5`, close unused apps after saving your work, and keep CARLA stopped. `--device cpu` is a slower fallback. `--headless` omits the window for automated tests. A 10 FPS cap is a ceiling, not a promised minimum.
 

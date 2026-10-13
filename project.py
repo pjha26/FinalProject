@@ -70,6 +70,37 @@ def download(url, destination):
     return destination
 
 
+def prepare_demo(args):
+    from PIL import Image
+    from src.demo_data import SAMPLE_BASE, SAMPLE_FILES, SAMPLE_REVISION, checkpoint_hashes, inspect_video, verify_manifest
+    from src.preprocess import PREPROCESSING_ID
+
+    output = Path(args.output)
+    manifest_path = output / "input_manifest.json"
+    if manifest_path.exists():
+        verify_manifest(manifest_path, args.checkpoint)
+        print("Existing demo input verified:", manifest_path)
+        return
+    hashes = checkpoint_hashes(args.checkpoint)
+    for local, (remote, expected) in SAMPLE_FILES.items():
+        path = download(SAMPLE_BASE + remote, output / local)
+        if file_hash(path) != expected:
+            raise ValueError("Pinned demo checksum mismatch: " + local)
+    information, first = inspect_video(output / "driving.mp4")
+    image_path = output / "driving_first_frame.png"
+    if image_path.exists():
+        raise FileExistsError("Unmanifested fallback image exists; choose a fresh output directory")
+    Image.fromarray(first).save(image_path)
+    files = {name: expected for name, (_, expected) in SAMPLE_FILES.items()}
+    files[image_path.name] = file_hash(image_path)
+    write_json(manifest_path, dict(information, schema_version=1, video="driving.mp4", files=files,
+               source_revision=SAMPLE_REVISION, source_url=SAMPLE_BASE + "project_video.mp4",
+               attribution="Udacity, Inc.; CarND-Advanced-Lane-Lines repository sample; MIT license retained",
+               input_kind="real driving video replay", ground_truth="unavailable",
+               preprocessing_id=PREPROCESSING_ID, checkpoint_sha256=hashes))
+    print("Demo input prepared:", manifest_path)
+
+
 def safe_extract(archive, destination, strip_root=False, max_bytes=1024 ** 3):
     destination = Path(destination).resolve()
     with zipfile.ZipFile(archive) as zipped:
@@ -366,6 +397,16 @@ def demo(args):
     fps_limit = getattr(args, "fps", 10)
     if not 0 < fps_limit <= 60:
         raise ValueError("--fps must be between 0 (exclusive) and 60")
+    manifest_path = getattr(args, "manifest", None)
+    input_manifest_hash = None
+    if manifest_path:
+        from src.demo_data import verify_manifest
+        if args.source != "video":
+            raise ValueError("--manifest is only supported for the prepared driving-video source")
+        manifest = verify_manifest(manifest_path, args.checkpoint)
+        if not getattr(args, "video", None) or Path(args.video).resolve() != (Path(manifest_path).resolve().parent / manifest["video"]).resolve():
+            raise ValueError("--video does not match the verified input manifest")
+        input_manifest_hash = file_hash(manifest_path)
     import torch
     torch.set_num_threads(2)
     output = Path(args.output)
@@ -446,6 +487,7 @@ def demo(args):
                    "input_fps": record.get("input_fps"), "fps_limit": fps_limit,
                    "model_input": [192, 640], "batch_size": 1,
                    "device": str(getattr(model, "device", "unknown")),
+                   "input_manifest_sha256": input_manifest_hash,
                    "pytorch_peak_allocated_mib": round(torch.cuda.max_memory_allocated(model.device) / 1024 ** 2, 2) if getattr(getattr(model, "device", None), "type", None) == "cuda" else None,
                    "video_playback": "sequential frames capped at source FPS and --fps; slower playback when processing is slower" if args.source == "video" else None,
                    "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth"})
@@ -463,6 +505,12 @@ def parser():
     command = argparse.ArgumentParser(description=__doc__)
     commands = command.add_subparsers(dest="command", required=True)
     commands.add_parser("assets", help="Download pinned upstream source and trusted baseline weights")
+    preparation = commands.add_parser("prepare-demo", help="Prepare a pinned real driving clip, license, fallback image and portable manifest")
+    preparation.add_argument("--output", default="data/demo")
+    preparation.add_argument("--checkpoint", default=str(BASELINE))
+    verification = commands.add_parser("verify-demo", help="Verify local demo inputs and checkpoint identity before moving laptops")
+    verification.add_argument("--manifest", default="data/demo/input_manifest.json")
+    verification.add_argument("--checkpoint", default=str(BASELINE))
     server = commands.add_parser("install-server", help="Download/extract official Windows CARLA 0.9.13")
     server.add_argument("--archive", help="Use an already downloaded official Windows release ZIP")
     check = commands.add_parser("check", help="Save environment/CUDA diagnostics; CARLA is optional")
@@ -477,6 +525,7 @@ def parser():
     playback.add_argument("--source", choices=("webcam", "video", "carla", "replay"), default="webcam")
     playback.add_argument("--camera", type=int, default=0, help="Local webcam index")
     playback.add_argument("--video", help="Local video file (required for --source video)")
+    playback.add_argument("--manifest", help="Verify prepared driving clip/checkpoint and record its identity")
     playback.add_argument("--fps", type=float, default=10, help="Webcam/video processing ceiling (default 10 FPS)")
     playback.add_argument("--scene")
     playback.add_argument("--headless", action="store_true")
@@ -507,6 +556,12 @@ def main():
         raise ValueError("--frames must be positive")
     if args.command == "assets":
         install_assets()
+    elif args.command == "prepare-demo":
+        prepare_demo(args)
+    elif args.command == "verify-demo":
+        from src.demo_data import verify_manifest
+        manifest = verify_manifest(args.manifest, args.checkpoint)
+        print("Demo input verified:", manifest["decoded_frames"], "frames;", manifest["source_duration_seconds"], "source seconds")
     elif args.command == "install-server":
         install_server(args.archive)
     elif args.command == "check":

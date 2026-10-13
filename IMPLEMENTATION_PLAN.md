@@ -86,11 +86,20 @@ From the project directory in PowerShell:
 .\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --device cuda --frames 300 --fps 10 --output runs/review_video
 ```
 
-The real driving clip must be supplied and licensed appropriately; `data/demo/driving.mp4` is an example path, not an included asset. Close the window or press Escape to finish. Use a fresh output path for each run. Use `--headless` for automated video checks, `--device cpu` for a slower fallback, or `--fps 5` to reduce work. Camera permissions/device indices must be checked on each laptop.
+Phase 2's `project.py prepare-demo` command downloads a pinned Udacity real driving clip, retains its repository MIT license, creates a first-frame image fallback and freezes a portable input/model manifest. Run `project.py verify-demo` before moving between laptops, and add `--manifest data/demo/input_manifest.json` to the video demo to verify and record its identity. The media remains ignored rather than included in Git. Close the window or press Escape to finish. Use a fresh output path for each run. Use `--headless` for automated video checks, `--device cpu` for a slower fallback, or `--fps 5` to reduce work. Camera permissions/device indices must be checked on each laptop.
 
 For a fresh machine, create a compatible Python 3.8 environment and install the pinned `requirements.txt`; see README. Existing requirements still include optional CARLA tooling for compatibility. Do not transfer `.venv` between laptops; rebuild it there. The NVIDIA driver must support the pinned CUDA build; a separate CUDA toolkit is not needed for these packaged inference wheels.
 
 ## Acceptance gates and evidence
+
+Before accepting a phase transition, run the full regression suite, verify the frozen demo input/model pair, and run both the existing image CLI and a short manifest-based video smoke test. Use new output folders. Do not replace the baseline or adopt a changed model/preprocessing contract if any check fails. These gates reduce regression risk; the presentation laptop still needs a separate displayed rehearsal.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe project.py verify-demo
+.\.venv\Scripts\python.exe project.py infer --image data/fixtures/test_image.jpg --device cuda --output runs/transition_image_01
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 10 --fps 5 --headless --output runs/transition_video_01
+```
 
 - **G1 functional:** regression checks pass; an actual checkpoint processes an image and a decoded video, with positive finite numerical output. Synthetic clips validate plumbing only.
 - **G2 demonstration:** a real camera or permitted real driving video runs for at least 60 seconds on the presentation laptop, without a crash. Camera movement must change the output. Record observed FPS and memory, including display overhead.
@@ -101,3 +110,5 @@ For a fresh machine, create a compatible Python 3.8 environment and install the 
 ## Current state
 
 Already verified before adaptation: local GTX 1650 image inference and numerical/core regression checks. Implemented in this adaptation: bounded webcam/video input, default camera demo, FPS cap, camera release on exit/failure, first-frame numerical demo exports, and optional simulator diagnostics. Validation results and remaining hardware gates are recorded in README and local ignored run summaries. Full GT benchmarks, new fine-tuning, and successful CARLA native camera capture are not complete.
+
+Phase 2 now implements real driving-input preparation and complete decode checks, immutable sample/license hashes, an image fallback, a portable baseline/input manifest, and verification before a demo. These additions preserve the Phase 1 loader/preprocessing/display interfaces. Build/test on this PC, then copy matching source/assets and rebuild the environment on the friend's laptop; do not assume local success establishes presentation-machine acceptance. Detailed commands and validation status are in README and the Phase 2 file.
