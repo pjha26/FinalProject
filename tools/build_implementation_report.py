@@ -104,11 +104,14 @@ def main():
     args = parser.parse_args()
     profile = load('runs/phase3_profile_final/summary.json')
     previous = load('runs/phase2_real_driving_rehearsal/validation.json')
-    tests = load('runs/phase3_tests.json')
+    tests = load('runs/phase4_tests.json')
+    evaluation = load('runs/phase4_reference_evaluation/summary.json')
+    driving = load('runs/phase4_driving_rehearsal/summary.json')
+    full_clip = load('runs/phase4_driving_full_clip/summary.json')
     inputs = load('data/demo/input_manifest.json')
     before = load('runs/phase3_render_before.json')
     after = load('runs/phase3_render_final.json')
-    if profile['status'] != 'pass' or not tests['successful']:
+    if profile['status'] != 'pass' or not tests['successful'] or evaluation['status'] != 'complete' or driving['runtime_acceptance']['status'] != 'pass' or full_clip['runtime_acceptance']['status'] != 'pass':
         raise ValueError('The progress report requires passing profile and test evidence')
     base_commit = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=ROOT, text=True).strip()
     output = ROOT / args.output
@@ -117,7 +120,7 @@ def main():
     add = story.append
 
     add(p('Monocular Depth Estimation<br/>Implementation Progress Report', 'ReportTitle'))
-    add(p(escape(args.report_date) + ' | Phases 1-3 | Hardware-adapted implementation', 'ReportSmall'))
+    add(p(escape(args.report_date) + ' | Phases 1-4 | Hardware-adapted implementation', 'ReportSmall'))
     add(p('<b>Current result:</b> a working RGB-only depth-perception prototype with real driving-video replay, relative depth maps, colour overlays, saved outputs, portable input verification and repeatable performance profiling.'))
     add(p('The project addresses the absence of explicit depth information in ordinary camera images. A pretrained neural network estimates a dense relative-depth map from each RGB frame, providing a perception research prototype that runs on the available laptop hardware.'))
     add(table([
@@ -125,13 +128,13 @@ def main():
         ['1 - Foundation', 'Image/video inference, RGB preprocessing, model loading and shared visualization implemented and tested.'],
         ['2 - Demo inputs', 'Real driving sample, retained license, image fallback, portable manifest and checksum verification implemented.'],
         ['3 - Stability / performance', 'Warmup-aware repeated profiling, numerical stability gate and measured rendering optimization implemented locally.'],
-        ['4 - Accuracy evaluation', 'Metric formulas exist; full ground-truth dataset benchmarks remain pending.'],
+        ['4 - Evaluation evidence', 'Paired RGB-D diagnostic, displayed runtime gates, latency statistics and visual-review exports implemented. Full driving benchmarks remain pending.'],
         ['5 - Delivery', 'Setup and transfer instructions exist; final academic submission and presentation-machine acceptance remain pending.'],
     ], [43 * mm, 131 * mm]))
     add(Spacer(1, 12))
     add(p('<b>Scope:</b> the latest hardware-adaptation instruction relaxes the original PDF implementation constraints. This report records implemented and tested behavior, not completion of every original PDF deliverable.'))
     add(p('Model weights remain pretrained. No project-specific training, validated native CARLA camera run, calibrated metre-scale prediction or autonomous control is claimed.'))
-    add(p('Source baseline: commit ' + escape(base_commit) + '; Phase 3 is the current working-tree update at report generation. Generated data and runtime evidence remain local.', 'ReportSmall'))
+    add(p('Source baseline: commit ' + escape(base_commit) + '; Phase 4 documentation is the current working-tree update at report generation. Generated datasets and raw runtime evidence remain local.', 'ReportSmall'))
 
     add(PageBreak())
     add(p('1. Architecture and model', 'ReportHeading'))
@@ -191,13 +194,14 @@ def main():
 
     add(PageBreak())
     add(p('4. Validation evidence and phase handoff', 'ReportHeading'))
-    add(p(f"<b>{tests['tests_run']} tests passed</b>; failures: {tests['failures']}; errors: {tests['errors']}; skipped: {tests['skipped']}. The regression suite includes the original Phase 1 and Phase 2 checks plus Phase 3 profiling and visualization checks."))
+    add(p(f"<b>{tests['tests_run']} tests passed</b>; failures: {tests['failures']}; errors: {tests['errors']}; skipped: {tests['skipped']}. The regression suite covers Phases 1-4, including reference-data integrity, metric protocol, warmup exclusion, repeatability, displayed-duration gates and review exports."))
     add(table([
         ['Area', 'Evidence covered'],
         ['Numerical / geometry', 'RGB order, tensor contract, depth decoding, intrinsics resizing, metric formulas and fixed colour scaling.'],
         ['Safety / integration', 'Archive traversal/size checks, checkpoint hashes, frame synchronization, replay validation and cleanup paths.'],
         ['Phase 2 transfer', 'Portable manifests, changed inputs/checkpoints, invalid metadata/paths, short decoding and source mismatch.'],
         ['Phase 3 stability', 'Timing percentiles, warmup exclusion, finite reciprocal maps, repeat mismatch rejection and palette/overlay fidelity.'],
+        ['Phase 4 evaluation', 'Reference units/alignment/hash checks, masking/crop/resize order, equal-image aggregation, partial failures and duration-gate rejection.'],
         ['Actual model', 'Official-checkpoint repeatability and real driving-video CUDA profiling, separate from mocked tests.'],
     ], [40 * mm, 134 * mm]))
     add(Spacer(1, 10))
@@ -205,17 +209,48 @@ def main():
     memory = profile['process_memory']
     add(p(f"Final-profile process peak working set: {memory['peak_working_set_mib']:.2f} MiB. PyTorch peak allocated GPU memory: {profile['pytorch_peak_allocated_mib']:.2f} MiB. Working set is not total system RAM or committed memory; PyTorch allocations are not total VRAM usage."))
     add(p('<b>Transition gate:</b> keep the accepted baseline and input hashes unchanged, run the full suite, verify-demo, image inference and a short video smoke test before accepting a later phase. Write into new output directories. A failed optional experiment must not replace the working baseline.'))
-    add(p('Evidence locations (local, ignored): runs/phase3_tests.json; runs/phase3_profile_final/{summary.json,runtime.csv,fingerprints.json,preview.png}; runs/phase3_profile/summary.json (before rendering optimization); runs/phase3_render_before.json and runs/phase3_render_final.json.'))
+    add(p('Evidence locations (local, ignored): runs/phase4_tests.json (current suite); runs/phase3_profile_final/{summary.json,runtime.csv,fingerprints.json,preview.png}; runs/phase3_profile/summary.json (before rendering optimization); runs/phase3_render_before.json and runs/phase3_render_final.json.'))
 
     add(PageBreak())
-    add(p('5. Remaining work and reproducible usage', 'ReportHeading'))
+    add(p('5. Phase 4: paired-depth diagnostic', 'ReportHeading'))
+    add(p(f"<b>Dataset:</b> {escape(evaluation['dataset'])}. Evaluated {evaluation['evaluated_samples']} correlated indoor reference frames from {evaluation['scenes']} scene, with {evaluation['total_valid_pixels']:,} valid pixels in total. This is a small diagnostic set, not the KITTI Eigen or NYU benchmark."))
+    add(p('The Open3D public sample archive is checksum-pinned. Its documented integer-millimetre depth images are converted to float32 metres. Reference depth is read only for scoring; model inference still receives RGB alone. Source, conversion, paired-asset hashes, split and checkpoint identity are frozen in the input manifest.'))
+    add(p('Protocol: registered RGB/depth dimensions; no crop for this reference; finite GT pixels strictly between 0.001 and 80 metres; OpenCV bilinear inverse-depth resizing before inversion; per-image GT median scaling; prediction clipping to [0.001,80]; equal-weight averaging of per-image metrics. Invalid or interrupted runs cannot report complete aggregate accuracy.'))
+    labels = [('abs_rel', 'Absolute relative error'), ('sq_rel', 'Squared relative error'), ('rmse', 'RMSE after GT median alignment (m)'), ('rmse_log', 'Natural-log RMSE'), ('a1', 'Delta < 1.25'), ('a2', 'Delta < 1.25 squared'), ('a3', 'Delta < 1.25 cubed')]
+    add(table([['Metric', 'Diagnostic mean']] + [[label, f"{evaluation['mean_metrics'][key]:.4f}"] for key, label in labels], [124 * mm, 50 * mm]))
+    add(Spacer(1, 10))
+    add(p('<b>Finding:</b> this indoor diagnostic has substantial prediction error. It demonstrates an evaluation workflow and exposes a limitation; it does not establish driving accuracy or satisfy KITTI targets. The cause has not been isolated. No fine-tuning or test-set selection was used to improve these scores.'))
+    add(p('Median alignment uses reference depth unavailable at deployment. An aligned RMSE in metres does not mean the RGB-only model predicts calibrated metre-scale distance. Do not attach these indoor scores to the separate driving-video demonstration.'))
+    add(p('Evidence: runs/phase4_reference_evaluation/{summary.json,per_sample.csv,*_relative_depth.npy,*_preview.png}; data/evaluation/redwood/evaluation_manifest.json. Full protocol and source links: docs/evaluation_protocol.md.', 'ReportSmall'))
+    add(p('Diagnostic commands (PowerShell, fresh output folder):', 'ReportSmall'))
+    add(Preformatted(r'''.\.venv\Scripts\python.exe project.py prepare-reference-eval
+.\.venv\Scripts\python.exe project.py evaluate --device cuda `
+  --output runs/reference_evaluation_01''', styles['ReportCode']))
+
+    add(PageBreak())
+    add(p('6. Phase 4: displayed runtime and review', 'ReportHeading'))
+    add(p('Both runs used the frozen real driving clip and the local GTX 1650, with a visible window and a 60-second minimum-duration gate. No model weights or preprocessing were changed. Review snapshots and first-frame overhead are included in frame-loop timings.'))
+    add(table([['Displayed run', 'Frames / seconds', 'Observed FPS', 'Configured cap']] + [[name, f"{run['frames']} / {run['wall_seconds']:.2f}", f"{run['processed_fps']:.2f}", f"{run['fps_limit']:.0f}"] for name, run in [('Capped rehearsal', driving), ('Full source clip', full_clip)]], [51 * mm, 49 * mm, 37 * mm, 37 * mm]))
+    add(p('The source is 25 FPS. A configured cap of 30 is effectively limited by the source to 25 FPS. Lower processing throughput slows sequential replay. These observations are not webcam/CARLA performance or cross-laptop guarantees.', 'ReportSmall'))
+    add(table([['Full-clip stage', 'Median (ms)', 'P95 (ms)']] + [[label, f"{full_clip['timings'][key]['median']:.2f}", f"{full_clip['timings'][key]['p95']:.2f}"] for key, label in [('model_ms', 'Model'), ('processing_ms', 'Preprocessing + model + output'), ('capture_to_display_ms', 'Arrival to display'), ('full_cycle_ms', 'Frame cycle, including pacing')]], [112 * mm, 31 * mm, 31 * mm]))
+    add(Spacer(1, 10))
+    review_image = ROOT / 'runs/phase4_driving_rehearsal/review/00000600_preview.png'
+    with PILImage.open(review_image) as picture:
+        ratio = picture.height / picture.width
+    add(Image(str(review_image), width=WIDTH, height=WIDTH * ratio))
+    add(p('Inspected adjacent pairs 200/201 and 600/601: broad road-to-horizon structure is visible; vehicle boundaries are coarse. Motion changes both RGB and predicted maps. These snapshots are qualitative evidence, not a motion-compensated flicker metric or ground-truth accuracy test.', 'ReportSmall'))
+    add(p(f"Full-clip process peak working set: {full_clip['process_memory']['peak_working_set_mib']:.2f} MiB; PyTorch peak allocated GPU memory: {full_clip['pytorch_peak_allocated_mib']:.2f} MiB. Total system/driver memory peaks were not recorded. The friend's RTX 3050 remains a separate acceptance gate."))
+    add(p('Saved review.json maps frame IDs to RGB, inverse-depth NPY and preview files. A short displayed run fails the duration gate; headless runs cannot satisfy it. Existing commands still work without the optional review/gate flags.'))
+
+    add(PageBreak())
+    add(p('7. Remaining work and reproducible usage', 'ReportHeading'))
     add(table([
         ['Requirement', 'Honest current position'],
         ['Fine-tuning', 'Not performed. No prepared calibrated temporal training dataset or local pose/loss training pipeline; pretrained baseline retained.'],
-        ['Ground-truth accuracy', 'No full KITTI/CARLA evaluation completed. Tested formulas do not prove AbsRel/RMSE targets.'],
+        ['Ground-truth accuracy', 'Small reference diagnostic completed; full KITTI/CARLA accuracy targets remain unvalidated.'],
         ['Live simulator / webcam', 'Native CARLA sensor validation and a physical-camera run remain pending.'],
         ['Presentation laptop', "RTX 3050 testing remains pending; current measurements belong to the local GTX 1650."],
-        ['10+ FPS and metric scale', 'Uncapped headless FPS does not prove sustained displayed/live performance. Depth remains relative, without calibrated metre-scale output.'],
+        ['Runtime and metric scale', 'Displayed video throughput is recorded above; native-speed camera/CARLA behavior and calibrated metre-scale depth remain unvalidated.'],
         ['Vehicle control', 'Path planning, steering and throttle control are outside the original PDF scope and are not implemented.'],
     ], [44 * mm, 130 * mm]))
     add(Spacer(1, 10))
@@ -234,7 +269,7 @@ def main():
     add(Spacer(1, 8))
     add(p('On the friend\'s laptop, transfer matching source, checkpoints, pinned third-party source and data/demo, then rebuild .venv. Verify CUDA, hashes and tests; rehearse the displayed demo there. Do not copy .venv or the CARLA runtime from the development machine.'))
     add(p('<b>References and provenance</b>', 'ReportSmall'))
-    for title, url in [('Official Monodepth2 source and pretrained models', 'https://github.com/nianticlabs/monodepth2'), ('Udacity driving sample and repository license', 'https://github.com/udacity/CarND-Advanced-Lane-Lines'), ('Project repository', 'https://github.com/pjha26/FinalProject')]:
+    for title, url in [('Official Monodepth2 source and pretrained models', 'https://github.com/nianticlabs/monodepth2'), ('Udacity driving sample and repository license', 'https://github.com/udacity/CarND-Advanced-Lane-Lines'), ('Open3D RGB-D reference format and units', 'https://www.open3d.org/docs/0.17.0/tutorial/geometry/rgbd_image.html'), ('Project repository', 'https://github.com/pjha26/FinalProject')]:
         add(p(f'<link href="{url}" color="#087e8b">{escape(title)}</link>', 'ReportSmall'))
     add(p('Original scope reference: monocular_depth_report_FINAL_FIXED (1).pdf, Sections 3.2-3.3 and Chapter 6. Current phase plans and repository code distinguish completed work from pending original targets.', 'ReportSmall'))
 

@@ -50,7 +50,7 @@ The demo validates the clip before opening its window and records the manifest S
 
 To move to your friend's laptop:
 
-1. Transfer the current source (`project.py`, `requirements.txt`, `src/`, and `tests/`), plus `checkpoints/baseline_mono_640x192/`, `third_party/monodepth2/`, and `data/demo/`. Keep licenses/provenance manifests with the copied assets. Phase 2 changes are local until separately committed/pushed; cloning GitHub alone does not obtain unpublished changes.
+1. Use the same published commit on both laptops, or transfer the current source (`project.py`, `requirements.txt`, `src/`, and `tests/`). Separately transfer `checkpoints/baseline_mono_640x192/`, `third_party/monodepth2/`, and `data/demo/`, which are ignored by Git. Keep licenses/provenance manifests with the assets.
 2. Rebuild `.venv` using the setup commands. Do not copy `.venv`, `.runtime`, or `.cache`. Alternatively, with the updated source and Internet access, run `project.py assets` and `project.py prepare-demo` to obtain matching assets.
 3. Run `project.py check --output runs/friend_hardware.json`, `project.py verify-demo`, and the regression suite. Confirm CUDA is available, then run the same displayed rehearsal with a fresh output folder.
 4. Keep the laptop plugged in; verify a full minute of stable display. Use `--fps 5` if necessary. Retain each laptop's summary/runtime evidence separately and test webcam permissions independently if using that input.
@@ -75,13 +75,38 @@ Measured on 18 October, local GTX 1650: **15.75 / 16.00 FPS uncapped headless** 
 
 Profiling found rendering overhead. Cached palette/font/static labels and OpenCV overlay blending reduced a separate warmed rendering check from **55.06 to 31.49 ms median** over 20 measured calls. The palette and numerical depth maps are preserved; blend rounding can differ by one colour level. No new application dependencies. **45 regression tests passed**, followed by fresh CUDA image and displayed video smoke checks. Detailed evidence/limitations are in the [Phase 3 handoff](phases/phase_03_training/implementation.md).
 
-The six-page [implementation progress PDF](output/pdf/implementation_progress_report.pdf) records Phases 1-3, architecture, model provenance, validation, measured performance, transfer commands and outstanding work. Regenerate it using a documentation Python containing ReportLab, Pillow and pypdf:
+The [implementation progress PDF](output/pdf/implementation_progress_report.pdf) records the implementation phases, architecture, model provenance, validation, measured performance, transfer commands and outstanding work. Regenerate it using a documentation Python containing ReportLab, Pillow and pypdf:
 
 ```powershell
 python tools/build_implementation_report.py --report-date 2026-10-18
 ```
 
 The generator reads local ignored evidence under `runs/` and `data/`; a fresh clone must first produce/copy those reports. PDF libraries are separate from the pinned inference environment. Fine-tuning, full GT benchmarks, native CARLA, physical webcam and RTX 3050 testing remain pending. The user authorized publishing the Phase 3 update to GitHub in no more than three commits.
+
+## Phase 4: evaluation evidence
+
+The fixed [evaluation protocol](docs/evaluation_protocol.md) separates paired reference-depth diagnostics from RGB-only driving-video demonstrations. The selected pretrained model is unchanged; ground truth is used only for scoring.
+
+```powershell
+.\.venv\Scripts\python.exe project.py prepare-reference-eval
+.\.venv\Scripts\python.exe project.py evaluate --device cuda --output runs/reference_evaluation_01
+```
+
+Preparation downloads a checksum-pinned, approximately 3.6 MiB Open3D RGB-D sample archive without installing Open3D. It converts the documented millimetre depth PNGs into metre-valued float32 arrays and freezes RGB/depth/checkpoint hashes. The five correlated indoor frames from one scene are a **small diagnostic set**, not a KITTI or NYU benchmark. Evaluation checks units, alignment, asset identity, valid masks, inverse-depth interpolation, per-image median alignment and equal-image metric aggregation. Failed runs are marked partial without aggregate scores. Numerical predictions remain relative; aligned errors do not recover deployment-time metric scale.
+
+The local diagnostic evaluated 5 frames / 1,340,711 valid pixels: mean **AbsRel 0.4960**, **SqRel 1.1006**, **RMSE 1.4404 m after GT alignment**, **log RMSE 0.5071**, and **delta1/2/3 0.3763 / 0.6680 / 0.8449**. This substantial indoor error is a limitation, not evidence that driving accuracy targets were achieved. Source/protocol, sample counts and individual results are retained in ignored `data/evaluation/redwood/` and `runs/phase4_reference_evaluation/`.
+
+For displayed runtime and qualitative review:
+
+```powershell
+.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 650 --fps 10 --min-seconds 60 --review-every 200 --output runs/driving_evaluation_01
+```
+
+`--min-seconds` requires a display-enabled frame loop lasting at least the chosen duration. Short runs save `needs_review` and fail; `--headless` cannot satisfy the gate. Optional review exports save first, periodic adjacent and last RGB/inverse-depth/preview frames, indexed by `review.json`. The runtime summary adds mean/median/p95 timings, memory scope, configured cap and explicit acceptance status. Existing commands remain compatible when these flags are omitted.
+
+The first local Phase 4 rehearsal passed: **650 frames / 76.26 seconds / 8.52 FPS under a 10 FPS cap**, with 9 review snapshots. This clip has no GT; its accuracy remains unavailable. Adjacent pairs 200/201 and 600/601 show broad road-to-horizon structure with coarse vehicle boundaries; motion prevents treating those snapshots as a quantitative flicker measure. The [Phase 4 handoff](phases/phase_04_evaluation/implementation.md) records the full-clip run, all validation evidence and remaining acceptance gates. Publishing this phase is authorized as exactly three commits.
+
+A second, higher-cap displayed run processed the **full 1,260-frame clip in 71.40 seconds at 17.65 FPS**, with `--fps 30 --min-seconds 60 --review-every 400`. The effective cap is the source's 25 FPS, and playback remains slower than native source speed. This observed local result is not a webcam/CARLA or RTX 3050 guarantee. Peak process working set was **734.73 MiB**, PyTorch allocated peak **106.34 MiB**; total system/driver peaks were not recorded. **All 55 regression tests passed.** Full KITTI/CARLA accuracy, fine-tuning, calibrated metric scale and remaining hardware gates stay pending.
 
 ## Run the practical demo
 
