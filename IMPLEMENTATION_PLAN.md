@@ -1,6 +1,6 @@
 # Hardware-Friendly Implementation Plan
 
-Updated: 13 October 2026. Duration: ten working days in five phases of two days each. Practical prototype review: 15 October 2026.
+Updated: 18 October 2026. Duration: ten working days in five phases of two days each. Original practical prototype review date: 15 October 2026.
 
 ## Scope decision
 
@@ -44,7 +44,7 @@ Official model source and pretrained assets: [Monodepth2](https://github.com/nia
 | 4 | 7-8 | [Evaluation](phases/phase_04_evaluation/implementation.md) | Measured performance and available GT evaluation; documented failure cases |
 | 5 | 9-10 | [Delivery](phases/phase_05_delivery/implementation.md) | Rehearsed demo, reproducible setup, report, and final evidence |
 
-Day numbers refer to the existing ten-day project schedule, not ten extra days from this update. Before 15 October, prioritize the Phase 1/2 demonstration gates; defer experiments that could disturb the working prototype. Each later phase is a plan, not a completion claim.
+Day numbers refer to the existing ten-day project schedule, not ten extra days from this update. The original 15 October prototype target prioritized Phase 1/2 demonstration gates. Preserve that working prototype while completing the remaining phases; defer experiments that could disturb it. Status and evidence below distinguish implemented work from planned tasks.
 
 ## Architecture
 
@@ -71,7 +71,7 @@ flowchart LR
 5. New outputs use a new directory. Never overwrite a previous run. Preserve `preview.png`, `inverse_depth.npy`, `relative_depth.npy`, `runtime.csv`, `metrics.json`, and `summary.json` for demos; image inference has its existing subset.
 6. With no GT, metrics stay empty and the summary explicitly reports unavailability. Median-aligned metrics are diagnostics, not calibrated sensor distances.
 7. Every handoff runs the regression suite and a real-checkpoint fixed-input smoke test. Keep a known-working command, environment, checkpoint, and input manifest. A failed optional experiment must not replace the baseline.
-8. Keep logs, weights, footage, downloaded runtimes, and private camera captures ignored. Stage source/documentation only, at most ten files for the current update. The user authorized publishing the Phase 1 work to `pjha26/FinalProject` in no more than four commits; future publication requires user authorization.
+8. Keep logs, weights, footage, downloaded runtimes, and private camera captures ignored. Stage source/documentation only, at most ten files for the current update. Phase 1/2 publication was authorized; the user now authorizes the Phase 3 update to `pjha26/FinalProject` in no more than three commits. Publication of later phases requires user authorization.
 
 ## Setup and demonstration commands
 
@@ -112,3 +112,5 @@ Before accepting a phase transition, run the full regression suite, verify the f
 Already verified before adaptation: local GTX 1650 image inference and numerical/core regression checks. Implemented in this adaptation: bounded webcam/video input, default camera demo, FPS cap, camera release on exit/failure, first-frame numerical demo exports, and optional simulator diagnostics. Validation results and remaining hardware gates are recorded in README and local ignored run summaries. Full GT benchmarks, new fine-tuning, and successful CARLA native camera capture are not complete.
 
 Phase 2 now implements real driving-input preparation and complete decode checks, immutable sample/license hashes, an image fallback, a portable baseline/input manifest, and verification before a demo. These additions preserve the Phase 1 loader/preprocessing/display interfaces. Build/test on this PC, then copy matching source/assets and rebuild the environment on the friend's laptop; do not assume local success establishes presentation-machine acceptance. Detailed commands and validation status are in README and the Phase 2 file.
+
+Phase 3 implements the local profiling/stability track: verified baseline/input identity, full-pipeline warmup, repeated frame fingerprints, per-stage latency statistics, memory reporting and a targeted rendering optimization. The original pretrained baseline is retained; no training or new model architecture is claimed. Actual headless CUDA profiles and all 45 regression tests passed, followed by image/displayed-video smoke checks. Read the Phase 3 handoff for exact measured scope and pending hardware/accuracy gates. The generated six-page implementation record is `output/pdf/implementation_progress_report.pdf`.

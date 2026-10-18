@@ -501,6 +501,95 @@ def demo(args):
             capture.__exit__(*sys.exc_info())
 
 
+def profile_model(args):
+    import numpy as np
+    import torch
+    from PIL import Image
+    from src.demo_data import verify_manifest
+    from src.model import load_model
+    from src.profiling import prediction_fingerprint, process_memory_mib, summarize_timings
+    from src.visualize import render_frame
+
+    if not 1 <= args.frames <= 300 or not 0 <= args.warmup <= 30 or not 2 <= args.repeats <= 5:
+        raise ValueError("Profile requires 1-300 frames, 0-30 warmup frames and 2-5 repeats")
+    manifest = verify_manifest(args.manifest, args.checkpoint)
+    total = args.frames + args.warmup
+    if manifest["decoded_frames"] < total:
+        raise ValueError("Prepared video is too short for the requested profile")
+    output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=False)
+    torch.set_num_threads(2)
+    model = load_model(args.checkpoint, args.device)
+    if model.encoder.training or model.decoder.training:
+        raise ValueError("Profiling requires encoder and decoder evaluation mode")
+    cuda = model.device.type == "cuda"
+    if cuda:
+        torch.cuda.reset_peak_memory_stats(model.device)
+    video_args = argparse.Namespace(source="video", video=str(Path(args.manifest).resolve().parent / manifest["video"]), frames=total)
+    rows, runs, reference = [], [], []
+    repeatable, first_preview = True, None
+    for repeat in range(args.repeats):
+        records = video_frames(video_args)
+        measured_start, fingerprints = None, []
+        try:
+            for index in range(total):
+                cycle_start = time.perf_counter()
+                try:
+                    record = next(records)
+                except StopIteration:
+                    raise ValueError("Video ended before the requested profile completed")
+                decoded = time.perf_counter()
+                maps, _, model_ms, processing_ms = timed_prediction(model, record["rgb"])
+                render_start = time.perf_counter()
+                preview = render_frame(record["rgb"], maps["inverse_depth"], "Phase 3 profile | relative depth | repeat {} | frame {}".format(repeat + 1, record["frame_id"]))
+                rendered = time.perf_counter()
+                fingerprint = prediction_fingerprint(maps)
+                validated = time.perf_counter()
+                if index < args.warmup:
+                    continue
+                if measured_start is None:
+                    measured_start = cycle_start
+                fingerprints.append((record["frame_id"], fingerprint))
+                if first_preview is None:
+                    first_preview = preview
+                rows.append(dict(repeat=repeat + 1, frame_id=record["frame_id"],
+                                 decode_ms=(decoded - cycle_start) * 1000, model_ms=model_ms, processing_ms=processing_ms,
+                                 render_ms=(rendered - render_start) * 1000, validation_ms=(validated - rendered) * 1000,
+                                 pipeline_ms=(validated - cycle_start) * 1000))
+            elapsed = time.perf_counter() - measured_start
+        finally:
+            records.close()
+        if repeat == 0:
+            reference = fingerprints
+        else:
+            repeatable = repeatable and fingerprints == reference
+        run_rows = rows[-args.frames:]
+        runs.append(dict(repeat=repeat + 1, measured_frames=args.frames, measured_seconds=elapsed,
+                         uncapped_headless_fps=args.frames / elapsed, timings=summarize_timings(run_rows)))
+    Image.fromarray(first_preview).save(output / "preview.png")
+    with (output / "runtime.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    write_json(output / "fingerprints.json", [{"frame_id": frame, "sha256": fingerprint} for frame, fingerprint in reference])
+    summary = dict(schema_version=1, status="pass" if repeatable else "needs_review", model="Monodepth2 ResNet-18 mono_640x192",
+                   checkpoint_sha256=manifest["checkpoint_sha256"], input_manifest_sha256=file_hash(args.manifest),
+                   source_revision=manifest["source_revision"], device=str(model.device),
+                   gpu=torch.cuda.get_device_name(model.device) if cuda else None,
+                   python=sys.version.split()[0], torch=torch.__version__, platform=platform.platform(),
+                   model_input=[192, 640], batch_size=1, cpu_threads=2, repeats=args.repeats,
+                   warmup_frames_per_repeat=args.warmup, measured_frames_per_repeat=args.frames,
+                   exact_prediction_repeatability=repeatable, timings=summarize_timings(rows), runs=runs,
+                   process_memory=process_memory_mib(),
+                   pytorch_peak_allocated_mib=torch.cuda.max_memory_allocated(model.device) / 1024 ** 2 if cuda else None,
+                   depth_units="relative; not calibrated metres", ground_truth_accuracy="unavailable",
+                   scope="uncapped headless decode + inference + composite rendering + numerical validation; excludes display, pacing, setup, warmup and output file writes")
+    write_json(output / "summary.json", summary)
+    print("Profile", summary["status"], "| exact repeated predictions:", repeatable, "| output:", output)
+    if not repeatable:
+        raise RuntimeError("Repeated predictions differ; inspect the profile before adopting changes")
+
+
 def parser():
     command = argparse.ArgumentParser(description=__doc__)
     commands = command.add_subparsers(dest="command", required=True)
@@ -519,6 +608,12 @@ def parser():
     inference = commands.add_parser("infer", help="Predict one RGB image and save numerical maps and preview")
     inference.add_argument("--image", required=True)
     inference.add_argument("--output", default="runs/baseline_image")
+    profile = commands.add_parser("profile", help="Repeatable uncapped headless timing and numerical-stability profile")
+    profile.add_argument("--manifest", default="data/demo/input_manifest.json")
+    profile.add_argument("--frames", type=int, default=30)
+    profile.add_argument("--warmup", type=int, default=3)
+    profile.add_argument("--repeats", type=int, default=2)
+    profile.add_argument("--output", default="runs/phase3_profile")
     collect = commands.add_parser("collect", help="Record an exclusive, synchronized CARLA scene")
     collect.add_argument("--output", required=True)
     playback = commands.add_parser("demo", help="Low-memory webcam/video depth demo; optional CARLA/replay")
@@ -544,7 +639,7 @@ def parser():
         child.add_argument("--frames", type=int, default=100)
     geometry.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
     geometry.add_argument("--seed", type=int, default=42)
-    for child in (inference, playback):
+    for child in (inference, playback, profile):
         child.add_argument("--checkpoint", default=str(BASELINE))
         child.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     return command
@@ -568,6 +663,8 @@ def main():
         environment_report(args)
     elif args.command == "infer":
         infer_image(args)
+    elif args.command == "profile":
+        profile_model(args)
     elif args.command == "collect":
         from src.carla_capture import collect_scene
         print(json.dumps(collect_scene(args.output, capture_settings(args), args.frames), indent=2))

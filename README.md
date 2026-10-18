@@ -59,6 +59,30 @@ Phase 2 local validation and remaining presentation-machine gates are recorded i
 
 On 14 October, all **39 regression checks passed**. A displayed real-video CUDA rehearsal on this 8 GB / GTX 1650 PC processed **350 frames in 71.58 seconds**, at **4.89 FPS under a 5 FPS cap**. Peak process working-set RAM was **620.13 MiB** and PyTorch peak allocated GPU memory **106.34 MiB**; these are not total system RAM or total VRAM. The 350 sequential frames cover 14 source seconds at the original 25 FPS. Evidence is local in `runs/phase2_real_driving_rehearsal/`. To reproduce the accepted workload, use the manifest-based command above with `--frames 350 --fps 5` and a new output directory. The friend's laptop and physical webcam remain unverified.
 
+## Phase 3: profiling and stability
+
+The selected model remains the original pretrained ResNet-18 baseline. Phase 3 adds a repeatable, warmup-aware diagnostic without changing weights, input normalization or the existing image/demo commands:
+
+```powershell
+.\.venv\Scripts\python.exe project.py profile --device cuda --frames 60 --warmup 5 --repeats 2 --output runs/profile_review_01
+```
+
+This verifies the prepared input/checkpoint pair and profiles the same frames repeatedly in evaluation/inference mode, without a window or FPS cap. Outputs are `summary.json`, `runtime.csv`, `fingerprints.json` and `preview.png`. Timings separate decoding, model execution, complete inference processing, rendering, numerical validation and total headless cycle. Each timing has mean/median/p95/min/max; processing includes model time, so those values overlap. Warmup covers rendering as well as inference.
+
+Every prediction must be finite, positive float32 at 192x640, with reciprocal depth/inverse-depth values. Exact fingerprint mismatches across repeats produce `needs_review` and a failing exit. This checks same-machine numerical repeatability, not accuracy or cross-GPU bit-for-bit equality.
+
+Measured on 18 October, local GTX 1650: **15.75 / 16.00 FPS uncapped headless** across two 60-frame repeats, excluding five warmup frames each; median model **22.40 ms**, rendering **22.52 ms** and full headless cycle **61.30 ms**. Predictions matched between repeats and before/after the rendering optimization. The final profile excludes display, pacing, setup and output writes; it does not establish sustained 10+ FPS for the displayed live/simulator application.
+
+Profiling found rendering overhead. Cached palette/font/static labels and OpenCV overlay blending reduced a separate warmed rendering check from **55.06 to 31.49 ms median** over 20 measured calls. The palette and numerical depth maps are preserved; blend rounding can differ by one colour level. No new application dependencies. **45 regression tests passed**, followed by fresh CUDA image and displayed video smoke checks. Detailed evidence/limitations are in the [Phase 3 handoff](phases/phase_03_training/implementation.md).
+
+The six-page [implementation progress PDF](output/pdf/implementation_progress_report.pdf) records Phases 1-3, architecture, model provenance, validation, measured performance, transfer commands and outstanding work. Regenerate it using a documentation Python containing ReportLab, Pillow and pypdf:
+
+```powershell
+python tools/build_implementation_report.py --report-date 2026-10-18
+```
+
+The generator reads local ignored evidence under `runs/` and `data/`; a fresh clone must first produce/copy those reports. PDF libraries are separate from the pinned inference environment. Fine-tuning, full GT benchmarks, native CARLA, physical webcam and RTX 3050 testing remain pending. The user authorized publishing the Phase 3 update to GitHub in no more than three commits.
+
 ## Run the practical demo
 
 From this project folder in PowerShell:
