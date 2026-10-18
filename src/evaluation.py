@@ -90,3 +90,32 @@ def aggregate_scores(rows):
     if not np.isfinite(values).all():
         raise ValueError("Nonfinite evaluation metric")
     return {key: float(value) for key, value in zip(METRICS, values.mean(axis=0))}
+
+
+def runtime_evidence(rows, elapsed, headless, minimum_seconds=0):
+    from src.profiling import summarize_timings
+    if not np.isfinite(elapsed) or elapsed <= 0 or not np.isfinite(minimum_seconds) or minimum_seconds < 0:
+        raise ValueError("Invalid runtime duration or acceptance threshold")
+    gate = "not_requested" if minimum_seconds == 0 else "pass" if not headless and elapsed >= minimum_seconds else "needs_review"
+    return dict(timings=summarize_timings(rows, ("model_ms", "processing_ms", "capture_to_display_ms", "full_cycle_ms")),
+                runtime_acceptance=dict(status=gate, minimum_seconds=minimum_seconds,
+                                        measured_seconds=elapsed, display_enabled=not headless),
+                scope="Integrated frame-loop time includes first-frame overhead, periodic review exports and pacing; excludes model loading, manifest verification and final report writes. Processing includes model time.")
+
+
+def save_review_snapshot(output, frame_id, rgb, maps, preview):
+    from src.profiling import prediction_fingerprint
+    if not isinstance(frame_id, int) or frame_id < 0:
+        raise ValueError("Review snapshot requires a nonnegative integer frame ID")
+    fingerprint = prediction_fingerprint(maps)
+    folder = Path(output) / "review"
+    folder.mkdir(exist_ok=True)
+    prefix = "{:08d}".format(frame_id)
+    if (folder / (prefix + "_preview.png")).exists():
+        return None
+    Image.fromarray(rgb).save(folder / (prefix + "_rgb.png"))
+    Image.fromarray(preview).save(folder / (prefix + "_preview.png"))
+    np.save(folder / (prefix + "_inverse_depth.npy"), maps["inverse_depth"], allow_pickle=False)
+    return dict(frame_id=frame_id, rgb="review/" + prefix + "_rgb.png", preview="review/" + prefix + "_preview.png",
+                inverse_depth="review/" + prefix + "_inverse_depth.npy", prediction_sha256=fingerprint,
+                interpretation="Qualitative inspection only; camera/object motion can change adjacent predictions.")

@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 
 import project
-from src.evaluation import METRICS, aggregate_scores, evaluation_manifest, paired_samples, score_inverse_depth
+from src.evaluation import METRICS, aggregate_scores, evaluation_manifest, paired_samples, score_inverse_depth, runtime_evidence, save_review_snapshot
 from src.preprocess import PREPROCESSING_ID
 
 TEST_TEMP = (project.ROOT / "tmp").resolve()
@@ -115,6 +115,50 @@ class EvaluationTests(unittest.TestCase):
             failed = json.loads((args.output / "summary.json").read_text())
             self.assertEqual(failed["status"], "partial")
             self.assertIsNone(failed["mean_metrics"])
+
+
+class RuntimeEvidenceTests(unittest.TestCase):
+    def test_display_gate_requires_duration_and_a_real_display(self):
+        rows = [dict(model_ms=1, processing_ms=2, capture_to_display_ms=3, full_cycle_ms=4)]
+        self.assertEqual(runtime_evidence(rows, 61, False, 60)["runtime_acceptance"]["status"], "pass")
+        self.assertEqual(runtime_evidence(rows, 59, False, 60)["runtime_acceptance"]["status"], "needs_review")
+        self.assertEqual(runtime_evidence(rows, 61, True, 60)["runtime_acceptance"]["status"], "needs_review")
+        self.assertEqual(runtime_evidence(rows, 1, True)["runtime_acceptance"]["status"], "not_requested")
+        with self.assertRaises(ValueError):
+            runtime_evidence(rows, float("nan"), False, 60)
+
+    def test_review_preserves_numerical_maps_and_avoids_duplicate_exports(self):
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            output = Path(temporary)
+            rgb = np.zeros((48, 64, 3), dtype=np.uint8)
+            maps = dict(inverse_depth=np.ones((192, 640), dtype=np.float32), relative_depth=np.ones((192, 640), dtype=np.float32))
+            saved = save_review_snapshot(output, 20, rgb, maps, rgb)
+            np.testing.assert_array_equal(np.load(output / saved["inverse_depth"], allow_pickle=False), maps["inverse_depth"])
+            self.assertTrue((output / saved["preview"]).is_file())
+            self.assertIsNone(save_review_snapshot(output, 20, rgb, maps, rgb))
+            with self.assertRaises(ValueError):
+                save_review_snapshot(output, "../escape", rgb, maps, rgb)
+
+    def test_headless_demo_cannot_claim_display_acceptance(self):
+        args = SimpleNamespace(source="video", headless=True, min_seconds=60, fps=10)
+        with patch("src.model.load_model") as model:
+            with self.assertRaisesRegex(ValueError, "cannot run with --headless"):
+                project.demo(args)
+            model.assert_not_called()
+
+    def test_short_display_run_saves_failed_gate_and_releases_window(self):
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            output = Path(temporary) / "short_run"
+            args = SimpleNamespace(source="video", headless=False, min_seconds=60, fps=10,
+                                   frames=1, output=output, checkpoint=project.BASELINE, device="cpu")
+            record = dict(frame_id=1, rgb=np.zeros((48, 64, 3), dtype=np.uint8), camera=None, input_fps=25)
+            maps = dict(inverse_depth=np.ones((192, 640), dtype=np.float32), relative_depth=np.ones((192, 640), dtype=np.float32))
+            with patch("src.model.load_model", return_value=SimpleNamespace(checkpoint=project.BASELINE)), patch("project.video_frames", return_value=(value for value in [record])), patch("project.timed_prediction", return_value=(maps, None, 1, 2)), patch("pygame.init"), patch("pygame.display.set_mode"), patch("pygame.display.set_caption"), patch("pygame.event.get", return_value=[]), patch("pygame.surfarray.make_surface"), patch("pygame.transform.smoothscale"), patch("pygame.display.flip"), patch("pygame.quit") as quit_window:
+                with self.assertRaisesRegex(RuntimeError, "did not meet"):
+                    project.demo(args)
+            quit_window.assert_called_once()
+            summary = json.loads((output / "summary.json").read_text())
+            self.assertEqual(summary["runtime_acceptance"]["status"], "needs_review")
 
 
 if __name__ == "__main__":

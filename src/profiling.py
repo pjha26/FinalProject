@@ -19,11 +19,11 @@ def prediction_fingerprint(maps):
     return digest.hexdigest()
 
 
-def summarize_timings(rows):
+def summarize_timings(rows, fields=TIMING_FIELDS):
     if not rows:
         raise ValueError("Cannot summarize an empty profile")
     result = {}
-    for field in TIMING_FIELDS:
+    for field in fields:
         values = np.asarray([row[field] for row in rows], dtype=np.float64)
         if not np.isfinite(values).all() or (values < 0).any():
             raise ValueError("Invalid profile timing: " + field)

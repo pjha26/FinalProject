@@ -486,12 +486,19 @@ def demo(args):
     from src.model import load_model
     from src.preprocess import camera_intrinsics
     from src.visualize import render_frame
+    from src.evaluation import runtime_evidence, save_review_snapshot
+    from src.profiling import process_memory_mib
 
     if args.source == "replay" and not args.scene:
         raise ValueError("--scene is required for replay")
     fps_limit = getattr(args, "fps", 10)
     if not 0 < fps_limit <= 60:
         raise ValueError("--fps must be between 0 (exclusive) and 60")
+    minimum_seconds, review_every = getattr(args, "min_seconds", 0), getattr(args, "review_every", 0)
+    if not np.isfinite(minimum_seconds) or minimum_seconds < 0 or review_every < 0:
+        raise ValueError("--min-seconds and --review-every must be nonnegative")
+    if minimum_seconds and args.headless:
+        raise ValueError("The displayed-runtime acceptance gate cannot run with --headless")
     manifest_path = getattr(args, "manifest", None)
     input_manifest_hash = None
     if manifest_path:
@@ -525,7 +532,7 @@ def demo(args):
             records = replay_scene(args.scene)
         else:
             records = video_frames(args)
-        rows, metrics, start = [], [], time.perf_counter()
+        rows, metrics, reviews, last_review, start = [], [], [], None, time.perf_counter()
         cycle_start = start
         for index, record in enumerate(records):
             if index >= args.frames:
@@ -560,6 +567,12 @@ def demo(args):
                 display.blit(pygame.transform.smoothscale(surface, display.get_size()), (0, 0))
                 pygame.display.flip()
             display_end = time.perf_counter()
+            if review_every:
+                last_review = (record["frame_id"], record["rgb"], maps, preview)
+                if index < 2 or record["frame_id"] % review_every in (0, 1):
+                    saved = save_review_snapshot(output, *last_review)
+                    if saved is not None:
+                        reviews.append(saved)
             if args.source in ("webcam", "video"):
                 playback_fps = min(fps_limit, record["input_fps"]) if record["input_fps"] else fps_limit
                 time.sleep(max(0, 1 / playback_fps - (time.perf_counter() - cycle_start)))
@@ -571,6 +584,12 @@ def demo(args):
         elapsed = time.perf_counter() - start
         if not rows:
             raise ValueError("No frames processed")
+        if last_review is not None:
+            saved = save_review_snapshot(output, *last_review)
+            if saved is not None:
+                reviews.append(saved)
+            write_json(output / "review.json", reviews)
+        evidence = runtime_evidence(rows, elapsed, args.headless, minimum_seconds)
         with (output / "runtime.csv").open("w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
             writer.writeheader()
@@ -582,11 +601,15 @@ def demo(args):
                    "input_fps": record.get("input_fps"), "fps_limit": fps_limit,
                    "model_input": [192, 640], "batch_size": 1,
                    "device": str(getattr(model, "device", "unknown")),
+                   "process_memory": process_memory_mib(), "review_every": review_every,
+                   "review_snapshots": len(reviews), **evidence,
                    "input_manifest_sha256": input_manifest_hash,
                    "pytorch_peak_allocated_mib": round(torch.cuda.max_memory_allocated(model.device) / 1024 ** 2, 2) if getattr(getattr(model, "device", None), "type", None) == "cuda" else None,
                    "video_playback": "sequential frames capped at source FPS and --fps; slower playback when processing is slower" if args.source == "video" else None,
                    "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth"})
         print("Demo completed:", len(rows), "frames; output:", output)
+        if evidence["runtime_acceptance"]["status"] == "needs_review":
+            raise RuntimeError("Displayed runtime did not meet --min-seconds; evidence saved for inspection")
     finally:
         if records is not None:
             records.close()
@@ -725,6 +748,8 @@ def parser():
     playback.add_argument("--fps", type=float, default=10, help="Webcam/video processing ceiling (default 10 FPS)")
     playback.add_argument("--scene")
     playback.add_argument("--headless", action="store_true")
+    playback.add_argument("--min-seconds", type=float, default=0, help="Require at least this many seconds of displayed processing; zero disables the gate")
+    playback.add_argument("--review-every", type=int, default=0, help="Save first, periodic adjacent and last review frames; zero disables snapshots")
     playback.add_argument("--output", default="runs/demo")
     audit = commands.add_parser("audit-scene", help="Check pilot frame IDs, numerical depth, poses and 10 Hz timing")
     audit.add_argument("--scene", required=True)
