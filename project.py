@@ -101,6 +101,101 @@ def prepare_demo(args):
     print("Demo input prepared:", manifest_path)
 
 
+def prepare_reference_evaluation(args):
+    import numpy as np
+    from PIL import Image
+    from src.demo_data import checkpoint_hashes
+    from src.evaluation import REFERENCE_URL, REFERENCE_SHA256, evaluation_manifest
+    from src.preprocess import PREPROCESSING_ID
+
+    output = Path(args.output)
+    if output.exists():
+        evaluation_manifest(output / "evaluation_manifest.json")
+        print("Existing evaluation input verified:", output)
+        return
+    checkpoint = checkpoint_hashes(args.checkpoint)
+    archive = download(REFERENCE_URL, ROOT / ".cache" / "SampleRedwoodRGBDImages.zip")
+    if file_hash(archive) != REFERENCE_SHA256:
+        raise ValueError("RGB-D reference archive checksum mismatch")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=output.parent) as temporary:
+        staged = Path(temporary) / "reference"
+        safe_extract(archive, staged, max_bytes=32 * 1024 ** 2)
+        samples = []
+        for index in range(5):
+            identifier = "{:05d}".format(index)
+            rgb_path = staged / "color" / (identifier + ".jpg")
+            raw_path = staged / "depth" / (identifier + ".png")
+            with Image.open(raw_path) as image:
+                raw = np.asarray(image)
+            if raw.ndim != 2 or raw.dtype.kind not in "ui" or raw.min() < 0 or raw.max() > 65535:
+                raise ValueError("Reference depth must be a 16-bit millimetre image")
+            depth_path = staged / "depth" / (identifier + ".npy")
+            np.save(depth_path, raw.astype(np.float32) / 1000, allow_pickle=False)
+            samples.append(dict(id=identifier, scene="redwood_living_room1", rgb=rgb_path.relative_to(staged).as_posix(),
+                                depth=depth_path.relative_to(staged).as_posix(), rgb_sha256=file_hash(rgb_path), depth_sha256=file_hash(depth_path)))
+        manifest = dict(schema_version=1, dataset="Open3D SampleRedwoodRGBDImages", source=REFERENCE_URL,
+                        source_archive_sha256=REFERENCE_SHA256, data_kind="rgbd_reference", split="diagnostic",
+                        preprocessing_id=PREPROCESSING_ID, checkpoint_sha256=checkpoint,
+                        limitations="Five correlated indoor reference frames from one scene; not KITTI/NYU benchmark evidence or proof of real-world driving accuracy.",
+                        depth_conversion="Reference PNG integer millimetres divided by 1000; GT is used only for scoring.",
+                        protocol=dict(depth_units="metres", aligned_to_rgb=True, min_depth=0.001, max_depth=80,
+                                      crop="none", scaling="per_image_median", aggregation="mean_of_images"), samples=samples)
+        write_json(staged / "evaluation_manifest.json", manifest)
+        evaluation_manifest(staged / "evaluation_manifest.json")
+        staged.replace(output)
+    print("Evaluation reference prepared:", output / "evaluation_manifest.json")
+
+
+def evaluate_model(args):
+    import numpy as np
+    import torch
+    from PIL import Image
+    from src.demo_data import checkpoint_hashes
+    from src.evaluation import evaluation_manifest, paired_samples, score_inverse_depth, aggregate_scores
+    from src.model import load_model
+    from src.visualize import render_frame
+
+    manifest = evaluation_manifest(args.manifest)
+    hashes = checkpoint_hashes(args.checkpoint)
+    if hashes != manifest.get("checkpoint_sha256"):
+        raise ValueError("Evaluation checkpoint differs from the frozen manifest")
+    torch.set_num_threads(2)
+    output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=False)
+    model = load_model(args.checkpoint, args.device)
+    rows, complete = [], False
+    try:
+        with (output / "per_sample.csv").open("w", newline="", encoding="utf-8") as stream:
+            writer = None
+            for sample, rgb, gt in paired_samples(args.manifest, manifest):
+                if not rows:
+                    timed_prediction(model, rgb)
+                maps, _, model_ms, processing_ms = timed_prediction(model, rgb)
+                measured = score_inverse_depth(gt, maps["inverse_depth"], manifest["protocol"]["crop"])
+                row = dict(id=sample["id"], scene=sample["scene"], model_ms=model_ms, processing_ms=processing_ms, **measured)
+                if writer is None:
+                    writer = csv.DictWriter(stream, fieldnames=list(row))
+                    writer.writeheader()
+                writer.writerow(row)
+                stream.flush()
+                rows.append(row)
+                np.save(output / (sample["id"] + "_relative_depth.npy"), maps["relative_depth"], allow_pickle=False)
+                Image.fromarray(render_frame(rgb, maps["inverse_depth"], "Relative prediction | {} | GT median-aligned diagnostic".format(sample["id"]))).save(output / (sample["id"] + "_preview.png"))
+        complete = True
+    finally:
+        summary = dict(schema_version=1, status="complete" if complete else "partial", dataset=manifest["dataset"],
+                       data_kind=manifest["data_kind"], split=manifest["split"], limitations=manifest["limitations"],
+                       evaluated_samples=len(rows), expected_samples=len(manifest["samples"]),
+                       scenes=len({row["scene"] for row in rows}), protocol=manifest["protocol"],
+                       manifest_sha256=file_hash(args.manifest), checkpoint_sha256=hashes,
+                       device=str(model.device), mean_metrics=aggregate_scores(rows) if complete else None,
+                       total_valid_pixels=sum(row["valid_pixels"] for row in rows),
+                       depth_claim="Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.")
+        write_json(output / "summary.json", summary)
+    print("Evaluation completed:", len(rows), "samples; diagnostic scope:", manifest["limitations"])
+
+
 def safe_extract(archive, destination, strip_root=False, max_bytes=1024 ** 3):
     destination = Path(destination).resolve()
     with zipfile.ZipFile(archive) as zipped:
@@ -600,6 +695,12 @@ def parser():
     verification = commands.add_parser("verify-demo", help="Verify local demo inputs and checkpoint identity before moving laptops")
     verification.add_argument("--manifest", default="data/demo/input_manifest.json")
     verification.add_argument("--checkpoint", default=str(BASELINE))
+    preparation_eval = commands.add_parser("prepare-reference-eval", help="Prepare the pinned five-frame indoor RGB-D diagnostic input")
+    preparation_eval.add_argument("--output", default="data/evaluation/redwood")
+    preparation_eval.add_argument("--checkpoint", default=str(BASELINE))
+    evaluation = commands.add_parser("evaluate", help="Score a frozen paired RGB/depth manifest; never infer accuracy from RGB-only footage")
+    evaluation.add_argument("--manifest", default="data/evaluation/redwood/evaluation_manifest.json")
+    evaluation.add_argument("--output", default="runs/phase4_reference_evaluation")
     server = commands.add_parser("install-server", help="Download/extract official Windows CARLA 0.9.13")
     server.add_argument("--archive", help="Use an already downloaded official Windows release ZIP")
     check = commands.add_parser("check", help="Save environment/CUDA diagnostics; CARLA is optional")
@@ -639,7 +740,7 @@ def parser():
         child.add_argument("--frames", type=int, default=100)
     geometry.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
     geometry.add_argument("--seed", type=int, default=42)
-    for child in (inference, playback, profile):
+    for child in (inference, playback, profile, evaluation):
         child.add_argument("--checkpoint", default=str(BASELINE))
         child.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     return command
@@ -653,6 +754,10 @@ def main():
         install_assets()
     elif args.command == "prepare-demo":
         prepare_demo(args)
+    elif args.command == "prepare-reference-eval":
+        prepare_reference_evaluation(args)
+    elif args.command == "evaluate":
+        evaluate_model(args)
     elif args.command == "verify-demo":
         from src.demo_data import verify_manifest
         manifest = verify_manifest(args.manifest, args.checkpoint)
