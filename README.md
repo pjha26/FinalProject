@@ -15,6 +15,16 @@ The user's updated scope replaces the PDF constraints. The default workflow targ
 
 ## Setup
 
+For the final presentation, use the [demo and laptop handoff guide](docs/demo_guide.md). After preparing all assets and installing dependencies, run the combined checks with:
+
+```powershell
+.\.venv\Scripts\python.exe tools/validate_delivery.py --device cuda --display
+```
+
+This runs the full regression suite and the existing Phase 1-4 commands sequentially, including a displayed rehearsal of at least 60 seconds. It performs no downloads. Fresh timestamped outputs, logs, source hashes and a fail-fast summary make the phase handoff reviewable; without `--display`, the display gate remains pending. The five-pair evaluation assets must be prepared with `project.py prepare-reference-eval` or copied as described in the guide. Presentation-machine acceptance is separate from local acceptance.
+
+**Final local acceptance, 19 October 2026:** all **61 tests** and all eight integrated checks passed in a separately rebuilt Python 3.8.20 environment. Actual CUDA image/video inference, exact repeated predictions and the five-pair diagnostic passed with the original checkpoint. The displayed rehearsal processed **650 frames in 82.55 seconds (7.87 FPS under a 10 FPS cap)** and passed the 60-second gate. Peak process working set was **540.00 MiB**; PyTorch peak allocated GPU memory was **106.34 MiB**, excluding other system/driver memory. The source hash inventory and complete evidence remain local in `runs/phase5_delivery/`. This is driving-video replay; RTX 3050, physical webcam and native CARLA remain unverified.
+
 The current machine already has `.venv`, dependencies, official weights and source. On another laptop install Python 3.8.20 and a suitable NVIDIA driver, then create a new environment:
 
 ```powershell
@@ -78,7 +88,7 @@ Profiling found rendering overhead. Cached palette/font/static labels and OpenCV
 The [implementation progress PDF](output/pdf/implementation_progress_report.pdf) records the implementation phases, architecture, model provenance, validation, measured performance, transfer commands and outstanding work. Regenerate it using a documentation Python containing ReportLab, Pillow and pypdf:
 
 ```powershell
-python tools/build_implementation_report.py --report-date 2026-10-18
+python tools/build_implementation_report.py --report-date 2026-10-19 --delivery runs/phase5_delivery
 ```
 
 The generator reads local ignored evidence under `runs/` and `data/`; a fresh clone must first produce/copy those reports. PDF libraries are separate from the pinned inference environment. Fine-tuning, full GT benchmarks, native CARLA, physical webcam and RTX 3050 testing remain pending. The user authorized publishing the Phase 3 update to GitHub in no more than three commits.
@@ -163,7 +173,7 @@ Tests cover RGB ordering/resizing, numerical metrics and geometry, source/checkp
 
 Local validation on 13 October 2026: **33 regression checks passed**. The actual checkpoint processed a 100-frame synthetic driving-image clip on the GTX 1650: **8.33 FPS headless** at a 10 FPS ceiling, **25.21 ms median model time**, **685.86 MiB peak process working-set RAM**, and **106.34 MiB peak PyTorch allocated GPU memory**. A separate displayed 30-frame run completed at **6.98 FPS**, including startup overhead. These short synthetic runs validate integration, not real driving quality or a 60-second live rehearsal. Evidence is local under `runs/lightweight_video_validation/` and `runs/lightweight_display_validation/`.
 
-The physical webcam attempt at camera index 0 failed to open; permission/device availability is unresolved. No full KITTI/NYU accuracy benchmark, new project-trained weights or successful native CARLA sensor pilot has been completed. The RTX 3050 laptop has not been measured. Before the 15 October review, rehearse a real webcam or permitted driving clip for 60 seconds on the presentation laptop.
+The physical webcam attempt at camera index 0 failed to open; permission/device availability is unresolved. No full KITTI/NYU accuracy benchmark, new project-trained weights or successful native CARLA sensor pilot has been completed. The RTX 3050 laptop has not been measured. Rehearse a real webcam or permitted driving clip for at least 60 seconds on the presentation laptop before using it for assessment.
 
 ## Optional simulator tools
 
@@ -185,4 +195,4 @@ The native simulator must be started separately for live capture. Existing faile
 
 Model implementation/pretrained assets: [official Monodepth2](https://github.com/nianticlabs/monodepth2), pinned source revision `b017a8164fae339b0ce01f3a9e5048104d5abd0e`. Original license remains in the downloaded source. Conceptual reference: [SemanticDepth](https://github.com/pablopalafox/semantic-depth). [Lite-Mono](https://github.com/noahzn/Lite-Mono) is a possible later smaller-model experiment, not a currently supported checkpoint architecture.
 
-The Phase 1 update contains ten source/documentation files, including the six plan files. The user authorized committing and pushing this work to `pjha26/FinalProject` in no more than four Phase 1 commits. Keep generated datasets, weights, runtimes and run evidence local; future publication requires user authorization.
+Phases 1-4 are published. The user authorizes Phase 5 delivery changes in exactly three commits to `pjha26/FinalProject`. Keep generated datasets, weights, runtimes and raw run evidence local; transfer required ignored assets separately for an offline demonstration.
