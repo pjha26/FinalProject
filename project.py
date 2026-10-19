@@ -23,6 +23,26 @@ MODEL_MD5 = "a964b8356e08a02d009609d9e3928f7c"
 SERVER_URL = "https://carla-releases.s3.us-east-005.backblazeb2.com/Windows/CARLA_0.9.13.zip"
 
 
+def selected_model(args):
+    if getattr(args, "model", "monodepth2") == "depth-anything":
+        from src.depth_anything import load_model
+        if Path(args.checkpoint).resolve() != BASELINE.resolve():
+            raise ValueError("--checkpoint selects Monodepth2 weights; Depth Anything uses its separately pinned assets")
+        return load_model(args.device, getattr(args, "input_size", 294))
+    from src.model import load_model
+    if getattr(args, "input_size", 294) != 294:
+        raise ValueError("--input-size applies only to --model depth-anything")
+    return load_model(args.checkpoint, args.device)
+
+
+def model_details(model):
+    if getattr(model, "backend", None) == "depth-anything":
+        return model.details()
+    from src.preprocess import PREPROCESSING_ID
+    return dict(backend="monodepth2", model_name="Monodepth2 ResNet-18 mono_640x192",
+                model_input=[192, 640], preprocessing_id=PREPROCESSING_ID)
+
+
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -153,7 +173,6 @@ def evaluate_model(args):
     from PIL import Image
     from src.demo_data import checkpoint_hashes
     from src.evaluation import evaluation_manifest, paired_samples, score_inverse_depth, aggregate_scores
-    from src.model import load_model
     from src.visualize import render_frame
 
     manifest = evaluation_manifest(args.manifest)
@@ -163,7 +182,7 @@ def evaluate_model(args):
     torch.set_num_threads(2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
-    model = load_model(args.checkpoint, args.device)
+    model = selected_model(args)
     rows, complete = [], False
     try:
         with (output / "per_sample.csv").open("w", newline="", encoding="utf-8") as stream:
@@ -192,6 +211,7 @@ def evaluate_model(args):
                        device=str(model.device), mean_metrics=aggregate_scores(rows) if complete else None,
                        total_valid_pixels=sum(row["valid_pixels"] for row in rows),
                        depth_claim="Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.")
+        summary.update(reference_checkpoint_sha256=hashes, **model_details(model))
         write_json(output / "summary.json", summary)
     print("Evaluation completed:", len(rows), "samples; diagnostic scope:", manifest["limitations"])
 
@@ -336,6 +356,9 @@ def environment_report(args):
 
 
 def timed_prediction(model, rgb, camera=None):
+    if getattr(model, "backend", None) == "depth-anything":
+        from src.depth_anything import timed_prediction as small_prediction
+        return small_prediction(model, rgb, camera)
     import torch
     from src.model import predict
     from src.preprocess import preprocess_rgb
@@ -357,25 +380,26 @@ def timed_prediction(model, rgb, camera=None):
 def infer_image(args):
     import numpy as np
     from PIL import Image
-    from src.model import load_model, sha256
+    from src.model import sha256
     from src.preprocess import PREPROCESSING_ID
     from src.visualize import render_frame
 
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     rgb = np.asarray(Image.open(args.image).convert("RGB"))
-    model = load_model(args.checkpoint, args.device)
+    model = selected_model(args)
     timed_prediction(model, rgb)  # Warmup is excluded from the reported prediction.
     maps, intrinsics, model_ms, processing_ms = timed_prediction(model, rgb)
     for name, values in maps.items():
         np.save(output / (name + ".npy"), values, allow_pickle=False)
     Image.fromarray(render_frame(rgb, maps["inverse_depth"], "Relative depth | {} | model {:.1f} ms".format(model.device, model_ms))).save(output / "preview.png")
     write_json(output / "summary.json", {"schema_version": 1, "checkpoint": str(model.checkpoint),
-               "encoder_sha256": sha256(model.checkpoint / "encoder.pth"), "preprocessing_id": PREPROCESSING_ID,
+               "encoder_sha256": sha256(model.checkpoint / "encoder.pth") if getattr(model, "backend", None) != "depth-anything" else None,
+               "preprocessing_id": PREPROCESSING_ID,
                "input": str(Path(args.image).resolve()), "intrinsics_resized": intrinsics.tolist(),
                "intrinsics_source": "assumed 90-degree FOV for diagnostic image; not used by RGB inference",
                "model_ms": model_ms, "processing_ms": processing_ms, "device": str(model.device),
-               "depth_units": "relative; not calibrated metres"})
+               "depth_units": "relative; not calibrated metres", **model_details(model)})
     print("Inference saved:", output / "preview.png")
 
 
@@ -482,11 +506,9 @@ def demo(args):
     import numpy as np
     from PIL import Image
     from src.carla_capture import CarlaCapture, replay_scene
-    from src.metrics import compute_metrics
-    from src.model import load_model
     from src.preprocess import camera_intrinsics
     from src.visualize import render_frame
-    from src.evaluation import runtime_evidence, save_review_snapshot
+    from src.evaluation import runtime_evidence, save_review_snapshot, score_inverse_depth
     from src.profiling import process_memory_mib
 
     if args.source == "replay" and not args.scene:
@@ -513,7 +535,7 @@ def demo(args):
     torch.set_num_threads(2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
-    model = load_model(args.checkpoint, args.device)
+    model = selected_model(args)
     display = capture = records = None
     if getattr(getattr(model, "device", None), "type", None) == "cuda":
         torch.cuda.reset_peak_memory_stats(model.device)
@@ -545,9 +567,8 @@ def demo(args):
             gt = record.get("depth")
             measured = None
             if gt is not None:
-                inverse = np.asarray(Image.fromarray(maps["inverse_depth"]).resize((gt.shape[1], gt.shape[0]), Image.Resampling.BILINEAR))
                 try:
-                    measured = compute_metrics(gt, 1 / inverse)
+                    measured = score_inverse_depth(gt, maps["inverse_depth"])
                     metrics.append(dict(measured, frame_id=record["frame_id"], status="valid"))
                 except ValueError as error:
                     metrics.append({"frame_id": record["frame_id"], "status": "invalid", "error": str(error)})
@@ -564,7 +585,9 @@ def demo(args):
                     np.save(output / (name + ".npy"), values, allow_pickle=False)
             if display is not None:
                 surface = pygame.surfarray.make_surface(preview.transpose(1, 0, 2))
-                display.blit(pygame.transform.smoothscale(surface, display.get_size()), (0, 0))
+                target = surface.get_rect().fit(display.get_rect())
+                display.fill((20, 20, 20))
+                display.blit(pygame.transform.smoothscale(surface, target.size), target)
                 pygame.display.flip()
             display_end = time.perf_counter()
             if review_every:
@@ -606,7 +629,8 @@ def demo(args):
                    "input_manifest_sha256": input_manifest_hash,
                    "pytorch_peak_allocated_mib": round(torch.cuda.max_memory_allocated(model.device) / 1024 ** 2, 2) if getattr(getattr(model, "device", None), "type", None) == "cuda" else None,
                    "video_playback": "sequential frames capped at source FPS and --fps; slower playback when processing is slower" if args.source == "video" else None,
-                   "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth"})
+                   "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth",
+                   **model_details(model)})
         print("Demo completed:", len(rows), "frames; output:", output)
         if evidence["runtime_acceptance"]["status"] == "needs_review":
             raise RuntimeError("Displayed runtime did not meet --min-seconds; evidence saved for inspection")
@@ -624,7 +648,6 @@ def profile_model(args):
     import torch
     from PIL import Image
     from src.demo_data import verify_manifest
-    from src.model import load_model
     from src.profiling import prediction_fingerprint, process_memory_mib, summarize_timings
     from src.visualize import render_frame
 
@@ -637,7 +660,7 @@ def profile_model(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(2)
-    model = load_model(args.checkpoint, args.device)
+    model = selected_model(args)
     if model.encoder.training or model.decoder.training:
         raise ValueError("Profiling requires encoder and decoder evaluation mode")
     cuda = model.device.type == "cuda"
@@ -690,7 +713,7 @@ def profile_model(args):
         writer.writeheader()
         writer.writerows(rows)
     write_json(output / "fingerprints.json", [{"frame_id": frame, "sha256": fingerprint} for frame, fingerprint in reference])
-    summary = dict(schema_version=1, status="pass" if repeatable else "needs_review", model="Monodepth2 ResNet-18 mono_640x192",
+    summary = dict(schema_version=1, status="pass" if repeatable else "needs_review", model=model_details(model)["model_name"],
                    checkpoint_sha256=manifest["checkpoint_sha256"], input_manifest_sha256=file_hash(args.manifest),
                    source_revision=manifest["source_revision"], device=str(model.device),
                    gpu=torch.cuda.get_device_name(model.device) if cuda else None,
@@ -702,6 +725,7 @@ def profile_model(args):
                    pytorch_peak_allocated_mib=torch.cuda.max_memory_allocated(model.device) / 1024 ** 2 if cuda else None,
                    depth_units="relative; not calibrated metres", ground_truth_accuracy="unavailable",
                    scope="uncapped headless decode + inference + composite rendering + numerical validation; excludes display, pacing, setup, warmup and output file writes")
+    summary.update(reference_checkpoint_sha256=manifest["checkpoint_sha256"], **model_details(model))
     write_json(output / "summary.json", summary)
     print("Profile", summary["status"], "| exact repeated predictions:", repeatable, "| output:", output)
     if not repeatable:
@@ -711,7 +735,8 @@ def profile_model(args):
 def parser():
     command = argparse.ArgumentParser(description=__doc__)
     commands = command.add_subparsers(dest="command", required=True)
-    commands.add_parser("assets", help="Download pinned upstream source and trusted baseline weights")
+    assets = commands.add_parser("assets", help="Download pinned source and selected model weights")
+    assets.add_argument("--model", choices=("monodepth2", "depth-anything"), default="monodepth2")
     preparation = commands.add_parser("prepare-demo", help="Prepare a pinned real driving clip, license, fallback image and portable manifest")
     preparation.add_argument("--output", default="data/demo")
     preparation.add_argument("--checkpoint", default=str(BASELINE))
@@ -766,6 +791,8 @@ def parser():
     geometry.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
     geometry.add_argument("--seed", type=int, default=42)
     for child in (inference, playback, profile, evaluation):
+        child.add_argument("--model", choices=("monodepth2", "depth-anything"), default="monodepth2")
+        child.add_argument("--input-size", type=int, choices=(294, 392, 518), default=294, help="Depth Anything input short edge; aspect preserved, multiple of 14")
         child.add_argument("--checkpoint", default=str(BASELINE))
         child.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     return command
@@ -776,7 +803,11 @@ def main():
     if getattr(args, "frames", 1) <= 0:
         raise ValueError("--frames must be positive")
     if args.command == "assets":
-        install_assets()
+        if args.model == "depth-anything":
+            from src.depth_anything import install_assets as install_small_assets
+            install_small_assets()
+        else:
+            install_assets()
     elif args.command == "prepare-demo":
         prepare_demo(args)
     elif args.command == "prepare-reference-eval":

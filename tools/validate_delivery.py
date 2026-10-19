@@ -18,11 +18,11 @@ def source_hashes():
     return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
 
 
-def run_delivery(output, device="auto", display=False):
+def run_delivery(output, device="auto", display=False, model="monodepth2", input_size=294):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     summary = dict(schema_version=1, status="running", started_utc=datetime.now(timezone.utc).isoformat(),
-                   python=sys.version, executable=sys.executable, device_requested=device,
+                   python=sys.version, executable=sys.executable, device_requested=device, model_requested=model, input_size_requested=input_size,
                    source_sha256=source_hashes(), steps=[], displayed_rehearsal="pending",
                    limitations=["RGB-only relative depth, not calibrated metres or autonomous control",
                                 "Five indoor reference frames are diagnostic, not a driving benchmark",
@@ -54,7 +54,7 @@ def run_delivery(output, device="auto", display=False):
             save()
 
     def project_step(name, arguments):
-        step(name, ["project.py"] + arguments + ["--output", str(output / name)])
+        step(name, ["project.py"] + arguments + ["--model", model, "--input-size", str(input_size), "--output", str(output / name)])
 
     save()
     try:
@@ -90,9 +90,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="runs/delivery_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
+    parser.add_argument("--model", choices=("monodepth2", "depth-anything"), default="monodepth2")
+    parser.add_argument("--input-size", type=int, choices=(294, 392, 518), default=294)
     parser.add_argument("--display", action="store_true", help="Also require 60 seconds of displayed driving replay")
     args = parser.parse_args()
-    run_delivery(args.output, args.device, args.display)
+    run_delivery(args.output, args.device, args.display, args.model, args.input_size)
 
 
 if __name__ == "__main__":

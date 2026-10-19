@@ -9,10 +9,15 @@ TIMING_FIELDS = ("decode_ms", "model_ms", "processing_ms", "render_ms", "validat
 
 def prediction_fingerprint(maps):
     digest = hashlib.sha256()
+    shape = np.asarray(maps["inverse_depth"]).shape
+    if len(shape) != 2 or min(shape) <= 0:
+        raise ValueError("Profile requires nonempty 2D depth maps")
+    if shape != (192, 640):
+        digest.update(str(shape).encode("ascii"))
     for key in ("inverse_depth", "relative_depth"):
         values = np.asarray(maps[key])
-        if values.shape != (192, 640) or values.dtype != np.float32 or not np.isfinite(values).all() or (values <= 0).any():
-            raise ValueError("Profile requires finite positive float32 192x640 depth maps")
+        if values.shape != shape or values.dtype != np.float32 or not np.isfinite(values).all() or (values <= 0).any():
+            raise ValueError("Profile requires matching finite positive float32 2D depth maps")
         digest.update(values.tobytes())
     if not np.allclose(maps["inverse_depth"] * maps["relative_depth"], 1, rtol=1e-5, atol=1e-6):
         raise ValueError("Depth and inverse-depth outputs are inconsistent")

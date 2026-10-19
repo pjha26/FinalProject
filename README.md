@@ -1,6 +1,6 @@
 # Real-Time Monocular Depth Estimation
 
-Hardware-friendly final-year prototype: RGB camera or local driving video -> Monodepth2 ResNet-18 -> relative depth -> RGB/depth/overlay display and measured FPS.
+Hardware-friendly final-year prototype: RGB camera or local driving video -> Monodepth2 baseline or Depth Anything V2 Small quality option -> relative depth -> RGB/depth/overlay display and measured FPS.
 
 The user's updated scope replaces the PDF constraints. The default workflow targets GTX 1650 to RTX 3050 laptops with 4 GB VRAM and 8-16 GB RAM. CARLA is optional. Its server failed during earlier sensor attempts on the current 8 GB PC; changing the input source removes that simulator memory requirement.
 
@@ -15,6 +15,10 @@ The user's updated scope replaces the PDF constraints. The default workflow targ
 - Resource and model tests are described below. A video fixture validates the pipeline; a physical-camera rehearsal and the friend's RTX 3050 must be checked separately.
 
 ## Setup
+
+For improved depth estimates, the optional **Depth Anything V2 Small** backend is now available through the same inference, profiling, evaluation and demo commands. Install its pinned assets with `project.py assets --model depth-anything`, then add `--model depth-anything --input-size 294` to your demo. Existing commands keep the original baseline. See the [accuracy investigation and comparison](docs/accuracy_report.md) for bug fixes, model provenance, measured scope and reproduction commands. The new backend uses its own official preprocessing and native output geometry; it does not reinterpret the old checkpoint.
+
+Measured locally: the Small-294 option reduced AbsRel from **0.4960 to 0.2033** on the existing five-frame indoor diagnostic using the same GT mask and median alignment. This limited diagnostic is not driving benchmark accuracy. **74 tests and all eight quality-backend integration checks passed**; the final displayed replay ran **650 frames in 67.99 seconds at 9.56 FPS** under a 10 FPS cap. The original baseline also passed its software checks. Logs are local under `runs/accuracy_quality_final/`, `runs/accuracy_baseline_delivery/` and `runs/accuracy_comparison_01/`. Independent multi-scene accuracy and RTX 3050 testing remain pending.
 
 For the final presentation, use the [demo and laptop handoff guide](docs/demo_guide.md). After preparing all assets and installing dependencies, run the combined checks with:
 

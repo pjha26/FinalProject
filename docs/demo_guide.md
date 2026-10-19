@@ -1,6 +1,6 @@
 # Final demonstration and laptop handoff
 
-The project estimates **relative depth from RGB alone** using the official pretrained Monodepth2 ResNet-18 `mono_640x192` model. The supported practical demonstration is real driving-video replay with depth computed for each frame. It displays RGB, estimated depth, overlay and measured FPS. It is a perception prototype, without vehicle control or calibrated distances.
+The project estimates **relative depth from RGB alone** using the original pretrained Monodepth2 ResNet-18 baseline or the new Depth Anything V2 Small quality option. The supported practical demonstration is real driving-video replay with depth computed for each frame. It displays RGB, estimated depth, overlay and measured FPS. It is a perception prototype, without vehicle control or calibrated distances.
 
 ## Architecture and completed phases
 
@@ -59,6 +59,8 @@ On the local GTX 1650, a separate Python 3.8.20 environment was rebuilt from the
 **Recorded local acceptance (19 October 2026):** `runs/phase5_delivery/summary.json` records all eight steps and displayed acceptance as passing. All 61 regression tests passed; the short profile's predictions matched exactly across repeats; image/video inference and the five-pair evaluator completed. The displayed replay processed 650 frames in 82.55 seconds at 7.87 FPS under a 10 FPS cap. Peak process working set was 540.00 MiB and PyTorch peak GPU allocation was 106.34 MiB; neither measures total system memory. Source hashes were unchanged during validation. This establishes local software acceptance without claiming 10 FPS for this displayed run.
 
 ## Run the actual presentation
+
+For the improved model option, first run `project.py assets --model depth-anything` while online, then add `--model depth-anything --input-size 294` to the demo/image commands below and to `tools/validate_delivery.py`. Copy `third_party/depth_anything_v2/` and `checkpoints/depth_anything_v2_small/`, including their licenses/provenance, for an offline handoff. Keep the existing baseline/input folders as well: frozen input manifests retain their original baseline reference, while new run summaries record the actual selected model independently. Follow the [accuracy report](accuracy_report.md) for comparisons and limits. The original commands below remain the Monodepth2 fallback.
 
 Prepare the environment and assets first. Use unused output names; the existing commands refuse to overwrite a run.
 
