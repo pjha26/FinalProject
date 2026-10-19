@@ -1,4 +1,4 @@
-"""Fixed-scale inverse-depth colors and a single shared RGB/depth/overlay view."""
+"""Fixed logarithmic inverse-depth colors and a shared RGB/depth/overlay view."""
 import numpy as np
 from functools import lru_cache
 from pathlib import Path
@@ -14,7 +14,16 @@ def _display_assets():
     header = Image.new("RGB", (1920, 44), (20, 20, 20))
     for offset, label in zip((0, 640, 1280), ("RGB", "Relative inverse depth", "Overlay")):
         ImageDraw.Draw(header).text((offset + 8, 3), label, fill="white", font=font)
-    return palette, font, header
+    footer = Image.new("RGB", (1920, 48), (20, 20, 20))
+    draw = ImageDraw.Draw(footer)
+    draw.text((8, 12), "Original RGB input", fill="white", font=font)
+    draw.text((648, 1), "Far / purple", fill="white", font=font)
+    bar = np.repeat(palette[None, :, :], 12, axis=0)
+    footer.paste(Image.fromarray(bar).resize((300, 12)), (750, 5))
+    draw.text((1062, 1), "Near / yellow", fill="white", font=font)
+    draw.text((648, 25), "Fixed log colour scale | relative only, not metres", fill="white", font=font)
+    draw.text((1288, 12), "30% RGB + 70% depth colour | estimated depth", fill="white", font=font)
+    return palette, font, header, footer
 
 
 def render_frame(rgb, inverse_depth, caption="Relative depth - near: yellow, far: purple"):
@@ -30,13 +39,14 @@ def render_frame(rgb, inverse_depth, caption="Relative depth - near: yellow, far
     size = (640, height)
     original = np.asarray(Image.fromarray(rgb).resize(size, Image.Resampling.BILINEAR))
     resized = np.asarray(Image.fromarray(inverse_depth).resize(size, Image.Resampling.BILINEAR))
-    # Fixed display bounds prevent per-frame color scaling from manufacturing flicker.
-    normalized = np.clip((resized - 0.01) / (10.0 - 0.01), 0, 1)
-    palette, font, header = _display_assets()
+    # A fixed log scale reveals low inverse-depth differences without per-frame rescaling.
+    normalized = np.log(np.clip(resized, 0.01, 10.0) / 0.01) / np.log(1000.0)
+    palette, font, header, footer = _display_assets()
     colors = palette[np.minimum((normalized * 256).astype(np.uint16), 255)]
-    overlay = cv2.addWeighted(original, 0.6, colors, 0.4, 0)
-    canvas = Image.new("RGB", (1920, height + 44), (20, 20, 20))
+    overlay = cv2.addWeighted(original, 0.3, colors, 0.7, 0)
+    canvas = Image.new("RGB", (1920, height + 92), (20, 20, 20))
     canvas.paste(header, (0, 0))
+    canvas.paste(footer, (0, height + 44))
     for offset, panel in zip((0, 640, 1280), (original, colors, overlay)):
         canvas.paste(Image.fromarray(panel), (offset, 44))
     ImageDraw.Draw(canvas).text((8, 23), caption, fill="white", font=font)

@@ -250,7 +250,7 @@ class ReplayAndSafetyTests(unittest.TestCase):
         inverse = np.full((192, 640), 0.1, dtype=np.float32)
         original = inverse.copy()
         image = render_frame(rgb, inverse)
-        self.assertEqual(image.shape, (524, 1920, 3))
+        self.assertEqual(image.shape, (572, 1920, 3))
         np.testing.assert_array_equal(inverse, original)
         np.testing.assert_array_equal(image, render_frame(rgb, inverse))
 

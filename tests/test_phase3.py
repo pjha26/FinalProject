@@ -23,19 +23,41 @@ def maps(inverse=1):
 
 
 class ProfilingTests(unittest.TestCase):
-    def test_display_palette_is_preserved_without_changing_numerical_depth(self):
+    def test_fixed_log_palette_and_stronger_overlay_preserve_numerical_depth(self):
         from matplotlib import colormaps
         from src.visualize import render_frame
         rgb = np.full((1, 640, 3), 100, dtype=np.uint8)
         inverse = np.linspace(0.01, 10, 640, dtype=np.float32)[None, :]
         original = inverse.copy()
         result = render_frame(rgb, inverse)
-        normalized = np.clip((inverse - 0.01) / (10 - 0.01), 0, 1)
+        normalized = np.log(np.clip(inverse, 0.01, 10) / 0.01) / np.log(1000)
         expected_colors = (colormaps["plasma"](normalized)[:, :, :3] * 255).astype(np.uint8)
-        np.testing.assert_array_equal(result[44:, 640:1280], expected_colors)
-        expected_overlay = (rgb * 0.6 + expected_colors * 0.4).astype(np.uint8)
-        np.testing.assert_allclose(result[44:, 1280:], expected_overlay, atol=1)
+        np.testing.assert_array_equal(result[44:45, 640:1280], expected_colors)
+        expected_overlay = (rgb * 0.3 + expected_colors * 0.7).astype(np.uint8)
+        np.testing.assert_allclose(result[44:45, 1280:], expected_overlay, atol=1)
         np.testing.assert_array_equal(inverse, original)
+
+    def test_same_depth_keeps_its_colour_when_other_pixels_change(self):
+        from src.visualize import render_frame
+        rgb = np.zeros((1, 640, 3), dtype=np.uint8)
+        first = np.full((1, 640), 0.1, dtype=np.float32)
+        second = first.copy()
+        second[0, 320:] = 9
+        a, b = render_frame(rgb, first), render_frame(rgb, second)
+        np.testing.assert_array_equal(a[44, 640:960], b[44, 640:960])
+        self.assertFalse(np.array_equal(a[44, 960:1280], b[44, 960:1280]))
+
+    def test_log_scale_separates_far_depths_and_includes_a_legend(self):
+        from matplotlib import colormaps
+        from src.visualize import render_frame
+        rgb = np.zeros((1, 640, 3), dtype=np.uint8)
+        inverse = np.full((1, 640), 0.1, dtype=np.float32)
+        inverse[0, :160], inverse[0, 160:320], inverse[0, 320:480], inverse[0, 480:] = 0.01, 0.1, 1, 10
+        result = render_frame(rgb, inverse)
+        expected = (colormaps["plasma"](np.asarray([0, 1 / 3, 2 / 3, 1]))[:, :3] * 255).astype(np.uint8)
+        np.testing.assert_array_equal(result[44, [640, 800, 960, 1120]], expected)
+        self.assertEqual(result.shape, (93, 1920, 3))
+        self.assertGreater(np.unique(result[-48:, 640:1280].reshape(-1, 3), axis=0).shape[0], 100)
 
     def test_timing_percentiles_and_invalid_samples(self):
         rows = [dict.fromkeys(TIMING_FIELDS, value) for value in (1, 3, 5)]
