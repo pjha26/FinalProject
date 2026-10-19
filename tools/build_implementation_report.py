@@ -5,6 +5,7 @@ These packages are not additional inference-runtime dependencies.
 """
 import argparse
 import json
+import re
 from pathlib import Path
 import subprocess
 from xml.sax.saxutils import escape
@@ -99,12 +100,18 @@ def load(relative):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--report-date', default='2026-10-18')
+    parser.add_argument('--report-date', default='2026-10-19')
+    parser.add_argument('--delivery', default='runs/phase5_delivery', help='Completed integrated delivery-check directory')
     parser.add_argument('--output', default='output/pdf/implementation_progress_report.pdf')
     args = parser.parse_args()
     profile = load('runs/phase3_profile_final/summary.json')
     previous = load('runs/phase2_real_driving_rehearsal/validation.json')
     tests = load('runs/phase4_tests.json')
+    delivery = load(str(Path(args.delivery) / 'summary.json'))
+    if delivery['status'] != 'pass' or delivery['displayed_rehearsal'] != 'pass':
+        raise ValueError('Final report requires passing integrated checks and a displayed rehearsal')
+    test_log = (ROOT / args.delivery / 'tests.log').read_text(encoding='utf-8')
+    tests['tests_run'] = int(re.search(r'Ran (\d+) tests', test_log).group(1))
     evaluation = load('runs/phase4_reference_evaluation/summary.json')
     driving = load('runs/phase4_driving_rehearsal/summary.json')
     full_clip = load('runs/phase4_driving_full_clip/summary.json')
@@ -120,7 +127,7 @@ def main():
     add = story.append
 
     add(p('Monocular Depth Estimation<br/>Implementation Progress Report', 'ReportTitle'))
-    add(p(escape(args.report_date) + ' | Phases 1-4 | Hardware-adapted implementation', 'ReportSmall'))
+    add(p(escape(args.report_date) + ' | Phases 1-5 | Hardware-adapted implementation', 'ReportSmall'))
     add(p('<b>Current result:</b> a working RGB-only depth-perception prototype with real driving-video replay, relative depth maps, colour overlays, saved outputs, portable input verification and repeatable performance profiling.'))
     add(p('The project addresses the absence of explicit depth information in ordinary camera images. A pretrained neural network estimates a dense relative-depth map from each RGB frame, providing a perception research prototype that runs on the available laptop hardware.'))
     add(table([
@@ -129,12 +136,12 @@ def main():
         ['2 - Demo inputs', 'Real driving sample, retained license, image fallback, portable manifest and checksum verification implemented.'],
         ['3 - Stability / performance', 'Warmup-aware repeated profiling, numerical stability gate and measured rendering optimization implemented locally.'],
         ['4 - Evaluation evidence', 'Paired RGB-D diagnostic, displayed runtime gates, latency statistics and visual-review exports implemented. Full driving benchmarks remain pending.'],
-        ['5 - Delivery', 'Setup and transfer instructions exist; final academic submission and presentation-machine acceptance remain pending.'],
+        ['5 - Delivery', 'Integrated offline acceptance runner, rebuilt-environment validation, displayed rehearsal and presenter handoff implemented. Presentation-machine acceptance remains pending.'],
     ], [43 * mm, 131 * mm]))
     add(Spacer(1, 12))
     add(p('<b>Scope:</b> the latest hardware-adaptation instruction relaxes the original PDF implementation constraints. This report records implemented and tested behavior, not completion of every original PDF deliverable.'))
     add(p('Model weights remain pretrained. No project-specific training, validated native CARLA camera run, calibrated metre-scale prediction or autonomous control is claimed.'))
-    add(p('Source baseline: commit ' + escape(base_commit) + '; Phase 4 documentation is the current working-tree update at report generation. Generated datasets and raw runtime evidence remain local.', 'ReportSmall'))
+    add(p('Source baseline at generation: commit ' + escape(base_commit) + '; Phase 5 delivery documentation is the current working-tree update. The delivery summary freezes Python source and requirements SHA256 hashes. Generated datasets and raw runtime evidence remain local.', 'ReportSmall'))
 
     add(PageBreak())
     add(p('1. Architecture and model', 'ReportHeading'))
@@ -194,7 +201,7 @@ def main():
 
     add(PageBreak())
     add(p('4. Validation evidence and phase handoff', 'ReportHeading'))
-    add(p(f"<b>{tests['tests_run']} tests passed</b>; failures: {tests['failures']}; errors: {tests['errors']}; skipped: {tests['skipped']}. The regression suite covers Phases 1-4, including reference-data integrity, metric protocol, warmup exclusion, repeatability, displayed-duration gates and review exports."))
+    add(p(f"<b>{tests['tests_run']} tests passed</b> in the integrated delivery run. The regression suite covers Phases 1-5, including reference-data integrity, metric protocol, repeatability, displayed-duration gates, review exports, fail-fast delivery orchestration and source-change rejection."))
     add(table([
         ['Area', 'Evidence covered'],
         ['Numerical / geometry', 'RGB order, tensor contract, depth decoding, intrinsics resizing, metric formulas and fixed colour scaling.'],
@@ -209,7 +216,7 @@ def main():
     memory = profile['process_memory']
     add(p(f"Final-profile process peak working set: {memory['peak_working_set_mib']:.2f} MiB. PyTorch peak allocated GPU memory: {profile['pytorch_peak_allocated_mib']:.2f} MiB. Working set is not total system RAM or committed memory; PyTorch allocations are not total VRAM usage."))
     add(p('<b>Transition gate:</b> keep the accepted baseline and input hashes unchanged, run the full suite, verify-demo, image inference and a short video smoke test before accepting a later phase. Write into new output directories. A failed optional experiment must not replace the working baseline.'))
-    add(p('Evidence locations (local, ignored): runs/phase4_tests.json (current suite); runs/phase3_profile_final/{summary.json,runtime.csv,fingerprints.json,preview.png}; runs/phase3_profile/summary.json (before rendering optimization); runs/phase3_render_before.json and runs/phase3_render_final.json.'))
+    add(p('Evidence locations (local, ignored): ' + escape(args.delivery) + '/tests.log (current suite); runs/phase4_tests.json (historical suite); runs/phase3_profile_final/{summary.json,runtime.csv,fingerprints.json,preview.png}; runs/phase3_render_before.json and runs/phase3_render_final.json.'))
 
     add(PageBreak())
     add(p('5. Phase 4: paired-depth diagnostic', 'ReportHeading'))
@@ -243,7 +250,20 @@ def main():
     add(p('Saved review.json maps frame IDs to RGB, inverse-depth NPY and preview files. A short displayed run fails the duration gate; headless runs cannot satisfy it. Existing commands still work without the optional review/gate flags.'))
 
     add(PageBreak())
-    add(p('7. Remaining work and reproducible usage', 'ReportHeading'))
+    add(p('7. Phase 5: integrated delivery acceptance', 'ReportHeading'))
+    final_display = load(str(Path(args.delivery) / 'display/summary.json'))
+    final_profile = load(str(Path(args.delivery) / 'profile/summary.json'))
+    add(p('tools/validate_delivery.py runs the existing phase commands sequentially with the same Python interpreter and frozen default baseline. It performs no downloads, creates exclusive output directories, saves per-step logs and stops on failure. Source hashes must remain unchanged throughout the run.'))
+    add(table([['Check', 'Recorded result']] + [[row['name'], row['status'] + f" ({row['elapsed_seconds']:.2f} s)"] for row in delivery['steps']], [80 * mm, 94 * mm]))
+    add(Spacer(1, 10))
+    add(p(f"<b>Final displayed rehearsal:</b> {final_display['frames']} frames in {final_display['wall_seconds']:.2f} seconds, {final_display['processed_fps']:.2f} FPS including the display loop under a 10 FPS cap. The minimum 60-second displayed gate passed. This is real driving-video replay with newly computed predictions, not a native CARLA simulation."))
+    add(p(f"The short repeated profile passed with exact frame predictions matching: {final_profile['exact_prediction_repeatability']}. Image inference, video smoke and the five-frame reference evaluator passed through their original interfaces. The baseline weights and preprocessing were retained."))
+    add(p('Environment reproduction: a separate project-local Python 3.8.20 environment was rebuilt from all 30 pinned requirements using the local package cache. The integrated run used that rebuilt interpreter. This verifies local reproduction, not installation or performance on the RTX 3050 laptop.'))
+    add(p('Presentation handoff: docs/demo_guide.md contains fresh-machine setup, offline asset transfer with licenses, the accepted video command, webcam/image fallbacks, a short explanation script and remaining hardware gates. Keep raw run summaries with the handoff separately from Git.'))
+    add(p('Acceptance status: software delivery track validated locally. Academic submission, target-laptop acceptance, physical camera, native simulator, full benchmark accuracy and any project-specific training remain separate outstanding work.'))
+
+    add(PageBreak())
+    add(p('8. Remaining work and reproducible usage', 'ReportHeading'))
     add(table([
         ['Requirement', 'Honest current position'],
         ['Fine-tuning', 'Not performed. No prepared calibrated temporal training dataset or local pose/loss training pipeline; pretrained baseline retained.'],
