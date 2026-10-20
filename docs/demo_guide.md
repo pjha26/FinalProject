@@ -90,6 +90,10 @@ Open the resulting `preview.png`. The output also contains numerical inverse-dep
 
 ## A short explanation for the examiner
 
+**Optional poster point cloud:** add `--point-cloud` to the video or image command above. After the first predicted frame, open the output folder's `point_cloud/viewer.html` in a browser. Rotate/zoom with the mouse or the labelled buttons; `cloud.ply`, `preview.png` and `metadata.json` are saved alongside it. This is a static first-frame relative projection, bounded to 10,000 coloured points, using assumed/provided camera intrinsics. It cannot provide metre distances or unseen geometry. Cloud export adds first-frame overhead; the moving RGB/depth/overlay demo continues normally. No additional package is required.
+
+Read the [poster alignment review](poster_alignment.md) before presenting: the poster's CPU speed is not reproduced, the physical webcam remains unvalidated, and result artwork should be replaced by actual outputs or labelled illustrative. If running the optional Depth Anything model, identify it by its actual name rather than calling it Monodepth2. The window title and saved metadata show the selected backend.
+
 “An ordinary camera records colour but does not directly measure distance. My project uses a pretrained monocular depth network to estimate a relative depth map from each RGB frame. I implemented a reproducible, low-memory inference pipeline, verified driving inputs, visualization, profiling and evaluation, then checked the phases together. The demonstration computes depth as the video runs. It supports perception research; it does not control a vehicle or give calibrated distances.”
 
 If asked about contribution, distinguish the pretrained model from your input preparation, integrity checks, integration, visualization optimization, measured validation and handoff tooling. Explain that no project-specific training has been completed.

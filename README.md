@@ -172,6 +172,8 @@ The [master plan](IMPLEMENTATION_PLAN.md) and [Phase 1](phases/phase_01_foundati
 
 ## Verification and remaining work
 
+For the presentation, read the [poster alignment review](docs/poster_alignment.md): it distinguishes implemented features from unverified poster claims and gives measured CPU/GPU results. Add `--point-cloud` to `infer` or `demo` for an optional first-frame relative cloud (`point_cloud/viewer.html`, PLY, PNG and metadata). The viewer opens offline and supports rotation/zoom; it is a static estimated surface with assumed/provided intrinsics, not calibrated metre-scale reconstruction. The preview/window identifies the selected model. See the [demo guide](docs/demo_guide.md) for commands.
+
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```

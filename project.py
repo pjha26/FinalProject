@@ -392,14 +392,18 @@ def infer_image(args):
     maps, intrinsics, model_ms, processing_ms = timed_prediction(model, rgb)
     for name, values in maps.items():
         np.save(output / (name + ".npy"), values, allow_pickle=False)
-    Image.fromarray(render_frame(rgb, maps["inverse_depth"], "Relative depth | {} | model {:.1f} ms".format(model.device, model_ms))).save(output / "preview.png")
+    Image.fromarray(render_frame(rgb, maps["inverse_depth"], "{} | Relative depth | {} | model {:.1f} ms".format(model_details(model)["model_name"], model.device, model_ms))).save(output / "preview.png")
+    cloud = None
+    if getattr(args, "point_cloud", False):
+        from src.point_cloud import export_point_cloud
+        cloud = export_point_cloud(output, rgb, maps["relative_depth"], intrinsics, model_details(model))
     write_json(output / "summary.json", {"schema_version": 1, "checkpoint": str(model.checkpoint),
                "encoder_sha256": sha256(model.checkpoint / "encoder.pth") if getattr(model, "backend", None) != "depth-anything" else None,
                "preprocessing_id": PREPROCESSING_ID,
                "input": str(Path(args.image).resolve()), "intrinsics_resized": intrinsics.tolist(),
                "intrinsics_source": "assumed 90-degree FOV for diagnostic image; not used by RGB inference",
                "model_ms": model_ms, "processing_ms": processing_ms, "device": str(model.device),
-               "depth_units": "relative; not calibrated metres", **model_details(model)})
+               "depth_units": "relative; not calibrated metres", "point_cloud": cloud, **model_details(model)})
     print("Inference saved:", output / "preview.png")
 
 
@@ -544,7 +548,7 @@ def demo(args):
             import pygame
             pygame.init()
             display = pygame.display.set_mode((1280, 360))
-            pygame.display.set_caption("RGB depth demo - close window or press Escape to stop")
+            pygame.display.set_caption(model_details(model)["model_name"] + " - RGB depth demo - Escape to stop")
         if args.source == "carla":
             settings = capture_settings(args)
             capture = CarlaCapture(settings).__enter__()
@@ -555,6 +559,7 @@ def demo(args):
         else:
             records = video_frames(args)
         rows, metrics, reviews, last_review, start = [], [], [], None, time.perf_counter()
+        cloud = None
         cycle_start = start
         for index, record in enumerate(records):
             if index >= args.frames:
@@ -563,7 +568,7 @@ def demo(args):
                 break
             frame_start = time.perf_counter()
             arrival_start = record.get("arrival_timestamp", frame_start)
-            maps, _, model_ms, processing_ms = timed_prediction(model, record["rgb"], record["camera"])
+            maps, intrinsics, model_ms, processing_ms = timed_prediction(model, record["rgb"], record["camera"])
             gt = record.get("depth")
             measured = None
             if gt is not None:
@@ -573,7 +578,7 @@ def demo(args):
                 except ValueError as error:
                     metrics.append({"frame_id": record["frame_id"], "status": "invalid", "error": str(error)})
             elapsed = time.perf_counter() - start
-            caption = "{} | Relative depth | frame {} | {:.1f} completed FPS".format(args.source, record["frame_id"], len(rows) / max(elapsed, 1e-9))
+            caption = "{} | {} | {} | frame {} | {:.1f} completed FPS".format(model_details(model)["model_name"], args.source, getattr(model, "device", "unknown"), record["frame_id"], len(rows) / max(elapsed, 1e-9))
             if measured:
                 caption += " | GT-aligned AbsRel {:.3f}, RMSE {:.2f} m".format(measured["abs_rel"], measured["rmse"])
             else:
@@ -583,6 +588,12 @@ def demo(args):
                 Image.fromarray(preview).save(output / "preview.png")
                 for name, values in maps.items():
                     np.save(output / (name + ".npy"), values, allow_pickle=False)
+                if getattr(args, "point_cloud", False):
+                    from src.point_cloud import export_point_cloud
+                    details = model_details(model)
+                    if record.get("camera"):
+                        details["intrinsics_source"] = "Provided camera intrinsics; depth remains model-estimated and relative"
+                    cloud = export_point_cloud(output, record["rgb"], maps["relative_depth"], intrinsics, details)
             if display is not None:
                 surface = pygame.surfarray.make_surface(preview.transpose(1, 0, 2))
                 target = surface.get_rect().fit(display.get_rect())
@@ -629,7 +640,7 @@ def demo(args):
                    "input_manifest_sha256": input_manifest_hash,
                    "pytorch_peak_allocated_mib": round(torch.cuda.max_memory_allocated(model.device) / 1024 ** 2, 2) if getattr(getattr(model, "device", None), "type", None) == "cuda" else None,
                    "video_playback": "sequential frames capped at source FPS and --fps; slower playback when processing is slower" if args.source == "video" else None,
-                   "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth",
+                   "metrics_scaling": "GT median alignment; diagnostic only" if metrics else "unavailable: no ground-truth depth", "point_cloud": cloud,
                    **model_details(model)})
         print("Demo completed:", len(rows), "frames; output:", output)
         if evidence["runtime_acceptance"]["status"] == "needs_review":
@@ -757,6 +768,7 @@ def parser():
     inference = commands.add_parser("infer", help="Predict one RGB image and save numerical maps and preview")
     inference.add_argument("--image", required=True)
     inference.add_argument("--output", default="runs/baseline_image")
+    inference.add_argument("--point-cloud", action="store_true", help="Also export a qualitative relative point-cloud snapshot (PLY, PNG and interactive HTML)")
     profile = commands.add_parser("profile", help="Repeatable uncapped headless timing and numerical-stability profile")
     profile.add_argument("--manifest", default="data/demo/input_manifest.json")
     profile.add_argument("--frames", type=int, default=30)
@@ -775,6 +787,7 @@ def parser():
     playback.add_argument("--headless", action="store_true")
     playback.add_argument("--min-seconds", type=float, default=0, help="Require at least this many seconds of displayed processing; zero disables the gate")
     playback.add_argument("--review-every", type=int, default=0, help="Save first, periodic adjacent and last review frames; zero disables snapshots")
+    playback.add_argument("--point-cloud", action="store_true", help="Export the first predicted frame as a qualitative relative point cloud")
     playback.add_argument("--output", default="runs/demo")
     audit = commands.add_parser("audit-scene", help="Check pilot frame IDs, numerical depth, poses and 10 Hz timing")
     audit.add_argument("--scene", required=True)
