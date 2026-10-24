@@ -222,3 +222,8 @@ Completed selective acquisition/projection and matched full Eigen 697 evaluation
 ## Remaining Step 7 measured - 25 October 2026
 
 Frozen model identities and complete source inventory preceded reserved-route scoring. Both models completed 100 identical frames/masks; AbsRel baseline/candidate 0.256899/0.264372, aligned RMSE 9.400815/8.750513 m. No reselection followed; route is consumed test evidence with shared-map/correlation limits. [Record](docs/reserved_test.md).
+
+
+## Remaining Step 8 measured - 25 October 2026
+
+Native displayed Town04/seed42/ClearNoon/Low run processed 783 consecutive frames in 65.0114 seconds, 12.0440 application FPS. Both runtime gates pass for this setup; startup/warmup excluded, other configurations unverified. Added optional validated wall-duration stop/provenance recording. [Evidence](docs/native_runtime.md).

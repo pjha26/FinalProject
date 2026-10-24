@@ -146,6 +146,22 @@ class RuntimeEvidenceTests(unittest.TestCase):
                 project.demo(args)
             model.assert_not_called()
 
+    def test_duration_stop_is_bounded_and_invalid_duration_fails_before_loading(self):
+        import itertools
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
+            args=SimpleNamespace(source='video',headless=True,min_seconds=0,fps=30,frames=100,output=Path(temporary)/'duration',checkpoint=project.BASELINE,device='cpu',stop_after_seconds=.01)
+            record=dict(frame_id=1,rgb=np.zeros((48,64,3),dtype=np.uint8),camera=None,input_fps=25)
+            maps=dict(inverse_depth=np.ones((192,640),dtype=np.float32),relative_depth=np.ones((192,640),dtype=np.float32))
+            with patch('src.model.load_model',return_value=SimpleNamespace(checkpoint=project.BASELINE)),patch('project.video_frames',return_value=(dict(record,frame_id=i) for i in range(100))),patch('project.timed_prediction',return_value=(maps,None,1,2)),patch('project.time.perf_counter',side_effect=itertools.count(1,.01)),patch('project.time.sleep'):
+                project.demo(args)
+            summary=json.loads((args.output/'summary.json').read_text())
+            self.assertGreater(summary['frames'],0);self.assertLess(summary['frames'],100)
+            self.assertEqual(summary['stop_after_seconds'],.01)
+            args.stop_after_seconds=float('nan')
+            with patch('src.model.load_model') as model:
+                with self.assertRaises(ValueError):project.demo(args)
+                model.assert_not_called()
+
     def test_short_display_run_saves_failed_gate_and_releases_window(self):
         with tempfile.TemporaryDirectory(dir=TEST_TEMP) as temporary:
             output = Path(temporary) / "short_run"

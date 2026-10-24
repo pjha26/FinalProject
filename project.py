@@ -525,6 +525,8 @@ def demo(args):
     if not 0 < fps_limit <= 60:
         raise ValueError("--fps must be between 0 (exclusive) and 60")
     minimum_seconds, review_every = getattr(args, "min_seconds", 0), getattr(args, "review_every", 0)
+    stop_after_seconds=getattr(args,"stop_after_seconds",0)
+    if not np.isfinite(stop_after_seconds) or stop_after_seconds<0:raise ValueError("--stop-after-seconds must be finite and nonnegative")
     if not np.isfinite(minimum_seconds) or minimum_seconds < 0 or review_every < 0:
         raise ValueError("--min-seconds and --review-every must be nonnegative")
     if minimum_seconds and args.headless:
@@ -623,6 +625,7 @@ def demo(args):
                          "capture_to_display_ms": (display_end - arrival_start) * 1000,
                          "full_cycle_ms": (cycle_end - cycle_start) * 1000})
             cycle_start = cycle_end
+            if stop_after_seconds and cycle_end-start>=stop_after_seconds:break
         elapsed = time.perf_counter() - start
         if not rows:
             raise ValueError("No frames processed")
@@ -639,7 +642,7 @@ def demo(args):
         write_json(output / "metrics.json", metrics)
         write_json(output / "summary.json", {"schema_version": 1, "source": args.source, "checkpoint": str(model.checkpoint),
                    "frames": len(rows), "wall_seconds": elapsed, "processed_fps": len(rows) / elapsed,
-                   "headless": args.headless, "depth_units": "relative; not calibrated metres",
+                   "headless": args.headless, "stop_after_seconds":stop_after_seconds, "capture_settings":vars(capture.settings) if capture is not None else None, "depth_units": "relative; not calibrated metres",
                    "input_fps": record.get("input_fps"), "fps_limit": fps_limit,
                    "model_input": [192, 640], "batch_size": 1,
                    "device": str(getattr(model, "device", "unknown")),
@@ -805,6 +808,7 @@ def parser():
     playback.add_argument("--fps", type=float, default=10, help="Webcam/video processing ceiling (default 10 FPS)")
     playback.add_argument("--scene")
     playback.add_argument("--headless", action="store_true")
+    playback.add_argument("--stop-after-seconds",type=float,default=0,help="Finish after this processing duration; zero keeps the frame limit")
     playback.add_argument("--min-seconds", type=float, default=0, help="Require at least this many seconds of displayed processing; zero disables the gate")
     playback.add_argument("--review-every", type=int, default=0, help="Save first, periodic adjacent and last review frames; zero disables snapshots")
     playback.add_argument("--point-cloud", action="store_true", help="Export the first predicted frame as a qualitative relative point cloud")

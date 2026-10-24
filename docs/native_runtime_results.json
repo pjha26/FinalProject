@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "schema_version": 1,
+    "source": "carla",
+    "checkpoint": "C:\\Users\\Lenovo\\Documents\\Codex\\2026-10-24\\https-github-com-pjha26-finalproject-https\\FinalProject\\checkpoints\\baseline_mono_640x192",
+    "frames": 783,
+    "wall_seconds": 65.01142619999999,
+    "processed_fps": 12.044036652744593,
+    "headless": false,
+    "stop_after_seconds": 65.0,
+    "capture_settings": {
+      "host": "127.0.0.1",
+      "port": 2000,
+      "map": "Town04",
+      "width": 640,
+      "height": 480,
+      "fov": 90.0,
+      "seed": 42,
+      "timeout": 60.0,
+      "traffic_manager_port": 8001,
+      "warmup_frames": 10,
+      "weather": "ClearNoon"
+    },
+    "depth_units": "relative; not calibrated metres",
+    "input_fps": null,
+    "fps_limit": 30.0,
+    "model_input": [
+      192,
+      640
+    ],
+    "batch_size": 1,
+    "device": "cuda",
+    "process_memory": {
+      "working_set_mib": 798.75390625,
+      "peak_working_set_mib": 819.09765625
+    },
+    "review_every": 100,
+    "review_snapshots": 18,
+    "timings": {
+      "model_ms": {
+        "mean": 10.819375478927608,
+        "median": 7.6394999999962465,
+        "p95": 16.039130000000767,
+        "minimum": 5.046000000000106,
+        "maximum": 1159.4651999999996
+      },
+      "processing_ms": {
+        "mean": 14.563702426564339,
+        "median": 11.461699999998132,
+        "p95": 20.86342999999715,
+        "minimum": 8.143000000004008,
+        "maximum": 1178.8235
+      },
+      "capture_to_display_ms": {
+        "mean": 86.82173601532594,
+        "median": 76.87800000000067,
+        "p95": 105.3635400000033,
+        "minimum": 51.344200000002616,
+        "maximum": 2227.848899999998
+      },
+      "full_cycle_ms": {
+        "mean": 83.02863703703704,
+        "median": 74.16150000000243,
+        "p95": 111.15881999999715,
+        "minimum": 41.93349999999896,
+        "maximum": 2207.1761000000015
+      }
+    },
+    "runtime_acceptance": {
+      "status": "pass",
+      "minimum_seconds": 60.0,
+      "measured_seconds": 65.01142619999999,
+      "display_enabled": true
+    },
+    "scope": "Integrated frame-loop time includes first-frame overhead, periodic review exports and pacing; excludes model loading, manifest verification and final report writes. Processing includes model time.",
+    "input_manifest_sha256": null,
+    "pytorch_peak_allocated_mib": 109.77,
+    "video_playback": null,
+    "metrics_scaling": "GT median alignment; diagnostic only",
+    "point_cloud": null,
+    "backend": "monodepth2",
+    "model_name": "Monodepth2 ResNet-18 mono_640x192",
+    "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+  },
+  "frame_identity_audit": {
+    "count": 783,
+    "first": 19,
+    "last": 801,
+    "consecutive": true
+  },
+  "acceptance": {
+    "displayed_60_seconds": true,
+    "application_fps_at_least_10": true
+  },
+  "limits": "One measured Town04 ClearNoon Low/off-screen configuration on this RTX4050 laptop; startup/warmup excluded. Not a guarantee for other maps/weather/hardware, hard real time or calibrated model distances."
+}
