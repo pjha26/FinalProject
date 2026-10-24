@@ -23,7 +23,7 @@ def evaluation_manifest(path):
     for key in ("dataset", "source", "limitations"):
         if not isinstance(manifest.get(key), str) or not manifest[key].strip():
             raise ValueError("Evaluation manifest requires " + key)
-    if manifest.get("data_kind") not in ("rgbd_reference", "real_rgbd", "synthetic_test_fixture") or manifest.get("split") not in ("diagnostic", "test", "validation"):
+    if manifest.get("data_kind") not in ("rgbd_reference", "real_rgbd", "simulated_rgbd", "synthetic_test_fixture") or manifest.get("split") not in ("diagnostic", "test", "validation"):
         raise ValueError("Declare evaluation data kind and held-out/diagnostic split")
     protocol = manifest.get("protocol")
     if not isinstance(protocol, dict) or protocol.get("depth_units") != "metres" or protocol.get("aligned_to_rgb") is not True or protocol.get("min_depth") != 0.001 or protocol.get("max_depth") != 80 or protocol.get("scaling") != "per_image_median" or protocol.get("aggregation") != "mean_of_images" or protocol.get("crop") not in ("none", "garg"):

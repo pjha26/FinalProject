@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "dataset": "CARLA map-disjoint moving-target pilot",
+  "data_kind": "simulated_rgbd",
+  "split": "validation",
+  "limitations": "Tiny correlated Low-quality daylight simulator validation from one route/map; not an untouched test set, KITTI benchmark, training benefit or deployment metric-scale evidence.",
+  "evaluated_samples": 25,
+  "expected_samples": 25,
+  "scenes": 1,
+  "protocol": {
+    "depth_units": "metres",
+    "aligned_to_rgb": true,
+    "min_depth": 0.001,
+    "max_depth": 80,
+    "scaling": "per_image_median",
+    "aggregation": "mean_of_images",
+    "crop": "none"
+  },
+  "manifest_sha256": "38173baf486529be15d5449719186453bcf46659f9f7ee8dcb9cf4aee451e409",
+  "checkpoint_sha256": {
+    "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+    "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+  },
+  "device": "cuda",
+  "mean_metrics": {
+    "abs_rel": 0.18140801021130007,
+    "sq_rel": 1.6326090089263219,
+    "rmse": 8.352287019913117,
+    "rmse_log": 0.34514984305932717,
+    "a1": 0.764108079677858,
+    "a2": 0.8787390122142469,
+    "a3": 0.9428669117752311
+  },
+  "total_valid_pixels": 4338866,
+  "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+  "reference_checkpoint_sha256": {
+    "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+    "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+  },
+  "backend": "monodepth2",
+  "model_name": "Monodepth2 ResNet-18 mono_640x192",
+  "model_input": [
+    192,
+    640
+  ],
+  "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1",
+  "evidence_source_commit": "2ec958caf4a1aaf01bc62bd1ddf542e99e336bab",
+  "evaluation_preparer": "tools/prepare_carla_evaluation.py (added with this result record)"
+}

@@ -145,3 +145,8 @@ The [CARLA pilot guide](docs/carla_training_pilot.md) records the new RGB-triple
 ## Map-disjoint CARLA input pilot - 25 October 2026
 
 Town05 seed 43 passed a fresh-server 100-frame capture and audit after seed 42 failed during warmup. Together with the accepted Town04 seed-42 recording, the unchanged preparer produced 98 training and 25 validation RGB triplets, rejecting 73 stationary validation windows. This completes the bounded native input-preparation gate, not representative training-data coverage or the seed-42 failure diagnosis. Next: freeze a CARLA validation baseline, implement/test the self-supervised training path, and run a separate bounded training experiment before any broader accuracy claim. Selected actual outputs and hashes are preserved in the local reference folder documented in [reference outputs](docs/reference_outputs.md).
+
+
+## Frozen CARLA validation baseline - 25 October 2026
+
+The tested evaluation preparer freezes all 25 unique moving validation targets with native reference depth and matching source/RGB hashes; simulator data is explicitly labelled. Unchanged Monodepth2 completed the diagnostic with AbsRel 0.181408, GT-median-aligned RMSE 8.352287 m and delta1 0.764108. All 25 saved predictions reproduced scores; all 107 tests plus frozen-input/image/video checks pass. Results and protocol are in the [CARLA guide](docs/carla_training_pilot.md) and [result metadata](docs/carla_baseline_results.json). Next: implement/test the self-supervised pose/loss training path and run a bounded sanity experiment, while expanding route coverage and reserving an untouched test set. No project-specific training has been completed.

@@ -93,3 +93,28 @@ Reproduce on a running server with new paths (retain the explicit seeds):
 ```
 
 The successful diagnostic used a fresh server for Town05, off-screen Low rendering, no sound, `-stdout -FullStdOutLogOutput`, and bounded capture. Do not assume a long-running mixed-map session has been validated. The separate [reference outputs guide](reference_outputs.md) describes the copied local evidence folder.
+
+## Frozen CARLA validation baseline - 25 October 2026
+
+`tools/prepare_carla_evaluation.py` freezes every unique middle frame of retained validation triplets, preserving native RGB/depth bytes and hashes. It requires a matching source capture/index, a validation map absent from training, an accepted source audit and matching frozen target RGB hashes. It refuses existing outputs and stages the dataset atomically. Ground-truth depth is copied only into the separate scoring dataset, never into prepared training inputs. The evaluator now explicitly labels simulator data `simulated_rgbd`. Three synthetic-fixture tests cover native GT/hash preservation, selection/no-overwrite, rejection of training maps or changed manifests, and failure on changed RGB.
+
+```powershell
+.\.venv\Scripts\python.exe tools/prepare_carla_evaluation.py --triplets data/training/carla_pilot_13/triplets.json --validation-scene data/carla/validation_town05_13 --output data/evaluation/carla_next
+.\.venv\Scripts\python.exe project.py evaluate --manifest data/evaluation/carla_next/evaluation_manifest.json --device cuda --output runs/carla_baseline_next
+```
+
+The unchanged pretrained Monodepth2 baseline completed all **25 validation targets from one Town05 route**, scoring **4,338,866 valid pixels**. Protocol: native 640x480 reference depth, finite reference values between 0.001 and 80 m, no crop, existing inverse-depth interpolation, per-image GT-median scaling, then arithmetic mean over images. Reference-depth geometry was separately probed on Town04 with the same sensor configuration; this run does not provide a new Town05 facade check or calibrated prediction scale.
+
+| Metric | Pretrained baseline |
+|---|---:|
+| AbsRel | 0.181408 |
+| SqRel | 1.632609 |
+| RMSE after GT-median alignment | 8.352287 m |
+| Log RMSE | 0.345150 |
+| delta1 | 0.764108 |
+| delta2 | 0.878739 |
+| delta3 | 0.942867 |
+
+The manifest SHA256 is `38173baf486529be15d5449719186453bcf46659f9f7ee8dcb9cf4aee451e409`. [Tracked result metadata](carla_baseline_results.json) records checkpoint hashes and protocol. Local evidence is `data/evaluation/carla_pilot_01/`, `runs/carla_baseline_01/` and `runs/carla_baseline_validation_01/`. All 25 saved prediction arrays reproduced per-image and aggregate metrics within rtol/atol 1e-6 (maximum absolute difference 2.23e-9); valid-pixel counts match. All **107 tests**, frozen-demo verification, CUDA image inference and a 10-frame headless video smoke test pass. The first output and highest-AbsRel output are saved separately for review; visual selections never change scoring membership.
+
+This is a tiny correlated simulator validation baseline, not an independent test set, official KITTI/Eigen result or evidence of fine-tuning benefit. These validation targets may support development; reserve separate untouched routes for final testing before model selection claims. Preserve the accepted baseline and KITTI evaluation-only data. Next implement/test the pose and self-supervised losses, run a bounded training sanity check in a separate checkpoint directory, and expand training/validation/test route coverage before longer experiments or accuracy claims.
