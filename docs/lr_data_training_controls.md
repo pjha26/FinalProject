@@ -18,6 +18,7 @@ Measured 25 October 2026. These runs reuse the existing training runner with no 
 | Pretrained baseline | 0 project updates | 0.181408 | 8.352287 m | 0.093627 | 4.219610 m |
 | Earlier frozen encoder, 1e-5, original data | 10 | 0.151677 | 7.584519 m | 0.109467 | 4.857251 m |
 | Lower learning rate; original data; 10 updates | 10 | 0.178996 | 8.283810 m | 0.094239 | 4.231347 m |
+| Expanded data; same rate; 10 updates | 10 | 0.179563 | 8.296955 m | 0.094061 | 4.224401 m |
 
 Protocol: native reference depth, 0.001-80 m mask, no crop, existing inverse-depth interpolation, per-image GT-median alignment and arithmetic mean over images. Scores do not recover predicted metric scale. CARLA covers one short Low-quality daylight validation route; KITTI is a 24-image/eight-drive diagnostic, not official Eigen or untouched final testing.
 
@@ -27,10 +28,26 @@ Learning rate 1e-5 -> 1e-6 relative to frozen-encoder control.
 
 Completed 10 updates on 10 unique training targets from 98 available triplets. Mean self-supervised validation objective: 0.023730101 before, 0.023442584 after. Validation/train/export section: 5.69 s excluding setup; peak PyTorch allocated CUDA memory 772021248 bytes, not total process/system VRAM.
 
+Training target counts by scene: {'train_town04_09': 10}.
+
 State and provenance audits confirm unchanged depth-encoder tensors and original baseline bytes, updated depth/pose paths, finite gradients/checkpoints, unchanged validation rows and matching manifest hashes. All 49 candidate predictions reproduce metrics within rtol/atol 1e-6 with the same sample IDs and valid-pixel counts as reference/baseline. Raw evidence: `runs/carla_frozen_lr1e6_01/`, `runs/carla_frozen_lr1e6_01_carla_eval/` and `runs/carla_frozen_lr1e6_01_kitti_eval/` (the low-rate KITTI description-corrected rerun has suffix `_corrected`; its metrics are identical).
 
 ```powershell
 .\.venv\Scripts\python.exe tools/train_carla_pilot.py --manifest data/training/carla_pilot_13/triplets.json --output runs/carla_frozen_lr1e6_01_next --steps 10 --learning-rate 0.000001 --device cuda --freeze-encoder
+```
+
+## Expanded data; same rate; 10 updates
+
+Training dataset 98 -> 196 relative to low-LR original-data control.
+
+Completed 10 updates on 10 unique training targets from 196 available triplets. Mean self-supervised validation objective: 0.023730101 before, 0.023584328 after. Validation/train/export section: 5.44 s excluding setup; peak PyTorch allocated CUDA memory 772021248 bytes, not total process/system VRAM.
+
+Training target counts by scene: {'train_town04_09': 5, 'train_town04_14': 5}.
+
+State and provenance audits confirm unchanged depth-encoder tensors and original baseline bytes, updated depth/pose paths, finite gradients/checkpoints, unchanged validation rows and matching manifest hashes. All 49 candidate predictions reproduce metrics within rtol/atol 1e-6 with the same sample IDs and valid-pixel counts as reference/baseline. Raw evidence: `runs/carla_expanded_lr1e6_01/`, `runs/carla_expanded_lr1e6_01_carla_eval/` and `runs/carla_expanded_lr1e6_01_kitti_eval/` (the low-rate KITTI description-corrected rerun has suffix `_corrected`; its metrics are identical).
+
+```powershell
+.\.venv\Scripts\python.exe tools/train_carla_pilot.py --manifest data/training/carla_expanded_01/triplets.json --output runs/carla_expanded_lr1e6_01_next --steps 10 --learning-rate 0.000001 --device cuda --freeze-encoder
 ```
 
 ## Decision and remaining work
