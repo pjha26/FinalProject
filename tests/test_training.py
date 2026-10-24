@@ -106,4 +106,23 @@ class TrainingGeometryTests(unittest.TestCase):
         self.assertGreater(float(result["warp_fraction"]),0)
 
 
+class EncoderFreezeTests(unittest.TestCase):
+    def test_freezing_only_depth_encoder_preserves_other_trainable_paths(self):
+        from project import BASELINE
+        from src.training import TrainableModel
+        model=TrainableModel(BASELINE,"cpu",freeze_encoder=True)
+        self.assertTrue(all(not p.requires_grad for p in model.encoder.parameters()))
+        for module in (model.depth,model.pose_encoder,model.pose):
+            self.assertTrue(all(p.requires_grad for p in module.parameters()))
+        model.train()
+        self.assertTrue(all(not module.training for module in model.modules() if isinstance(module,torch.nn.BatchNorm2d)))
+        self.assertTrue(all(not p.requires_grad for p in model.encoder.parameters()))
+
+    def test_default_keeps_depth_encoder_trainable(self):
+        from project import BASELINE
+        from src.training import TrainableModel
+        model=TrainableModel(BASELINE,"cpu")
+        self.assertTrue(all(p.requires_grad for p in model.encoder.parameters()))
+
+
 if __name__=="__main__":unittest.main()

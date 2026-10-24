@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "training": {
+    "schema_version": 1,
+    "status": "sanity_complete",
+    "started_utc": "2026-10-24T19:54:18.498607+00:00",
+    "device": "cuda",
+    "steps_requested": 10,
+    "steps_completed": 10,
+    "seed": 42,
+    "batch_size": 1,
+    "learning_rate": 1e-05,
+    "freeze_depth_encoder": true,
+    "gradient_norm_clip": 10.0,
+    "manifest_sha256": "bb93ba2e4a1004854757e4fe13bd9cde7d363c8c907483ecb4e1286f531d7c1d",
+    "train_triplets": 98,
+    "validation_triplets": 25,
+    "initial_checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+      "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+      "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+    },
+    "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+    "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+    "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
+    "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+    "limitations": "Training sanity check on 98 correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+    "validation_before": {
+      "loss": 0.02373010091483593,
+      "photometric": 0.02371411703526974,
+      "smoothness": 1.598365375684807e-05,
+      "warp_fraction": 0.5491448020935059
+    },
+    "validation_after": {
+      "loss": 0.024117683917284014,
+      "photometric": 0.024100262001156808,
+      "smoothness": 1.742217100400012e-05,
+      "warp_fraction": 0.5497632956504822
+    },
+    "candidate_checkpoint_sha256": {
+      "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+      "depth.pth": "a3f77cec89116bdbc6901fa62f8f2989112ced420bba8ca9e61a587f27a7317c",
+      "pose_encoder.pth": "9d3318f67a0737b5f87f09effc382f4b5587a602239fc455bb24651f5a26c789",
+      "pose.pth": "ab2f0bfb47d2c6a18b796eefc1c3d22e2843983cad48f2433be8a1baa8bde230"
+    },
+    "peak_torch_allocated_bytes": 772021248,
+    "elapsed_seconds": 5.6422171
+  },
+  "state_audit": {
+    "status": "pass",
+    "same_ten_training_targets_as_unfrozen": true,
+    "files": {
+      "encoder.pth": {
+        "changed_tensors": 0,
+        "total_tensors": 122,
+        "baseline_bytes_unchanged": true
+      },
+      "depth.pth": {
+        "changed_tensors": 28,
+        "total_tensors": 28,
+        "baseline_bytes_unchanged": true
+      },
+      "pose_encoder.pth": {
+        "changed_tensors": 60,
+        "total_tensors": 122,
+        "baseline_bytes_unchanged": true
+      },
+      "pose.pth": {
+        "changed_tensors": 8,
+        "total_tensors": 8,
+        "baseline_bytes_unchanged": true
+      }
+    },
+    "source_sha256": {
+      "src/training.py": "035fdfd934ac0214b849a24cc44d8e473c2a047bcbbb933e1830390a3768b4bc",
+      "tools/train_carla_pilot.py": "ace770c9e99dab3e1d2d93f5098414c65216be8d06d27e61709e7a8382b1de0a",
+      "tests/test_training.py": "c985492aea0811ab3045e4fdbbedf041a711b4375c66ca2f044dd6ef6be3f39a"
+    }
+  },
+  "comparison": {
+    "carla": {
+      "samples": 25,
+      "valid_pixels": 4338866,
+      "scores_reproduced": true,
+      "maximum_metric_absolute_difference": 3.6995304597553513e-09,
+      "baseline": {
+        "abs_rel": 0.18140801021130007,
+        "sq_rel": 1.6326090089263219,
+        "rmse": 8.352287019913117,
+        "rmse_log": 0.34514984305932717,
+        "a1": 0.764108079677858,
+        "a2": 0.8787390122142469,
+        "a3": 0.9428669117752311
+      },
+      "unfrozen": {
+        "abs_rel": 0.14515620136900034,
+        "sq_rel": 1.2259417719102261,
+        "rmse": 7.032226533274643,
+        "rmse_log": 0.2569764450585785,
+        "a1": 0.8330412987965188,
+        "a2": 0.9296164399086476,
+        "a3": 0.9659475513443608
+      },
+      "frozen": {
+        "abs_rel": 0.15167710172164842,
+        "sq_rel": 1.3160671165687179,
+        "rmse": 7.584518517507003,
+        "rmse_log": 0.29963022002163664,
+        "a1": 0.8130309359755659,
+        "a2": 0.9153335156276597,
+        "a3": 0.9568127830252873
+      }
+    },
+    "kitti": {
+      "samples": 24,
+      "valid_pixels": 1782495,
+      "scores_reproduced": true,
+      "maximum_metric_absolute_difference": 5.080277989399917e-07,
+      "baseline": {
+        "abs_rel": 0.09362687132453361,
+        "sq_rel": 0.6896455021779558,
+        "rmse": 4.219609616896688,
+        "rmse_log": 0.14903443240625655,
+        "a1": 0.9128543584774701,
+        "a2": 0.9752481364642772,
+        "a3": 0.9909762486532604
+      },
+      "unfrozen": {
+        "abs_rel": 0.1196805279993536,
+        "sq_rel": 1.3194227880702167,
+        "rmse": 5.299157113859497,
+        "rmse_log": 0.17493542442689758,
+        "a1": 0.8959916613078632,
+        "a2": 0.9656554744285696,
+        "a3": 0.9858059602461747
+      },
+      "frozen": {
+        "abs_rel": 0.10946697643831876,
+        "sq_rel": 1.057261820395342,
+        "rmse": 4.8572512992688255,
+        "rmse_log": 0.16415310604340302,
+        "a1": 0.9062115045860395,
+        "a2": 0.9688092742637763,
+        "a3": 0.9874596070801468
+      }
+    }
+  },
+  "tests": 116,
+  "decision": "Keep pretrained baseline; freezing reduces but does not remove KITTI regression; reserved test unscored."
+}

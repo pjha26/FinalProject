@@ -13,3 +13,6 @@ A second local folder, `../outputs/carla_baseline_reference_2026-10-25_01/`, con
 
 
 The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`, records the first ten-step self-supervised sanity experiment. Open `index.html` for the recorded loss/metric plot, actual target/reconstruction images and matched baseline/candidate CARLA/KITTI previews. It also holds selected numerical arrays, configuration, training CSV, 114-test log, checkpoint/state audit, comparison metrics and a SHA256 manifest. Candidate weights stay in the ignored experiment directory. KITTI regressed, so this candidate is retained as experimental and the accepted default remains pretrained.
+
+
+`../outputs/encoder_freeze_reference_2026-10-25_01/` records the next two steps: expanded training-route preparation/reserved-test integrity, and the matched encoder-freezing trial. The `index.html` gallery shows the added training RGB, identical-sample baseline/unfrozen/frozen previews, and recorded loss/metric comparisons. JSON/CSV files, selected arrays, the 116-test log, numerical-state audit and SHA256 manifest are included. No reserved-test model predictions or candidate weights are included. The pretrained baseline remains default because both candidates regress on the KITTI pilot.

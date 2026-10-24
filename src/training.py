@@ -92,7 +92,7 @@ def temporal_transforms(encoder, decoder, colors):
 
 
 class TrainableModel(nn.Module):
-    def __init__(self, checkpoint, device):
+    def __init__(self, checkpoint, device, freeze_encoder=False):
         super().__init__()
         networks, _ = training_layers()
         base = load_model(checkpoint, device)
@@ -105,6 +105,7 @@ class TrainableModel(nn.Module):
         self.pose_encoder.load_state_dict(torch.load(Path(checkpoint)/"pose_encoder.pth", map_location="cpu", weights_only=True), strict=True)
         self.pose.load_state_dict(torch.load(Path(checkpoint)/"pose.pth", map_location="cpu", weights_only=True), strict=True)
         self.to(device)
+        self.encoder.requires_grad_(not freeze_encoder)
 
     def train(self, mode=True):
         super().train(mode)

@@ -39,7 +39,7 @@ def validate(model, objective, dataset, device):
     return {key:float(np.mean([row[key] for row in rows])) for key in rows[0]}
 
 
-def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42):
+def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, freeze_encoder=False):
     if not isinstance(steps,int) or steps<=0 or not np.isfinite(learning_rate) or learning_rate<=0:
         raise ValueError("Need positive steps and finite positive learning rate")
     output=Path(output).resolve()
@@ -55,20 +55,21 @@ def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42):
     if device.type=="cuda":
         if not torch.cuda.is_available():raise RuntimeError("CUDA requested but unavailable")
         torch.cuda.manual_seed_all(seed);torch.cuda.reset_peak_memory_stats(device)
-    model=TrainableModel(BASELINE,device)
+    model=TrainableModel(BASELINE,device,freeze_encoder=freeze_encoder)
     objective=SelfSupervisedLoss().to(device)
-    optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
+    optimizer=torch.optim.Adam([p for p in model.parameters() if p.requires_grad],lr=learning_rate)
     order=torch.Generator().manual_seed(seed)
     output.mkdir(parents=True,exist_ok=False)
     started=time.perf_counter()
     record=dict(schema_version=1,status="running",started_utc=datetime.now(timezone.utc).isoformat(),device=str(device),
                 steps_requested=steps,steps_completed=0,seed=seed,batch_size=1,learning_rate=learning_rate,
+                freeze_depth_encoder=freeze_encoder,gradient_norm_clip=10.0,
                 manifest_sha256=train.fingerprint,train_triplets=len(train),validation_triplets=len(val),
                 initial_checkpoint_sha256=initial,pose_source_sha256=POSE_SOURCE_SHA256,
                 objective="Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
                 adaptations="Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
                 reproducibility="Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
-                limitations="Training sanity check on 98 correlated Town04 triplets, not converged training, generalization, official benchmark or calibrated depth evidence.")
+                limitations="Training sanity check on {} correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.".format(len(train)))
     write_json(output/"summary.json",record)
     try:
         record["validation_before"]=validate(model,objective,val,device)
@@ -142,5 +143,6 @@ if __name__=="__main__":
     parser.add_argument("--steps",type=int,default=10)
     parser.add_argument("--learning-rate",type=float,default=1e-5)
     parser.add_argument("--device",choices=("cuda","cpu"),default="cuda")
+    parser.add_argument("--freeze-encoder",action="store_true",help="Freeze depth-encoder parameters; depth decoder and pose networks remain trainable")
     args=parser.parse_args()
-    run(args.manifest,args.output,args.steps,args.learning_rate,args.device)
+    run(args.manifest,args.output,args.steps,args.learning_rate,args.device,freeze_encoder=args.freeze_encoder)

@@ -46,3 +46,8 @@ Seven new component tests cover RGB-only loading, calibration/temporal order, ha
 [Tracked experiment metadata](training_pilot_results.json) contains the configuration, objective, checkpoint/source hashes, state audit, metrics and decision. Local evidence: `runs/training_component_validation_01/`, `runs/carla_training_sanity_01/`, `runs/carla_sanity_candidate_01/`, `runs/kitti_sanity_candidate_01/`, and each scoring dataset's `candidate_sanity_01_manifest.json`. Raw evidence and candidate weights remain ignored. The separate [reference-output folder](reference_outputs.md) contains actual labelled previews, numerical arrays, training trace, metrics and hashes; the trace is descriptive, not proof of convergence.
 
 Next: expand route/scene diversity and reserve untouched testing routes; design a controlled short experiment to investigate the KITTI regression before longer fine-tuning. Evaluate one change at a time (for example, freezing the encoder or a smaller learning rate), without training on evaluation examples or replacing the baseline. Broader training, augmentation, loss ablations, full Eigen evaluation and integrated CARLA inference/FPS remain incomplete.
+
+
+## Subsequent controlled step
+
+The [encoder-freezing control](encoder_freeze_experiment.md) now compares the first unfrozen candidate with a matched ten-step frozen-depth-encoder trial. It reduces but does not remove the KITTI regression; the pretrained default remains unchanged. Route expansion and a separately reserved unscored route are recorded in the [data expansion](carla_data_expansion.md).
