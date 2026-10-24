@@ -167,3 +167,8 @@ Added/audited 100-frame Town04 seed-44 training capture and prepared 196 trainin
 ## Step 2 - controlled encoder freezing - 25 October 2026
 
 Added opt-in `--freeze-encoder` with preserved default behavior and optimizer filtering; two new tests bring the suite to 116 passing tests. A matched ten-step experiment on the original 98/25 manifest used the same target IDs/order and initial weights as the unfrozen sanity run. Numerical audit confirms all depth-encoder tensors stayed unchanged while decoder/pose paths updated. KITTI pilot AbsRel 0.109467 reduces the unfrozen 0.119681 regression but remains worse than baseline 0.093627; CARLA AbsRel is 0.151677. Keep the pretrained default. All 49 predictions reproduce scoring; fresh baseline image/video and asset checks pass. The reserved seed-45 route remains unscored. [Control details](docs/encoder_freeze_experiment.md) and [metadata](docs/encoder_freeze_results.json) record the evidence. Next: a predeclared learning-rate control, followed separately by fixed-policy expanded-data training; broader research/runtime gates remain incomplete.
+
+
+## Lower learning rate; original data; 10 updates - 25 October 2026
+
+Completed 10 updates on 10 unique targets under the predeclared protocol. CARLA diagnostic AbsRel 0.178996; KITTI diagnostic AbsRel 0.094239. All 49 predictions reproduce scoring, with source/weight/encoder/validation audits passing; reserved testing remains unscored. Pretrained baseline retained. [Control record](docs/lr_data_training_controls.md) and [numerical metadata](docs/lr_data_training_controls_results.json) document the result and limits. No application source or default weights changed.

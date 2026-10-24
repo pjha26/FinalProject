@@ -16,3 +16,6 @@ The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`
 
 
 `../outputs/encoder_freeze_reference_2026-10-25_01/` records the next two steps: expanded training-route preparation/reserved-test integrity, and the matched encoder-freezing trial. The `index.html` gallery shows the added training RGB, identical-sample baseline/unfrozen/frozen previews, and recorded loss/metric comparisons. JSON/CSV files, selected arrays, the 116-test log, numerical-state audit and SHA256 manifest are included. No reserved-test model predictions or candidate weights are included. The pretrained baseline remains default because both candidates regress on the KITTI pilot.
+
+
+`../outputs/training_controls_2026-10-25_01/` contains the predeclared lower-rate, expanded-data and duration-control reference cases as they complete. Open `index.html` for status and per-case galleries. Each completed case retains actual first-sample previews, selected prediction arrays, configuration, state/scoring audits, metric tables and source hashes; a cumulative manifest checks saved files. No reserved-test predictions or full checkpoints are included.

@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "protocol": {
+    "schema_version": 1,
+    "status": "predeclared_before_execution",
+    "source_commit": "f87f04e7342ff84b297bf715fb0d2b22ed591125",
+    "seed": 42,
+    "batch_size": 1,
+    "freeze_encoder": true,
+    "learning_rate": 1e-06,
+    "initialization": "Official unchanged Monodepth2 depth/pose weights; each run starts independently",
+    "validation": "Same frozen 25-target Town05 and 24-image KITTI pilots; reference depth used for scoring only",
+    "reserved_test": "test_town05_16 remains unscored and excluded",
+    "runs": [
+      {
+        "name": "carla_frozen_lr1e6_01",
+        "manifest": "data/training/carla_pilot_13/triplets.json",
+        "steps": 10,
+        "changed_factor": "Learning rate 1e-5 -> 1e-6 relative to frozen-encoder control",
+        "manifest_sha256": "bb93ba2e4a1004854757e4fe13bd9cde7d363c8c907483ecb4e1286f531d7c1d"
+      },
+      {
+        "name": "carla_expanded_lr1e6_01",
+        "manifest": "data/training/carla_expanded_01/triplets.json",
+        "steps": 10,
+        "changed_factor": "Training dataset 98 -> 196 relative to low-LR original-data control",
+        "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf"
+      },
+      {
+        "name": "carla_expanded_epoch_01",
+        "manifest": "data/training/carla_expanded_01/triplets.json",
+        "steps": 196,
+        "changed_factor": "Duration 10 -> 196 updates, one complete shuffled pass through expanded data",
+        "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf"
+      }
+    ],
+    "execution_gate": "Proceed to longer run only if short runs finish with finite gradients/losses and valid checkpoints; do not use reserved-test results for selection"
+  },
+  "cases": {
+    "carla_frozen_lr1e6_01": {
+      "specification": {
+        "name": "carla_frozen_lr1e6_01",
+        "manifest": "data/training/carla_pilot_13/triplets.json",
+        "steps": 10,
+        "changed_factor": "Learning rate 1e-5 -> 1e-6 relative to frozen-encoder control",
+        "manifest_sha256": "bb93ba2e4a1004854757e4fe13bd9cde7d363c8c907483ecb4e1286f531d7c1d"
+      },
+      "training": {
+        "schema_version": 1,
+        "status": "sanity_complete",
+        "started_utc": "2026-10-24T20:00:53.637971+00:00",
+        "device": "cuda",
+        "steps_requested": 10,
+        "steps_completed": 10,
+        "seed": 42,
+        "batch_size": 1,
+        "learning_rate": 1e-06,
+        "freeze_depth_encoder": true,
+        "gradient_norm_clip": 10.0,
+        "manifest_sha256": "bb93ba2e4a1004854757e4fe13bd9cde7d363c8c907483ecb4e1286f531d7c1d",
+        "train_triplets": 98,
+        "validation_triplets": 25,
+        "initial_checkpoint_sha256": {
+          "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+          "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+          "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+          "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+        },
+        "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+        "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+        "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
+        "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+        "limitations": "Training sanity check on 98 correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+        "validation_before": {
+          "loss": 0.02373010091483593,
+          "photometric": 0.02371411703526974,
+          "smoothness": 1.598365375684807e-05,
+          "warp_fraction": 0.5491448020935059
+        },
+        "validation_after": {
+          "loss": 0.023442584201693536,
+          "photometric": 0.023426450565457346,
+          "smoothness": 1.6133592980622778e-05,
+          "warp_fraction": 0.5504233717918396
+        },
+        "candidate_checkpoint_sha256": {
+          "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+          "depth.pth": "b8d3504df280ac6a690522969078b881a1bc021eed2a713950b8490e53c212ac",
+          "pose_encoder.pth": "240fcd663e4aaac029bd5d7a9b8c3185da44f800aa6ab312d2b4f4794a4d1629",
+          "pose.pth": "b83e12587b87b522c8fb18ccc3d447add712b995b6ca0cfa5bb96e830a75d0c9"
+        },
+        "peak_torch_allocated_bytes": 772021248,
+        "elapsed_seconds": 5.6907513000000005
+      },
+      "state_audit": {
+        "status": "pass",
+        "steps": 10,
+        "unique_targets": 10,
+        "same_target_order_as_high_lr_control": true,
+        "validation_rows_unchanged": true,
+        "complete_single_epoch": false,
+        "states": {
+          "encoder.pth": {
+            "total_tensors": 122,
+            "changed_tensors": 0,
+            "baseline_bytes_unchanged": true
+          },
+          "depth.pth": {
+            "total_tensors": 28,
+            "changed_tensors": 28,
+            "baseline_bytes_unchanged": true
+          },
+          "pose_encoder.pth": {
+            "total_tensors": 122,
+            "changed_tensors": 60,
+            "baseline_bytes_unchanged": true
+          },
+          "pose.pth": {
+            "total_tensors": 8,
+            "changed_tensors": 8,
+            "baseline_bytes_unchanged": true
+          }
+        },
+        "source_sha256": {
+          "src/training.py": "035fdfd934ac0214b849a24cc44d8e473c2a047bcbbb933e1830390a3768b4bc",
+          "tools/train_carla_pilot.py": "ace770c9e99dab3e1d2d93f5098414c65216be8d06d27e61709e7a8382b1de0a"
+        }
+      },
+      "comparison": {
+        "carla": {
+          "samples": 25,
+          "valid_pixels": 4338866,
+          "metrics_reproduced": true,
+          "max_metric_absolute_difference": 4.250377827474949e-09,
+          "baseline": {
+            "abs_rel": 0.18140801021130007,
+            "sq_rel": 1.6326090089263219,
+            "rmse": 8.352287019913117,
+            "rmse_log": 0.34514984305932717,
+            "a1": 0.764108079677858,
+            "a2": 0.8787390122142469,
+            "a3": 0.9428669117752311
+          },
+          "reference": {
+            "abs_rel": 0.15167710172164842,
+            "sq_rel": 1.3160671165687179,
+            "rmse": 7.584518517507003,
+            "rmse_log": 0.29963022002163664,
+            "a1": 0.8130309359755659,
+            "a2": 0.9153335156276597,
+            "a3": 0.9568127830252873
+          },
+          "candidate": {
+            "abs_rel": 0.17899587493331615,
+            "sq_rel": 1.6018568237606527,
+            "rmse": 8.283809909281011,
+            "rmse_log": 0.34131589399355716,
+            "a1": 0.7707770979318755,
+            "a2": 0.88229302535855,
+            "a3": 0.9442576798291968
+          }
+        },
+        "kitti": {
+          "samples": 24,
+          "valid_pixels": 1782495,
+          "metrics_reproduced": true,
+          "max_metric_absolute_difference": 6.446421405570391e-07,
+          "baseline": {
+            "abs_rel": 0.09362687132453361,
+            "sq_rel": 0.6896455021779558,
+            "rmse": 4.219609616896688,
+            "rmse_log": 0.14903443240625655,
+            "a1": 0.9128543584774701,
+            "a2": 0.9752481364642772,
+            "a3": 0.9909762486532604
+          },
+          "reference": {
+            "abs_rel": 0.10946697643831876,
+            "sq_rel": 1.057261820395342,
+            "rmse": 4.8572512992688255,
+            "rmse_log": 0.16415310604340302,
+            "a1": 0.9062115045860395,
+            "a2": 0.9688092742637763,
+            "a3": 0.9874596070801468
+          },
+          "candidate": {
+            "abs_rel": 0.09423893092050482,
+            "sq_rel": 0.7065461657982364,
+            "rmse": 4.231346762685148,
+            "rmse_log": 0.14941416344498074,
+            "a1": 0.9134356718033857,
+            "a2": 0.974759179905619,
+            "a3": 0.9909080401240549
+          }
+        }
+      }
+    }
+  },
+  "tests": 116,
+  "default": "Unchanged official pretrained Monodepth2",
+  "scope": "Predeclared development-validation controls; reserved test remains unscored; not convergence or full benchmark evidence"
+}
