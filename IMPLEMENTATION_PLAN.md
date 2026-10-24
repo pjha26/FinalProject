@@ -182,3 +182,8 @@ Completed 10 updates on 10 unique targets under the predeclared protocol. CARLA 
 ## Expanded data; same rate; one 196-update epoch - 25 October 2026
 
 Completed 196 updates on 196 unique targets under the predeclared protocol. CARLA diagnostic AbsRel 0.147682; KITTI diagnostic AbsRel 0.108976. All 49 predictions reproduce scoring, with source/weight/encoder/validation audits passing; reserved testing remains unscored. Pretrained baseline retained. [Control record](docs/lr_data_training_controls.md) and [numerical metadata](docs/lr_data_training_controls_results.json) document the result and limits. No application source or default weights changed.
+
+
+## Remaining-work sequence - 25 October 2026
+
+The [remaining implementation plan](docs/remaining_implementation_plan.md) now defines nine ordered gates: synchronized augmentation; broader CARLA conditions/routes; epoch/resume support; controlled longer training; loss/seed ablations; full KITTI protocol; frozen-model reserved testing; integrated CARLA FPS acceptance; final research delivery. Start with a matched augmented-versus-unaugmented 196-step epoch, keeping original reconstruction targets and validation unchanged. This supplements the prototype delivery plan rather than claiming the original research scope is complete.

@@ -262,6 +262,8 @@ A [subsequent CARLA data expansion](docs/carla_data_expansion.md) adds a second 
 
 Predeclared [learning-rate/data/duration controls](docs/lr_data_training_controls.md) now record 3 completed follow-up experiment(s), with matched validation masks and preserved baseline weights. The accepted default remains pretrained; reserved test data remains unscored.
 
+The remaining research work is now organized into a [nine-step implementation plan](docs/remaining_implementation_plan.md), with dependencies and measured completion gates. The next implementation is synchronized temporal colour augmentation; the pretrained default and reserved testing remain protected.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
