@@ -30,3 +30,45 @@ Ground truth is used only for scoring. The selected images are already cropped: 
 This is a small **local cropped-validation diagnostic**, not an official KITTI leaderboard or full Eigen benchmark. Per-image median alignment does not recover metre-scale deployment predictions. The pretrained Monodepth2 checkpoint remains unchanged. No training examples or fine-tuned weights are created by this importer.
 
 Raw KITTI files, prepared inputs, numerical outputs and run logs remain ignored by Git. Retain them locally with the source manifest and dataset terms; only source/tests/documentation are committed.
+
+
+## Measured pilot results - 24 October 2026
+
+The importer was published as `4e0d870` before evaluating the models. Both sequential CUDA evaluations completed all 24 images from eight drives. The 92-test suite passed, including five importer tests covering conversion, masking, deterministic selection, input integrity and failure cases. Raw predictions from all 48 model/sample combinations independently reproduced their recorded scores within float32 tolerance. Paired sample IDs and valid-pixel counts matched exactly; retained calibration hashes also matched.
+
+| Backend | AbsRel | SqRel | Aligned RMSE (m) | Log RMSE | Delta1 | Delta2 | Delta3 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Monodepth2 ResNet-18 mono_640x192 | 0.093627 | 0.689646 | 4.219610 | 0.149034 | 0.912854 | 0.975248 | 0.990976 |
+| Depth Anything V2 Small | 0.094203 | 0.722033 | 4.258988 | 0.138601 | 0.927902 | 0.979386 | 0.992438 |
+
+AbsRel, SqRel, RMSE and log RMSE are lower-is-better; delta accuracies are higher-is-better. RMSE is measured after per-image GT median alignment. These figures do not establish calibrated depth during deployment, and must not be presented as achievement of the original report's official KITTI/Eigen targets.
+
+Monodepth2 has slightly lower aggregate AbsRel/SqRel/RMSE here; Small has better log RMSE and delta accuracies. The AbsRel difference is about 0.00058. Per-drive performance is mixed, so this pilot does not establish a universal winner. Monodepth2 remains the default; no candidate weights or training hyperparameters were selected using these validation scores.
+
+| Drive | Monodepth2 AbsRel | Small-294 AbsRel |
+|---|---:|---:|
+| 2011_09_26_drive_0002_sync | 0.064781 | 0.069919 |
+| 2011_09_26_drive_0013_sync | 0.107718 | 0.088954 |
+| 2011_09_26_drive_0020_sync | 0.060432 | 0.125545 |
+| 2011_09_26_drive_0023_sync | 0.071283 | 0.130160 |
+| 2011_09_26_drive_0036_sync | 0.111334 | 0.070947 |
+| 2011_09_28_drive_0037_sync | 0.134836 | 0.116265 |
+| 2011_09_30_drive_0016_sync | 0.079555 | 0.064449 |
+| 2011_10_03_drive_0047_sync | 0.119076 | 0.087389 |
+The small, deterministic sample has three correlated frames per drive, all from selected cropped validation. It is not the full Eigen split, an official benchmark submission, an independent test of every model's pretraining, or a fine-tuning result. Depth Anything overlap remains unknown. Any later tuning requires a separate untouched test set.
+
+### Evidence and provenance
+
+- Supplied ZIP: `data_depth_selection.zip`; locally computed SHA256 `11028c5f9ea21afdba20d00baeae023a9dbe80183765938816e47bfce1dd0f70`. This fingerprints the supplied file; it is not a checksum independently published by KITTI.
+- Prepared manifest SHA256: `a169c0571f4fd4023d3840497fba0aa7bbd4e3d322f98292da65f50e6ce5b492`.
+- Evaluated valid reference pixels across the 24 images: **1782495** for each backend; equal-image aggregation, not pooled-pixel scoring.
+- Prepared subset: approximately 55.53 MiB; the 2 GB ZIP was not fully extracted. Only selected RGB/depth/intrinsics were retained.
+- Baseline input: 192x640. Small network input: 294x1022, with output returned to the supplied RGB geometry. Neither setting was changed during evaluation.
+- Local inputs: `data/evaluation/kitti_pilot_01/`. The original source ZIP remains unchanged at its user-supplied location.
+- Local results: `runs/kitti_baseline_01/`, `runs/kitti_small_01/`, and `runs/kitti_import_validation_01/` (tests, run logs, source inventory and recomputed-score audit). These remain ignored.
+
+The first sample and each backend's highest-AbsRel sample were inspected visually after scoring, without changing subset membership. They include street, bicycle/pedestrian and shaded parked-car scenes. Appearance and raw preview colours alone do not establish depth correctness. Preview maps remain uncalibrated relative predictions; median alignment is applied only in scoring.
+
+### Remaining work
+
+Preserve this baseline. Broader driving evaluation and an untouched test split remain necessary before claiming generalization or selecting a fine-tuned candidate. The original CARLA temporal RGB/calibration collection, pose/loss training components, project-specific fine-tuning, full Eigen evaluation and ablations remain unfinished. The KITTI pilot is evaluation data, not training input.

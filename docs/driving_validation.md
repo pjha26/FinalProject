@@ -61,7 +61,7 @@ Before using the existing evaluator:
 
 Using the `garg` crop alone does not implement the complete official KITTI/Eigen evaluation procedure. Label any custom subset as a local diagnostic, not an official benchmark score. Median-aligned error uses GT during scoring; it does not make deployment outputs metric. Report performance and accuracy separately with their hardware, protocol and sample scope.
 
-Dataset acquisition/conversion and a held-out driving benchmark are **next work**, not completed by this document. The current five-frame indoor comparison cannot decide which model is most accurate for every driving scene.
+The [24-image KITTI cropped-validation pilot](kitti_pilot.md) now implements initial acquisition/conversion and matched driving-depth scoring. Its eight drives exclude the pinned baseline training/development lists, while Small pretraining overlap remains unknown. It is a local diagnostic; broader untouched-test evaluation and the full Eigen protocol remain next work. Neither this pilot nor the five-frame indoor comparison selects a universally best model.
 
 ## 4. Accept improvements only with evidence
 

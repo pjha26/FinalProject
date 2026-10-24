@@ -181,13 +181,32 @@ The optional backend's separate displayed rehearsal also passed, including point
 
 The five reference frames are correlated indoor samples from Open3D/Redwood. GT median alignment uses information unavailable during deployment; aligned errors do not establish calibrated output distances. The driving sample has no aligned GT. Read the [evaluation protocol](docs/evaluation_protocol.md), [accuracy report](docs/accuracy_report.md) and [poster alignment review](docs/poster_alignment.md) before reporting performance or accuracy.
 
+## KITTI cropped-validation pilot
+
+A local KITTI validation pilot is now implemented and measured: **24 images from eight drives**, excluding drives in the pinned Monodepth2 Eigen-Zhou training/development lists. Depth Anything's pretraining overlap is unknown. The importer reads the supplied ZIP directly, keeps only the selected paired RGB/depth/intrinsics, converts KITTI depth using `/256`, freezes checksums, and rejects invalid inputs or existing output directories. **92 tests passed**, and both models completed all 24 examples.
+
+| Backend | AbsRel | GT-aligned RMSE (m) | Delta1 |
+|---|---:|---:|---:|
+| Monodepth2 ResNet-18 | 0.093627 | 4.219610 | 0.912854 |
+| Depth Anything V2 Small-294 | 0.094203 | 4.258988 | 0.927902 |
+
+This is a small **cropped-validation diagnostic**, not an official KITTI/Eigen benchmark or evidence of completed fine-tuning. Scores use per-image GT median alignment; deployment outputs remain relative. The mixed metrics do not establish a universal model winner. Read the [KITTI pilot guide and full results](docs/kitti_pilot.md) for selection, split overlap, masks, provenance and all metrics.
+
+```powershell
+.\.venv\Scripts\python.exe tools/prepare_kitti_subset.py --archive 'C:\path\to\data_depth_selection.zip' --output data/evaluation/kitti_pilot_01
+.\.venv\Scripts\python.exe project.py evaluate --manifest data/evaluation/kitti_pilot_01/evaluation_manifest.json --model monodepth2 --device cuda --output runs/kitti_baseline_01
+.\.venv\Scripts\python.exe project.py evaluate --manifest data/evaluation/kitti_pilot_01/evaluation_manifest.json --model depth-anything --input-size 294 --device cuda --output runs/kitti_small_01
+```
+
+Use fresh output paths on a repeat. Keep the ZIP, prepared data and raw run evidence outside Git. The validation subset must not become fine-tuning data.
+
 ## Driving-scene improvement roadmap
 
 Follow the [driving validation and presentation plan](docs/driving_validation.md) for the next work:
 
 1. Freeze the current baseline and reproduce a complete rehearsal on the presentation laptop, including an offline run and saved-image fallback.
 2. Compare both existing models on the same varied, permitted driving clips; review vehicles, boundaries, road/horizon, shadows and reflective surfaces using saved snapshots.
-3. Acquire a documented held-out RGB/aligned-depth driving set and evaluate both models with the same frozen masks, crop and scaling protocol. KITTI evaluation requires correct registration and split provenance, not just a directory of dashcam videos.
+3. Extend the initial 24-image KITTI cropped-validation pilot with broader documented evaluation and an untouched test split. Retain the same masks/crop/scaling protocol and check pretraining overlap; a full Eigen benchmark remains separate.
 4. Investigate the largest measured errors before considering fine-tuning, new models or deployment optimizations. Accept changes only after repeatable quality and runtime checks.
 
 ## Presentation laptop handoff
@@ -245,7 +264,7 @@ The implementation history is recorded in the [master plan](IMPLEMENTATION_PLAN.
 - [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2): optional Small model; source and checkpoint revisions/checksums are pinned in `src/depth_anything.py`. The integrated Small assets retain their Apache-2.0 license.
 - [Udacity Advanced Lane Lines sample](https://github.com/udacity/CarND-Advanced-Lane-Lines): recorded driving video, pinned revision and checksums, with the MIT license retained in prepared data.
 - [Open3D sample data](https://github.com/isl-org/open3d_downloads): five-frame Redwood RGB-D diagnostic; source, archive hash and unit conversion recorded in its manifest and evaluation protocol.
-- [KITTI depth prediction benchmark](https://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction): proposed driving-depth evaluation resource; not yet a completed project benchmark.
+- [KITTI depth prediction benchmark](https://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction): source for the local 24-image cropped-validation pilot; full official benchmark evaluation remains pending.
 - [CARLA](https://github.com/carla-simulator/carla): optional simulator tooling.
 - [SemanticDepth](https://github.com/pablopalafox/semantic-depth): conceptual reference supplied for the project; not the selected inference backend.
 

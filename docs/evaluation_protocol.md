@@ -55,3 +55,8 @@ Runtime summaries retain wall-clock FPS, model/processing/arrival-to-display/ful
 ## Phase transition gate
 
 Keep the accepted checkpoint and Phase 2 input identity frozen. Run all regression tests, verify-demo, image inference, repeated profiling and a displayed runtime rehearsal before accepting changes. Retain failures and old results. Full KITTI validation, the friend's RTX 3050, physical webcam and native CARLA sensor acceptance are separate gates.
+
+
+## KITTI cropped-validation extension - 24 October 2026
+
+The [KITTI pilot](kitti_pilot.md) reuses this evaluator with 24 samples from eight drives and the same masking, inverse-depth interpolation, per-image median alignment and equal-image aggregation. KITTI PNG conversion uses /256 rather than Redwood /1000. The images are already cropped to 1216x352, so no additional Garg crop is applied. Drive exclusion uses SHA256-verified upstream Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. All 48 saved model/sample predictions reproduced their scores. The pilot is not the full Eigen benchmark, and remains evaluation-only.

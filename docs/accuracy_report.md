@@ -2,6 +2,10 @@
 
 Date: 19 October 2026. The original pretrained Monodepth2 baseline remains available. `--model depth-anything` selects the new, independently pinned Depth Anything V2 Small backend. No weights are trained or fine-tuned by this project.
 
+## Later driving-depth evidence - 24 October 2026
+
+The [KITTI cropped-validation pilot](kitti_pilot.md) now adds 24 RGB/depth examples from eight drives, with source/split audits and matched scoring. Monodepth2 AbsRel is 0.093627 and Small-294 AbsRel is 0.094203; Small has better delta accuracies. This differs from the older indoor comparison below and does not establish a universal winner. The new result is a local diagnostic, not official Eigen scoring or completed training. The full 92-test suite passed.
+
 ## Bugs and limitations investigated
 
 | Finding | Resolution |
