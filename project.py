@@ -466,6 +466,7 @@ def audit_scene(args):
 def video_frames(args):
     """Stream a local video or camera without retaining decoded frames."""
     import cv2
+    import numpy as np
 
     if args.source == "video":
         path = Path(getattr(args, "video", "") or "")
@@ -487,14 +488,18 @@ def video_frames(args):
             capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         native_fps = capture.get(cv2.CAP_PROP_FPS)
         native_fps = native_fps if 0 < native_fps <= 240 else 0
+        expected_frames = capture.get(cv2.CAP_PROP_FRAME_COUNT) if args.source == "video" else 0
+        expected_frames = round(expected_frames) if np.isfinite(expected_frames) and expected_frames > 0 else 0
         for index in range(args.frames):
             ok, frame = capture.read()
             arrival = time.perf_counter()
             if not ok:
                 if args.source == "webcam":
                     raise RuntimeError("Camera stopped supplying frames")
+                if index == 0 or index < expected_frames:
+                    raise RuntimeError("Video decode stopped at frame {} before its declared end ({}); verify or replace the clip".format(index, expected_frames or "unknown"))
                 break
-            if frame is None or frame.ndim != 3 or frame.shape[2] != 3 or min(frame.shape[:2]) == 0:
+            if frame is None or frame.ndim != 3 or frame.shape[2] != 3 or frame.dtype != np.uint8 or min(frame.shape[:2]) == 0:
                 raise ValueError("Invalid decoded RGB frame")
             height, width = frame.shape[:2]
             scale = min(640 / width, 480 / height, 1)
@@ -539,14 +544,18 @@ def demo(args):
     torch.set_num_threads(2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
-    model = selected_model(args)
     display = capture = records = None
-    if getattr(getattr(model, "device", None), "type", None) == "cuda":
-        torch.cuda.reset_peak_memory_stats(model.device)
+    pygame_started = False
+    rows = []
     try:
+        print("Loading {} on {}...".format(getattr(args, "model", "monodepth2"), args.device), flush=True)
+        model = selected_model(args)
+        if getattr(getattr(model, "device", None), "type", None) == "cuda":
+            torch.cuda.reset_peak_memory_stats(model.device)
         if not args.headless:
             import pygame
             pygame.init()
+            pygame_started = True
             display = pygame.display.set_mode((1280, 360))
             pygame.display.set_caption(model_details(model)["model_name"] + " - RGB depth demo - Escape to stop")
         if args.source == "carla":
@@ -645,10 +654,22 @@ def demo(args):
         print("Demo completed:", len(rows), "frames; output:", output)
         if evidence["runtime_acceptance"]["status"] == "needs_review":
             raise RuntimeError("Displayed runtime did not meet --min-seconds; evidence saved for inspection")
+    except (Exception, KeyboardInterrupt) as error:
+        # Keep failed runs inspectable without labelling partial results as completed evidence.
+        try:
+            write_json(output / "failure.json", dict(status="interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
+                       error=str(error) or type(error).__name__, error_type=type(error).__name__,
+                       completed_frames=len(rows), last_completed_frame=rows[-1]["frame_id"] if rows else None,
+                       source=args.source, model_requested=getattr(args, "model", "monodepth2"),
+                       device_requested=args.device, partial_outputs=True,
+                       scope="Failure diagnostic only; partial files do not establish completed runtime or accuracy"))
+        except OSError as report_error:
+            print("Could not save failure diagnostic:", report_error, file=sys.stderr)
+        raise
     finally:
         if records is not None:
             records.close()
-        if display is not None:
+        if pygame_started:
             pygame.quit()
         if capture is not None:
             capture.__exit__(*sys.exc_info())

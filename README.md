@@ -1,207 +1,252 @@
-# Real-Time Monocular Depth Estimation
+# Monocular Depth Estimation
 
-Hardware-friendly final-year prototype: RGB camera or local driving video -> Monodepth2 baseline or Depth Anything V2 Small quality option -> relative depth -> RGB/depth/overlay display and measured FPS.
+A final-year computer vision project that estimates **relative scene depth from a single RGB image or successive video frames**. The application integrates pretrained neural networks, a desktop visualization, optional point-cloud export, runtime profiling and reproducible evaluation.
 
-The user's updated scope replaces the PDF constraints. The default workflow targets GTX 1650 to RTX 3050 laptops with 4 GB VRAM and 8-16 GB RAM. CARLA is optional. Its server failed during earlier sensor attempts on the current 8 GB PC; changing the input source removes that simulator memory requirement.
+**Current delivery:** image and recorded driving-video inference have been demonstrated locally. Physical webcam validation and testing on the presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
 
-## Current implementation
+## Features
 
-- Official monocular `mono_640x192` ResNet-18 checkpoint; checksum-checked, pinned upstream source. Existing image inference ran on the local GTX 1650.
-- Shared 640x192, batch-one model inference. One-frame webcam/video decoding, display input bounded to 640x480, two PyTorch CPU threads and a default 10 FPS workload ceiling.
-- Webcam is the default demo source. Local video, saved-image inference and the previous optional CARLA/scene-replay commands remain available.
-- RGB, relative depth and overlay; first-frame preview and numerical arrays; per-frame runtime CSV and JSON summary. Escape/close releases camera/window. Local video finishes normally at EOF.
-- The current display uses a fixed logarithmic inverse-depth colour scale over the model's 0.01-10 range, a near/far legend and a stronger overlay (30% RGB / 70% depth colour). The same numerical value keeps the same colour across frames; there is no per-frame contrast rescaling. This changes visualization only, without changing depth arrays, model weights or accuracy. Original Phase 3-5 measurements and the published implementation report describe the earlier display.
-- No GT scores invented for camera/video. Output depth is relative, not calibrated metres. KITTI-trained monocular weights can perform poorly on indoor webcam scenes.
-- Resource and model tests are described below. A video fixture validates the pipeline; a physical-camera rehearsal and the friend's RTX 3050 must be checked separately.
+- **Two pretrained backends:** Monodepth2 ResNet-18 as the default baseline and Depth Anything V2 Small as an optional comparison model.
+- **Multiple inputs:** individual images, local video and webcam capture; optional CARLA capture and stored-scene replay tools.
+- **Desktop visualization:** synchronized RGB, relative inverse-depth colour map and depth overlay, with the selected model, device and completed FPS.
+- **Portable driving demo:** checksum-verified video, retained attribution/license, fallback image and input manifest.
+- **Numerical exports:** inverse-depth and relative-depth arrays, previews, per-frame timing and run metadata.
+- **Optional point cloud:** bounded first-frame coloured point cloud with PLY, PNG, metadata and a self-contained offline HTML viewer.
+- **Reproducible checks:** unit/integration tests, prediction-repeatability profiling, reference-depth evaluation and an offline delivery validator.
+- **Failure diagnostics:** unexpected video truncation is rejected when a declared frame count is available; demo failures after output creation retain `failure.json` and release capture/display resources.
 
-## Setup
+## System architecture
 
-For improved depth estimates, the optional **Depth Anything V2 Small** backend is now available through the same inference, profiling, evaluation and demo commands. Install its pinned assets with `project.py assets --model depth-anything`, then add `--model depth-anything --input-size 294` to your demo. Existing commands keep the original baseline. See the [accuracy investigation and comparison](docs/accuracy_report.md) for bug fixes, model provenance, measured scope and reproduction commands. The new backend uses its own official preprocessing and native output geometry; it does not reinterpret the old checkpoint.
-
-Measured locally: the Small-294 option reduced AbsRel from **0.4960 to 0.2033** on the existing five-frame indoor diagnostic using the same GT mask and median alignment. This limited diagnostic is not driving benchmark accuracy. **74 tests and all eight quality-backend integration checks passed**; the final displayed replay ran **650 frames in 67.99 seconds at 9.56 FPS** under a 10 FPS cap. The original baseline also passed its software checks. Logs are local under `runs/accuracy_quality_final/`, `runs/accuracy_baseline_delivery/` and `runs/accuracy_comparison_01/`. Independent multi-scene accuracy and RTX 3050 testing remain pending.
-
-For the final presentation, use the [demo and laptop handoff guide](docs/demo_guide.md). After preparing all assets and installing dependencies, run the combined checks with:
-
-```powershell
-.\.venv\Scripts\python.exe tools/validate_delivery.py --device cuda --display
+```mermaid
+flowchart TD
+    A[RGB image / local driving video / webcam] --> B[Input decoding and validation]
+    S[Optional CARLA capture / scene replay] --> B
+    M[Input manifest and asset checksums] -.-> B
+    B --> C[Backend-specific RGB preprocessing]
+    C --> D{Selected pretrained model}
+    D --> E[Monodepth2 ResNet-18]
+    D --> F[Depth Anything V2 Small]
+    E --> G[Relative depth and inverse depth]
+    F --> G
+    B --> H[RGB / depth / overlay desktop display]
+    G --> H
+    G --> I[NPY maps and preview images]
+    G --> J[Optional first-frame point-cloud projection]
+    B --> J
+    K[Assumed or supplied camera intrinsics] --> J
+    J --> L[Offline HTML viewer / PLY / PNG / metadata]
+    H --> N[Runtime CSV and run summary]
+    G --> O[Separate reference-depth evaluator]
+    P[Aligned ground-truth depth: scoring only] --> O
+    O --> Q[Per-image metrics and aggregate report]
 ```
 
-This runs the full regression suite and the existing Phase 1-4 commands sequentially, including a displayed rehearsal of at least 60 seconds. It performs no downloads. Fresh timestamped outputs, logs, source hashes and a fail-fast summary make the phase handoff reviewable; without `--display`, the display gate remains pending. The five-pair evaluation assets must be prepared with `project.py prepare-reference-eval` or copied as described in the guide. Presentation-machine acceptance is separate from local acceptance.
+Ground-truth depth is never an inference input. Supplied camera intrinsics do not resolve the model's unknown depth scale. Recorded driving footage is replayed while depth is computed; this is distinct from a live simulator or physical webcam demonstration.
 
-**Final local acceptance, 19 October 2026:** all **61 tests** and all eight integrated checks passed in a separately rebuilt Python 3.8.20 environment. Actual CUDA image/video inference, exact repeated predictions and the five-pair diagnostic passed with the original checkpoint. The displayed rehearsal processed **650 frames in 82.55 seconds (7.87 FPS under a 10 FPS cap)** and passed the 60-second gate. Peak process working set was **540.00 MiB**; PyTorch peak allocated GPU memory was **106.34 MiB**, excluding other system/driver memory. The source hash inventory and complete evidence remain local in `runs/phase5_delivery/`. This is driving-video replay; RTX 3050, physical webcam and native CARLA remain unverified.
+## Models and preprocessing
 
-**Visualization follow-up, 19 October 2026:** all **63 tests and eight integrated checks passed** with the clearer log-colour view and legend. The displayed replay completed 650 frames in 71.80 seconds (9.05 FPS under a 10 FPS cap); this separate observation is not a controlled speed comparison. Saved image depth arrays, all profiled prediction fingerprints and all seven diagnostic accuracy scores match the original Phase 5 run exactly. Evidence is local in `runs/visualization_delivery_01/`; the same-prediction before/after preview is in `runs/visualization_comparison/`. This is a readability improvement, without an accuracy gain or replacement-model validation.
+| Property | Monodepth2 baseline | Depth Anything V2 Small option |
+|---|---|---|
+| CLI selector | `--model monodepth2` | `--model depth-anything` |
+| Architecture | ResNet-18 encoder and depth decoder | DINOv2 ViT-S encoder and DPT depth head |
+| Weights | Official monocular `mono_640x192` checkpoint | Official relative-depth Small checkpoint |
+| Input processing | RGB, bilinear resize to 640 × 192; model-internal normalization | RGB, ImageNet normalization, aspect-preserving bicubic resize to multiples of 14 |
+| Input-size control | Fixed 640 × 192 | Short-edge target 294 by default; 392 or 518 optional, subject to long-edge budget |
+| Output geometry | 192 × 640 arrays | Arrays resized to the supplied RGB geometry |
+| Runtime device | CPU or CUDA | CPU or CUDA |
 
-The current machine already has `.venv`, dependencies, official weights and source. On another laptop install Python 3.8.20 and a suitable NVIDIA driver, then create a new environment:
+Both models use pretrained weights. **No project-specific training or fine-tuning has been completed.** The optional model is a distinct architecture and must be identified by its actual name in presentations. Source revisions, asset hashes and preprocessing identities are pinned in the implementation and recorded in run metadata.
+
+Video/webcam input is decoded one frame at a time and bounded to 640 × 480 while preserving aspect ratio. Inference uses batch size one and two PyTorch CPU threads. The default video/webcam processing ceiling is 10 FPS; it is not a guaranteed minimum. Sequential replay slows when processing cannot keep up with the original video rate.
+
+## Technology stack
+
+The exact environment is pinned in [requirements.txt](requirements.txt).
+
+| Component | Technology / validated version | Purpose |
+|---|---|---|
+| Runtime | Python 3.8.20, Windows, PowerShell commands | Validated local execution environment |
+| Deep learning | PyTorch 2.0.1 + CUDA 11.8; torchvision 0.15.2 + CUDA 11.8 | Model loading and inference |
+| Numerical processing | NumPy 1.24.4 | Depth arrays, geometry and evaluation |
+| Image/video I/O | OpenCV 4.8.1.78; Pillow 9.5.0 | Capture, decoding, resizing and images |
+| Desktop interface | Pygame 2.5.2 | RGB/depth/overlay presentation |
+| Plotting | Matplotlib 3.7.5 | Point-cloud preview export and visualization support |
+| Point-cloud viewer | HTML, CSS, JavaScript Canvas 2D | Interactive projection of exported 3D points; no server or frontend build required |
+| Verification | Python `unittest`, SHA256 manifests, CSV/JSON reports | Regression tests, provenance and measurements |
+| Optional simulation | CARLA client/server 0.9.13 | Sensor capture and replay tooling |
+| Optional report generation | ReportLab, Pillow and pypdf in a separate documentation environment | Implementation PDF generation |
+
+The CARLA client is retained in the requirements for compatibility; normal image/video inference does not require a running CARLA server. Open3D supplies the reference sample data but is not an installed inference dependency. The README's architecture diagram uses Mermaid on compatible Markdown viewers.
+
+## Installation
+
+Run commands from the repository root in PowerShell. The documented dependency set targets Python 3.8; do not assume a newer interpreter is interchangeable with these pinned wheels. CPU execution is supported, while CUDA is the demonstrated presentation path. A fresh laptop requires a compatible NVIDIA driver and a newly created environment.
 
 ```powershell
+git clone https://github.com/pjha26/FinalProject.git
+cd FinalProject
 py -3.8 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe project.py assets
-.\.venv\Scripts\python.exe project.py check --output runs/hardware_check.json
-```
-
-The pinned PyTorch wheels include CUDA 11.8 runtime libraries; no separate toolkit is required for inference. `requirements.txt` retains optional CARLA client tooling for compatibility, but camera/video inference needs no CARLA installation/server. Rebuild `.venv` on your friend's laptop; don't copy the environment folder. Source and model downloads require Internet during setup; prepared inference runs locally.
-
-## Phase 2: repeatable real driving input and laptop transfer
-
-Develop on the current PC and rehearse on the presentation laptop. Keep the same source, model weights, input and preprocessing on both; rebuild the environment on each machine and measure performance separately.
-
-Prepare the approximately 24 MiB [Udacity driving sample](https://github.com/udacity/CarND-Advanced-Lane-Lines). Its repository license is MIT; the preparation command retains the license and pins the source revision and file hashes. No CARLA server is needed:
-
-```powershell
 .\.venv\Scripts\python.exe project.py prepare-demo
+.\.venv\Scripts\python.exe project.py check --output runs/hardware_check.json
 .\.venv\Scripts\python.exe project.py verify-demo
 ```
 
-Preparation creates ignored local `data/demo/driving.mp4`, `UDACITY_LICENSE.txt`, `driving_first_frame.png`, and `input_manifest.json`. The real clip has 1,260 decoded frames, 1280x720 resolution, 25 FPS and 50.4 seconds of source footage. The portable manifest records source/license identity, decoded dimensions/count/rate, preprocessing, and baseline weight hashes. Re-running preparation verifies the existing manifest rather than replacing accepted inputs. Modified media, fallback images, model weights or incompatible metadata are rejected.
+Model/source and sample preparation need internet access. Prepared inference runs offline. Inspect `hardware_check.json` for `cuda_available`, the actual GPU and dependency import errors; `check` saves diagnostics rather than certifying readiness. Explicit `--device cuda` fails if CUDA is unavailable; `--device cpu` deliberately uses the CPU.
 
-For the practical rehearsal, use the manifest with the shared demo:
-
-```powershell
-.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 600 --fps 10 --output runs/driving_rehearsal_01
-.\.venv\Scripts\python.exe project.py infer --image data/demo/driving_first_frame.png --device cuda --output runs/driving_image_fallback_01
-```
-
-The demo validates the clip before opening its window and records the manifest SHA256 in the run summary. This sample is video replay with live depth computation, not an interactive simulator, and has no ground-truth depth. At a 10 FPS ceiling, 600 sequential frames take at least 60 seconds and cover 24 seconds of the original 25 FPS footage; replay slows rather than skipping frames. Verification/startup time is separate from the summary's processing wall time.
-
-To move to your friend's laptop:
-
-1. Use the same published commit on both laptops, or transfer the current source (`project.py`, `requirements.txt`, `src/`, and `tests/`). Separately transfer `checkpoints/baseline_mono_640x192/`, `third_party/monodepth2/`, and `data/demo/`, which are ignored by Git. Keep licenses/provenance manifests with the assets.
-2. Rebuild `.venv` using the setup commands. Do not copy `.venv`, `.runtime`, or `.cache`. Alternatively, with the updated source and Internet access, run `project.py assets` and `project.py prepare-demo` to obtain matching assets.
-3. Run `project.py check --output runs/friend_hardware.json`, `project.py verify-demo`, and the regression suite. Confirm CUDA is available, then run the same displayed rehearsal with a fresh output folder.
-4. Keep the laptop plugged in; verify a full minute of stable display. Use `--fps 5` if necessary. Retain each laptop's summary/runtime evidence separately and test webcam permissions independently if using that input.
-
-Phase 2 local validation and remaining presentation-machine gates are recorded in the [Phase 2 plan](phases/phase_02_data/implementation.md). GT evaluation and any project-specific training remain separate later work.
-
-On 14 October, all **39 regression checks passed**. A displayed real-video CUDA rehearsal on this 8 GB / GTX 1650 PC processed **350 frames in 71.58 seconds**, at **4.89 FPS under a 5 FPS cap**. Peak process working-set RAM was **620.13 MiB** and PyTorch peak allocated GPU memory **106.34 MiB**; these are not total system RAM or total VRAM. The 350 sequential frames cover 14 source seconds at the original 25 FPS. Evidence is local in `runs/phase2_real_driving_rehearsal/`. To reproduce the accepted workload, use the manifest-based command above with `--frames 350 --fps 5` and a new output directory. The friend's laptop and physical webcam remain unverified.
-
-## Phase 3: profiling and stability
-
-The selected model remains the original pretrained ResNet-18 baseline. Phase 3 adds a repeatable, warmup-aware diagnostic without changing weights, input normalization or the existing image/demo commands:
+Install the optional model separately:
 
 ```powershell
-.\.venv\Scripts\python.exe project.py profile --device cuda --frames 60 --warmup 5 --repeats 2 --output runs/profile_review_01
+.\.venv\Scripts\python.exe project.py assets --model depth-anything
 ```
 
-This verifies the prepared input/checkpoint pair and profiles the same frames repeatedly in evaluation/inference mode, without a window or FPS cap. Outputs are `summary.json`, `runtime.csv`, `fingerprints.json` and `preview.png`. Timings separate decoding, model execution, complete inference processing, rendering, numerical validation and total headless cycle. Each timing has mean/median/p95/min/max; processing includes model time, so those values overlap. Warmup covers rendering as well as inference.
+## Run the demonstration
 
-Every prediction must be finite, positive float32 at 192x640, with reciprocal depth/inverse-depth values. Exact fingerprint mismatches across repeats produce `needs_review` and a failing exit. This checks same-machine numerical repeatability, not accuracy or cross-GPU bit-for-bit equality.
-
-Measured on 18 October, local GTX 1650: **15.75 / 16.00 FPS uncapped headless** across two 60-frame repeats, excluding five warmup frames each; median model **22.40 ms**, rendering **22.52 ms** and full headless cycle **61.30 ms**. Predictions matched between repeats and before/after the rendering optimization. The final profile excludes display, pacing, setup and output writes; it does not establish sustained 10+ FPS for the displayed live/simulator application.
-
-Profiling found rendering overhead. Cached palette/font/static labels and OpenCV overlay blending reduced a separate warmed rendering check from **55.06 to 31.49 ms median** over 20 measured calls. The palette and numerical depth maps are preserved; blend rounding can differ by one colour level. No new application dependencies. **45 regression tests passed**, followed by fresh CUDA image and displayed video smoke checks. Detailed evidence/limitations are in the [Phase 3 handoff](phases/phase_03_training/implementation.md).
-
-The [implementation progress PDF](output/pdf/implementation_progress_report.pdf) records the implementation phases, architecture, model provenance, validation, measured performance, transfer commands and outstanding work. Regenerate it using a documentation Python containing ReportLab, Pillow and pypdf:
+**Recorded driving video — recommended validated input path:**
 
 ```powershell
-python tools/build_implementation_report.py --report-date 2026-10-19 --delivery runs/phase5_delivery
+.\.venv\Scripts\python.exe project.py demo --model monodepth2 --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 650 --fps 10 --min-seconds 60 --review-every 200 --output runs/presentation_video_01
 ```
 
-The generator reads local ignored evidence under `runs/` and `data/`; a fresh clone must first produce/copy those reports. PDF libraries are separate from the pinned inference environment. Fine-tuning, full GT benchmarks, native CARLA, physical webcam and RTX 3050 testing remain pending. The user authorized publishing the Phase 3 update to GitHub in no more than three commits.
+Allow the command to finish for the 60-second displayed acceptance gate. Close the window or press Escape to stop; a short run cannot satisfy that gate. Change the output suffix for every new attempt: existing run folders are intentionally never overwritten.
 
-## Phase 4: evaluation evidence
-
-The fixed [evaluation protocol](docs/evaluation_protocol.md) separates paired reference-depth diagnostics from RGB-only driving-video demonstrations. The selected pretrained model is unchanged; ground truth is used only for scoring.
+**Single-image fallback:**
 
 ```powershell
-.\.venv\Scripts\python.exe project.py prepare-reference-eval
-.\.venv\Scripts\python.exe project.py evaluate --device cuda --output runs/reference_evaluation_01
+.\.venv\Scripts\python.exe project.py infer --model monodepth2 --image data/demo/driving_first_frame.png --device cuda --output runs/presentation_image_01
 ```
 
-Preparation downloads a checksum-pinned, approximately 3.6 MiB Open3D RGB-D sample archive without installing Open3D. It converts the documented millimetre depth PNGs into metre-valued float32 arrays and freezes RGB/depth/checkpoint hashes. The five correlated indoor frames from one scene are a **small diagnostic set**, not a KITTI or NYU benchmark. Evaluation checks units, alignment, asset identity, valid masks, inverse-depth interpolation, per-image median alignment and equal-image metric aggregation. Failed runs are marked partial without aggregate scores. Numerical predictions remain relative; aligned errors do not recover deployment-time metric scale.
-
-The local diagnostic evaluated 5 frames / 1,340,711 valid pixels: mean **AbsRel 0.4960**, **SqRel 1.1006**, **RMSE 1.4404 m after GT alignment**, **log RMSE 0.5071**, and **delta1/2/3 0.3763 / 0.6680 / 0.8449**. This substantial indoor error is a limitation, not evidence that driving accuracy targets were achieved. Source/protocol, sample counts and individual results are retained in ignored `data/evaluation/redwood/` and `runs/phase4_reference_evaluation/`.
-
-For displayed runtime and qualitative review:
+**Optional webcam — validate separately before presenting:**
 
 ```powershell
-.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --manifest data/demo/input_manifest.json --device cuda --frames 650 --fps 10 --min-seconds 60 --review-every 200 --output runs/driving_evaluation_01
+.\.venv\Scripts\python.exe project.py demo --source webcam --camera 0 --device cuda --frames 650 --fps 10 --min-seconds 60 --output runs/presentation_camera_01
 ```
 
-`--min-seconds` requires a display-enabled frame loop lasting at least the chosen duration. Short runs save `needs_review` and fail; `--headless` cannot satisfy the gate. Optional review exports save first, periodic adjacent and last RGB/inverse-depth/preview frames, indexed by `review.json`. The runtime summary adds mean/median/p95 timings, memory scope, configured cap and explicit acceptance status. Existing commands remain compatible when these flags are omitted.
+The physical camera-index-0 probe failed on the development laptop. Check Windows camera permissions, available indices and competing camera applications before relying on this input. If unavailable, explicitly demonstrate the recorded-video mode instead.
 
-The first local Phase 4 rehearsal passed: **650 frames / 76.26 seconds / 8.52 FPS under a 10 FPS cap**, with 9 review snapshots. This clip has no GT; its accuracy remains unavailable. Adjacent pairs 200/201 and 600/601 show broad road-to-horizon structure with coarse vehicle boundaries; motion prevents treating those snapshots as a quantitative flicker measure. The [Phase 4 handoff](phases/phase_04_evaluation/implementation.md) records the full-clip run, all validation evidence and remaining acceptance gates. Publishing this phase is authorized as exactly three commits.
+**Optional model:** append `--model depth-anything --input-size 294` in place of the baseline model selection. Use separate output directories and retain the baseline as a rehearsed fallback. Larger input settings have not established better driving accuracy.
 
-A second, higher-cap displayed run processed the **full 1,260-frame clip in 71.40 seconds at 17.65 FPS**, with `--fps 30 --min-seconds 60 --review-every 400`. The effective cap is the source's 25 FPS, and playback remains slower than native source speed. This observed local result is not a webcam/CARLA or RTX 3050 guarantee. Peak process working set was **734.73 MiB**, PyTorch allocated peak **106.34 MiB**; total system/driver peaks were not recorded. **All 55 regression tests passed.** Full KITTI/CARLA accuracy, fine-tuning, calibrated metric scale and remaining hardware gates stay pending.
+**Optional point cloud:** add `--point-cloud` to `infer` or `demo`. Open the output folder's `point_cloud/viewer.html` in a browser to rotate and zoom. The export represents the first processed frame, contains at most 10,000 RGB-coloured points, excludes invalid/floor and distant outlier predictions, and records its filtering in metadata. It is a qualitative relative surface projection with assumed/provided intrinsics, not a live 3D stream, LiDAR measurement or complete reconstruction.
 
-## Run the practical demo
+## Interpreting outputs
 
-From this project folder in PowerShell:
+The left panel shows RGB, the centre shows relative inverse depth, and the right blends 70% depth colour with 30% RGB. Yellow indicates relatively nearer regions and purple relatively farther regions. Colours use a fixed logarithmic display scale; they do not directly encode metres or guarantee accuracy.
 
-```powershell
-# Webcam: default camera index 0, around 60 seconds at the 10 FPS ceiling
-.\.venv\Scripts\python.exe project.py demo --source webcam --camera 0 --device cuda --frames 600 --fps 10 --output runs/review_webcam_01
-
-# Driving footage: prepared with project.py prepare-demo, or supplied locally
-.\.venv\Scripts\python.exe project.py demo --source video --video data/demo/driving.mp4 --device cuda --frames 300 --fps 10 --output runs/review_video_01
-
-# Verified single-image fallback
-.\.venv\Scripts\python.exe project.py infer --image data/fixtures/test_image.jpg --device cuda --output runs/review_image_01
-```
-
-Close the window or press **Escape** to stop. Use a different output directory each time: existing runs are intentionally never overwritten. Camera access requires Windows camera permission and an available device; try `--camera 1` if the intended device is not index 0. The driving video is downloaded by `prepare-demo`, not stored in Git. A video is processed sequentially, capped at its native FPS and --fps; processing below that rate slows replay rather than dropping frames.
-
-If the laptop struggles, use `--fps 5`, close unused apps after saving your work, and keep CARLA stopped. `--device cpu` is a slower fallback. `--headless` omits the window for automated tests. A 10 FPS cap is a ceiling, not a promised minimum.
-
-Demo outputs:
-
-| File | Meaning |
+| Output | Description |
 |---|---|
-| `preview.png` | First processed frame: RGB / relative depth / overlay |
-| `inverse_depth.npy`, `relative_depth.npy` | First-frame numerical model outputs, 192x640, uncalibrated scale |
-| `runtime.csv` | Per-frame model, processing, arrival-to-display and full-cycle timing |
-| `summary.json` | Source, checkpoint, device, frame count, wall time, observed FPS, input rate and PyTorch peak allocated GPU bytes |
-| `metrics.json` | Empty when no GT exists; diagnostic GT-aligned results for compatible recorded scenes |
+| `preview.png` | First-frame RGB/depth/overlay composite with model identity |
+| `inverse_depth.npy`, `relative_depth.npy` | First-frame numerical predictions; positive, uncalibrated relative values |
+| `summary.json` | Completed demo evidence: selected backend/device, frame count, completed FPS, timing statistics, memory and optional cloud paths |
+| `runtime.csv` | Model, processing, capture-to-display and full-cycle time for each completed frame |
+| `metrics.json` | Demo GT scores only where compatible reference depth exists; empty for ordinary RGB-only video/webcam |
+| `review.json`, review snapshots | Optional first, periodic adjacent and final frame exports for qualitative inspection |
+| `point_cloud/` | Optional PLY, offline viewer, preview and geometry metadata |
+| `failure.json` | Failure/interruption diagnostic after demo output creation, with error and completed-frame count; partial outputs are not accepted results |
 
-Timing includes first-frame overhead; the displayed FPS uses already-completed frames. The summary is the completed run measurement. PyTorch allocated GPU memory excludes driver/runtime/other applications; inspect total VRAM and RAM in Task Manager as well. Outputs, camera footage, weights and downloaded runtimes stay ignored by Git.
+Image inference has a smaller summary containing its own processing/model latency and model metadata. A demo failure can leave partial files; inspect `failure.json`, the terminal and any saved duration gate before treating a run as complete. Validation errors before output creation are reported in the terminal. Lack of a reliable declared video frame count limits detection of premature decoding stops.
 
-## Architecture and phase transitions
+## Validation and measured results
 
-```mermaid
-flowchart LR
-    A[Webcam / local video / RGB image] --> B[Bounded RGB frame and preprocessing]
-    B --> C[ResNet-18 depth model / 640 x 192 / batch 1]
-    C --> D[Relative depth and inverse depth]
-    D --> E[RGB + depth + overlay / FPS]
-    D --> F[NPY / preview / runtime evidence]
-    G[Optional CARLA or scene replay] --> B
-```
-
-The [master plan](IMPLEMENTATION_PLAN.md) and [Phase 1](phases/phase_01_foundation/implementation.md), [Phase 2](phases/phase_02_data/implementation.md), [Phase 3](phases/phase_03_training/implementation.md), [Phase 4](phases/phase_04_evaluation/implementation.md), [Phase 5](phases/phase_05_delivery/implementation.md) now use the revised hardware scope. Baseline hashes, preprocessing, prediction shapes and existing CLI commands remain the handoff contracts. Later model experiments use separate checkpoints and must pass the working demo gate before adoption.
-
-## Verification and remaining work
-
-For the presentation, read the [poster alignment review](docs/poster_alignment.md): it distinguishes implemented features from unverified poster claims and gives measured CPU/GPU results. Add `--point-cloud` to `infer` or `demo` for an optional first-frame relative cloud (`point_cloud/viewer.html`, PLY, PNG and metadata). The viewer opens offline and supports rotation/zoom; it is a static estimated surface with assumed/provided intrinsics, not calibrated metre-scale reconstruction. The preview/window identifies the selected model. See the [demo guide](docs/demo_guide.md) for commands.
+Run the automated suite:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Tests cover RGB ordering/resizing, numerical metrics and geometry, source/checkpoint safety, scene replay, camera release and input failure, local video decoding/EOF, demo outputs, and actual checkpoint repeatability where assets are present. A mocked webcam does not prove physical-camera operation.
-
-Local validation on 13 October 2026: **33 regression checks passed**. The actual checkpoint processed a 100-frame synthetic driving-image clip on the GTX 1650: **8.33 FPS headless** at a 10 FPS ceiling, **25.21 ms median model time**, **685.86 MiB peak process working-set RAM**, and **106.34 MiB peak PyTorch allocated GPU memory**. A separate displayed 30-frame run completed at **6.98 FPS**, including startup overhead. These short synthetic runs validate integration, not real driving quality or a 60-second live rehearsal. Evidence is local under `runs/lightweight_video_validation/` and `runs/lightweight_display_validation/`.
-
-The physical webcam attempt at camera index 0 failed to open; permission/device availability is unresolved. No full KITTI/NYU accuracy benchmark, new project-trained weights or successful native CARLA sensor pilot has been completed. The RTX 3050 laptop has not been measured. Rehearse a real webcam or permitted driving clip for at least 60 seconds on the presentation laptop before using it for assessment.
-
-## Optional simulator tools
-
-These existing commands remain available for a suitable machine; they are not needed for the new default demo:
+Prepare the small paired reference dataset, then perform offline integrated acceptance on the actual presentation laptop:
 
 ```powershell
-.\.venv\Scripts\python.exe project.py check --carla --host 127.0.0.1 --port 2000 --output runs/carla_check.json
-.\.venv\Scripts\python.exe project.py install-server
-.\.venv\Scripts\python.exe project.py collect --map Town04 --frames 100 --output data/carla/scenes/pilot_new
-.\.venv\Scripts\python.exe project.py demo --source carla --map Town04 --frames 100 --output runs/carla_new
-.\.venv\Scripts\python.exe project.py demo --source replay --scene data/carla/scenes/valid_scene --frames 100 --output runs/replay_new
-.\.venv\Scripts\python.exe project.py audit-scene --scene data/carla/scenes/valid_scene --output runs/scene_audit.json
-.\.venv\Scripts\python.exe project.py calibrate-depth --map Town04 --output runs/depth_geometry.json
+.\.venv\Scripts\python.exe project.py prepare-reference-eval
+.\.venv\Scripts\python.exe tools/validate_delivery.py --device cuda --model monodepth2 --display
 ```
 
-The native simulator must be started separately for live capture. Existing failed zero-frame scene folders are partial and rejected by replay. Geometry/audit unit tests do not replace real sensor validation. Do not restart CARLA on the memory-constrained PC just to run webcam/video depth.
+The delivery validator runs tests, input verification, environment diagnostics, image inference, repeated profiling, reference evaluation, headless video and a displayed rehearsal. It performs no downloads, freezes source hashes, retains per-step logs and stops on failure. Check that the final `summary.json` has `status: pass` and `displayed_rehearsal: pass`. Use `--model depth-anything --input-size 294` for a separate optional-model acceptance run. Omit `--display` only when intentionally leaving displayed acceptance pending.
 
-## References and Git
+Measured local observations on 21 October 2026:
 
-Model implementation/pretrained assets: [official Monodepth2](https://github.com/nianticlabs/monodepth2), pinned source revision `b017a8164fae339b0ce01f3a9e5048104d5abd0e`. Original license remains in the downloaded source. Conceptual reference: [SemanticDepth](https://github.com/pablopalafox/semantic-depth). [Lite-Mono](https://github.com/noahzn/Lite-Mono) is a possible later smaller-model experiment, not a currently supported checkpoint architecture.
+| Workload | Device | Observed result | Scope |
+|---|---|---|---|
+| Monodepth2, 30 measured frames/repeat, two repeats | CPU, two threads | 1.57 / 1.56 FPS; 578.29 ms median model time | Headless pipeline; excludes setup/warmup |
+| Monodepth2, 650-frame driving replay, 30 FPS ceiling | GTX 1650 4 GB | 9.96 FPS over 65.27 s; 28.49 ms median model time | Displayed pipeline, with optional first-frame cloud and periodic exports |
+| Monodepth2, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 9.10 FPS over 71.42 s; displayed duration gate passed | Current reliability update; periodic review exports, no cloud |
+| Depth Anything V2 Small-294, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 8.37 FPS over 77.66 s; displayed duration gate passed | Periodic review exports and a 10,000-point first-frame cloud |
+| Depth Anything V2 Small-294, five indoor reference frames | GTX 1650 | AbsRel 0.2033 versus baseline 0.4960 | Small GT-median-aligned diagnostic; not a driving benchmark |
 
-Phases 1-4 are published. The user authorizes Phase 5 delivery changes in exactly three commits to `pjha26/FinalProject`. Keep generated datasets, weights, runtimes and raw run evidence local; transfer required ignored assets separately for an offline demonstration.
+These are observations, not hardware guarantees or controlled comparisons between unlike workloads. Earlier run history is retained in the phase documents and reports. Source clip rate, CPU processing, rendering, exports, pacing and system load affect completed FPS. GPU model latency alone is not displayed throughput. The RTX 3050 and RTX 4050 have not been tested; **14–20 FPS on CPU is not an established project result**.
+
+The reliability update passed **87 automated tests and all eight baseline delivery checks**, with unchanged source during validation. The local evidence is retained in ignored `runs/presentation_reliability_delivery_01/`; a fresh clone must produce its own run evidence. Software acceptance on this development laptop does not replace the presentation-machine rehearsal.
+
+The optional backend's separate displayed rehearsal also passed, including point-cloud export (`runs/presentation_reliability_quality_01/`). These two rehearsals establish integration and duration acceptance; neither supplies driving-depth accuracy ground truth.
+
+The five reference frames are correlated indoor samples from Open3D/Redwood. GT median alignment uses information unavailable during deployment; aligned errors do not establish calibrated output distances. The driving sample has no aligned GT. Read the [evaluation protocol](docs/evaluation_protocol.md), [accuracy report](docs/accuracy_report.md) and [poster alignment review](docs/poster_alignment.md) before reporting performance or accuracy.
+
+## Driving-scene improvement roadmap
+
+Follow the [driving validation and presentation plan](docs/driving_validation.md) for the next work:
+
+1. Freeze the current baseline and reproduce a complete rehearsal on the presentation laptop, including an offline run and saved-image fallback.
+2. Compare both existing models on the same varied, permitted driving clips; review vehicles, boundaries, road/horizon, shadows and reflective surfaces using saved snapshots.
+3. Acquire a documented held-out RGB/aligned-depth driving set and evaluate both models with the same frozen masks, crop and scaling protocol. KITTI evaluation requires correct registration and split provenance, not just a directory of dashcam videos.
+4. Investigate the largest measured errors before considering fine-tuning, new models or deployment optimizations. Accept changes only after repeatable quality and runtime checks.
+
+## Presentation laptop handoff
+
+- Transfer the same Git revision. Rebuild `.venv`; do not copy another machine's virtual environment.
+- Prepare online or separately copy ignored `third_party/monodepth2/`, `checkpoints/baseline_mono_640x192/`, `data/demo/` and `data/evaluation/redwood/`, keeping licenses and manifests. For the optional backend, also include `third_party/depth_anything_v2/` and `checkpoints/depth_anything_v2_small/`.
+- Run input verification and the displayed delivery validator. Keep each machine's evidence separate and rehearse without internet.
+- Use a rehearsed model and clip, plug in the laptop, and close unneeded applications after saving work. Keep the single-image command and previously generated outputs available as explicitly labelled fallbacks.
+
+See the [demo and handoff guide](docs/demo_guide.md) for detailed procedures.
+
+## Troubleshooting
+
+| Symptom | Action |
+|---|---|
+| Output directory already exists | Select a new output suffix; preserve the previous evidence. |
+| CUDA unavailable | Inspect `project.py check` output and the driver/environment. CPU is a slower diagnostic fallback; it does not satisfy an unmeasured GPU claim. |
+| Video cannot open or ends unexpectedly | Run `verify-demo` for the pinned sample. For custom clips, verify the local file/codec or replace it with a rehearsed decodable copy. |
+| Camera cannot open | Check OS permissions, camera index and competing apps; use the recorded-video path if not validated. |
+| FPS remains near 10 | Check the configured `--fps` ceiling. For an independent speed test use `--fps 30` in a fresh run; inspect actual `processed_fps`, not the requested ceiling. |
+| Depth or point-cloud boundaries look wrong | Inspect raw predictions and scene conditions. A new colour map cannot fix model error or recover metric scale. |
+| Plot export cannot write its font cache | Set `$env:MPLCONFIGDIR = "$PWD\.cache\matplotlib"` before execution. |
+| A run fails or is interrupted | Read the terminal, `failure.json` if created, and validator logs. Retain partial outputs for diagnosis and rerun into a fresh folder after fixing the cause. |
+
+## Repository structure
+
+```text
+project.py                 Command-line entry point and shared inference/demo workflow
+requirements.txt           Pinned runtime dependencies
+src/                       Model backends, preprocessing, visualization, geometry,
+                           evaluation, profiling, input verification and CARLA tools
+tests/                     Automated regression and integration checks
+tools/validate_delivery.py Offline acceptance workflow and evidence collection
+tools/compare_accuracy.py  Reproducible model/input-size comparison
+tools/build_implementation_report.py  Optional PDF report generator
+docs/                      Demo guide, protocols, accuracy and poster reviews
+phases/                    Five phase-specific implementation plans
+IMPLEMENTATION_PLAN.md     Overall implementation plan
+output/pdf/                Generated implementation report
+checkpoints/               Ignored pretrained weights and manifests
+third_party/               Ignored pinned upstream inference source and licenses
+data/                      Ignored demo and evaluation assets
+runs/                      Ignored predictions, logs, measurements and diagnostics
+```
+
+## Scope and limitations
+
+This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, native CARLA sensor capture and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
+
+The implementation history is recorded in the [master plan](IMPLEMENTATION_PLAN.md), [Phase 1](phases/phase_01_foundation/implementation.md), [Phase 2](phases/phase_02_data/implementation.md), [Phase 3](phases/phase_03_training/implementation.md), [Phase 4](phases/phase_04_evaluation/implementation.md) and [Phase 5](phases/phase_05_delivery/implementation.md). The [implementation PDF](output/pdf/implementation_progress_report.pdf) is a dated artifact; later changes are documented in source and the current guides.
+
+## Attribution and external assets
+
+- [Monodepth2 — Niantic](https://github.com/nianticlabs/monodepth2): original baseline implementation and pretrained weights; pinned revision `b017a8164fae339b0ce01f3a9e5048104d5abd0e`. Retain its upstream license and weight terms.
+- [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2): optional Small model; source and checkpoint revisions/checksums are pinned in `src/depth_anything.py`. The integrated Small assets retain their Apache-2.0 license.
+- [Udacity Advanced Lane Lines sample](https://github.com/udacity/CarND-Advanced-Lane-Lines): recorded driving video, pinned revision and checksums, with the MIT license retained in prepared data.
+- [Open3D sample data](https://github.com/isl-org/open3d_downloads): five-frame Redwood RGB-D diagnostic; source, archive hash and unit conversion recorded in its manifest and evaluation protocol.
+- [KITTI depth prediction benchmark](https://www.cvlibs.net/datasets/kitti/eval_depth.php?benchmark=depth_prediction): proposed driving-depth evaluation resource; not yet a completed project benchmark.
+- [CARLA](https://github.com/carla-simulator/carla): optional simulator tooling.
+- [SemanticDepth](https://github.com/pablopalafox/semantic-depth): conceptual reference supplied for the project; not the selected inference backend.
+
+Downloaded datasets, model weights, upstream source and local run evidence are excluded from Git. Their respective licenses and provenance must accompany any offline asset handoff. This repository does not grant a new license over third-party assets.
