@@ -147,16 +147,19 @@ class TrainableModel(nn.Module):
 
 
 class SelfSupervisedLoss(nn.Module):
-    def __init__(self, height=HEIGHT, width=WIDTH):
+    def __init__(self, height=HEIGHT, width=WIDTH, use_ssim=True, automasking=True, smoothness_weight=1e-3):
         super().__init__()
         _, layers = training_layers()
         self.backproject = layers.BackprojectDepth(1, height, width)
         self.project = layers.Project3D(1, height, width)
         self.ssim = layers.SSIM()
+        if not np.isfinite(smoothness_weight) or smoothness_weight < 0:raise ValueError("Smoothness weight must be finite and nonnegative")
+        self.use_ssim,self.automasking,self.smoothness_weight=use_ssim,automasking,smoothness_weight
         self.height, self.width = height, width
 
     def photometric(self, prediction, target):
-        return 0.85*self.ssim(prediction,target).mean(1,True) + 0.15*(prediction-target).abs().mean(1,True)
+        l1=(prediction-target).abs().mean(1,True)
+        return 0.85*self.ssim(prediction,target).mean(1,True)+0.15*l1 if self.use_ssim else l1
 
     def warp(self, source, depth, k, transform):
         points = self.backproject(depth, torch.linalg.inv(k))
@@ -179,11 +182,11 @@ class SelfSupervisedLoss(nn.Module):
             warped = [self.warp(colors[:,i],depth,k,t) for i,t in zip((0,2),transforms)]
             reprojection = torch.cat([self.photometric(image,target) for image in warped],1)
             ties = torch.randn_like(identity)*1e-5 if self.training else torch.zeros_like(identity)
-            best, chosen = torch.cat((identity+ties,reprojection),1).min(1)
+            best, chosen = torch.cat((identity+ties,reprojection),1).min(1) if self.automasking else reprojection.min(1)
             photo = best.mean()
             color = F.interpolate(target,disp.shape[-2:],mode="bilinear",align_corners=False)
-            smooth = layers.get_smooth_loss(disp/(disp.mean((2,3),keepdim=True)+1e-7),color)*1e-3/(2**scale)
-            losses.append(photo+smooth);photos.append(photo);smooths.append(smooth);fractions.append((chosen>=2).float().mean())
+            smooth = layers.get_smooth_loss(disp/(disp.mean((2,3),keepdim=True)+1e-7),color)*self.smoothness_weight/(2**scale)
+            losses.append(photo+smooth);photos.append(photo);smooths.append(smooth);fractions.append((chosen>=2).float().mean() if self.automasking else torch.ones((),device=colors.device))
             if scale == 0:
                 reconstruction = warped[0]
         return dict(loss=torch.stack(losses).mean(), photometric=torch.stack(photos).mean(), smoothness=torch.stack(smooths).mean(),

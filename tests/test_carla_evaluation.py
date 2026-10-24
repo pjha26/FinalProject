@@ -46,6 +46,17 @@ class CarlaEvaluationPreparationTests(unittest.TestCase):
             prepare(self.triplets,self.val,out)
         self.assertFalse(out.exists())
 
+    def test_multiple_validation_scenes_keep_unique_native_targets(self):
+        from tools.prepare_carla_evaluation import prepare_many
+        val2=self.fixture.scene('val2','Town05')
+        prepare_triplets([self.train],[self.val,val2],self.root/'multi_triplets')
+        output=self.root/'multi_evaluation'
+        result=prepare_many(self.root/'multi_triplets/triplets.json',[self.val,val2],output)
+        self.assertEqual(len(result['samples']),6)
+        self.assertEqual({s['scene'] for s in result['samples']},{'val','val2'})
+        self.assertEqual(len(list(paired_samples(output/'evaluation_manifest.json',evaluation_manifest(output/'evaluation_manifest.json')))),6)
+        with self.assertRaisesRegex(ValueError,'distinct'):prepare_many(self.triplets,[self.val,self.val],self.root/'bad')
+
     def test_rgb_mutation_cannot_publish_evaluation(self):
         p=self.val / "rgb/00000002.png"
         from PIL import Image

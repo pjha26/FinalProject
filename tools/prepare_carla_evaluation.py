@@ -95,15 +95,43 @@ def prepare(triplets, scene, output, checkpoint=BASELINE):
     return manifest
 
 
+def prepare_many(triplets, scenes, output, checkpoint=BASELINE):
+    scenes=[Path(p).resolve() for p in scenes];output=Path(output).resolve()
+    if not scenes or len(set(scenes))!=len(scenes):raise ValueError("Need distinct validation scene directories")
+    if output.exists():raise FileExistsError("Use a fresh CARLA evaluation output directory")
+    output.parent.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=str(output.parent)) as temporary:
+        root=Path(temporary);staged=root/'combined';staged.mkdir();samples=[];sources=[];manifest=None
+        for index,scene in enumerate(scenes):
+            part=root/('part_'+str(index));current=prepare(triplets,scene,part,checkpoint)
+            if manifest is None:manifest=dict(current)
+            if current['protocol']!=manifest['protocol'] or current['checkpoint_sha256']!=manifest['checkpoint_sha256']:raise ValueError("Inconsistent validation protocols/checkpoints")
+            sources.append(dict(scene=scene.name,map=current['map'],seed=current['seed'],weather=json.loads((scene/'metadata.json').read_text(encoding='utf-8'))['settings'].get('weather','ClearNoon'),source_sha256=current['source_capture_sha256']))
+            for sample in current['samples']:
+                for key in ['rgb','depth']:
+                    dest=staged/sample[key];dest.parent.mkdir(exist_ok=True)
+                    if dest.exists():raise ValueError("Duplicate validation target")
+                    shutil.copyfile(part/sample[key],dest)
+                    if file_hash(dest)!=sample[key+'_sha256']:raise ValueError("Validation copy changed")
+                samples.append(sample)
+        manifest.pop('map',None);manifest.pop('seed',None);manifest.pop('source_capture_sha256',None)
+        manifest.update(dataset='CARLA multi-condition moving-target validation',samples=samples,source_captures=sources,
+                        limitations='Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence.')
+        path=staged/'evaluation_manifest.json';write_json(path,manifest)
+        for _ in paired_samples(path,evaluation_manifest(path)):pass
+        staged.replace(output)
+    return manifest
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--triplets", required=True)
-    parser.add_argument("--validation-scene", required=True)
+    parser.add_argument("--validation-scene", required=True, action="append")
     parser.add_argument("--checkpoint", default=str(BASELINE))
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     try:
-        prepare(args.triplets, args.validation_scene, args.output, args.checkpoint)
+        prepare(args.triplets, args.validation_scene[0], args.output, args.checkpoint) if len(args.validation_scene)==1 else prepare_many(args.triplets,args.validation_scene,args.output,args.checkpoint)
     except (ValueError, OSError, RuntimeError) as error:
         print("Error:", error, file=sys.stderr)
         sys.exit(1)

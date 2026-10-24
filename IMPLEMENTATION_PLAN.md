@@ -197,3 +197,8 @@ Implemented opt-in input-only synchronized temporal colour jitter with independe
 ## Remaining Step 2 complete - 25 October 2026
 
 Validated capture weather selection and recorded two conditions/two routes per map: eight audited 100-frame source scenes, 392 training and 152 validation triplets. Reserved route remains excluded/unscored. [Condition record](docs/carla_conditions.md) and [hash/count metadata](docs/carla_conditions_results.json) describe acceptance and limits.
+
+
+## Remaining Step 3 and ablation infrastructure - 25 October 2026
+
+Added atomic epoch model/optimizer/RNG checkpoints, config/hash-verified resume and per-epoch validation. CPU fixtures reproduce uninterrupted versus interrupted/resumed states exactly; invalid config/checksum and overwrite rejection pass. Added explicit loss controls and multi-scene native evaluation preparation. All 126 tests pass. [Details](docs/epoch_training.md). Research training/ablations and remaining data/runtime/delivery gates are not implied by these implementation tests.
