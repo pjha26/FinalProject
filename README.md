@@ -260,7 +260,7 @@ A [controlled encoder-freezing follow-up](docs/encoder_freeze_experiment.md) use
 
 A [subsequent CARLA data expansion](docs/carla_data_expansion.md) adds a second Town04 training route, giving 196 prepared training triplets with the original 25 validation triplets. A separate 100-frame Town05 seed-45 route is reserved without model scoring; its roles/hashes are recorded in the route registry. This remains a small daylight simulator dataset.
 
-Predeclared [learning-rate/data/duration controls](docs/lr_data_training_controls.md) now record 2 completed follow-up experiment(s), with matched validation masks and preserved baseline weights. The accepted default remains pretrained; reserved test data remains unscored.
+Predeclared [learning-rate/data/duration controls](docs/lr_data_training_controls.md) now record 3 completed follow-up experiment(s), with matched validation masks and preserved baseline weights. The accepted default remains pretrained; reserved test data remains unscored.
 
 ## Scope and limitations
 

@@ -177,3 +177,8 @@ Completed 10 updates on 10 unique targets under the predeclared protocol. CARLA 
 ## Expanded data; same rate; 10 updates - 25 October 2026
 
 Completed 10 updates on 10 unique targets under the predeclared protocol. CARLA diagnostic AbsRel 0.179563; KITTI diagnostic AbsRel 0.094061. All 49 predictions reproduce scoring, with source/weight/encoder/validation audits passing; reserved testing remains unscored. Pretrained baseline retained. [Control record](docs/lr_data_training_controls.md) and [numerical metadata](docs/lr_data_training_controls_results.json) document the result and limits. No application source or default weights changed.
+
+
+## Expanded data; same rate; one 196-update epoch - 25 October 2026
+
+Completed 196 updates on 196 unique targets under the predeclared protocol. CARLA diagnostic AbsRel 0.147682; KITTI diagnostic AbsRel 0.108976. All 49 predictions reproduce scoring, with source/weight/encoder/validation audits passing; reserved testing remains unscored. Pretrained baseline retained. [Control record](docs/lr_data_training_controls.md) and [numerical metadata](docs/lr_data_training_controls_results.json) document the result and limits. No application source or default weights changed.

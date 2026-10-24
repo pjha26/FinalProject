@@ -19,6 +19,7 @@ Measured 25 October 2026. These runs reuse the existing training runner with no 
 | Earlier frozen encoder, 1e-5, original data | 10 | 0.151677 | 7.584519 m | 0.109467 | 4.857251 m |
 | Lower learning rate; original data; 10 updates | 10 | 0.178996 | 8.283810 m | 0.094239 | 4.231347 m |
 | Expanded data; same rate; 10 updates | 10 | 0.179563 | 8.296955 m | 0.094061 | 4.224401 m |
+| Expanded data; same rate; one 196-update epoch | 196 | 0.147682 | 7.350631 m | 0.108976 | 4.723875 m |
 
 Protocol: native reference depth, 0.001-80 m mask, no crop, existing inverse-depth interpolation, per-image GT-median alignment and arithmetic mean over images. Scores do not recover predicted metric scale. CARLA covers one short Low-quality daylight validation route; KITTI is a 24-image/eight-drive diagnostic, not official Eigen or untouched final testing.
 
@@ -50,8 +51,22 @@ State and provenance audits confirm unchanged depth-encoder tensors and original
 .\.venv\Scripts\python.exe tools/train_carla_pilot.py --manifest data/training/carla_expanded_01/triplets.json --output runs/carla_expanded_lr1e6_01_next --steps 10 --learning-rate 0.000001 --device cuda --freeze-encoder
 ```
 
+## Expanded data; same rate; one 196-update epoch
+
+Duration 10 -> 196 updates, one complete shuffled pass through expanded data.
+
+Completed 196 updates on 196 unique training targets from 196 available triplets. Mean self-supervised validation objective: 0.023730101 before, 0.022279437 after. Validation/train/export section: 26.23 s excluding setup; peak PyTorch allocated CUDA memory 774337024 bytes, not total process/system VRAM.
+
+Training target counts by scene: {'train_town04_09': 98, 'train_town04_14': 98}.
+
+State and provenance audits confirm unchanged depth-encoder tensors and original baseline bytes, updated depth/pose paths, finite gradients/checkpoints, unchanged validation rows and matching manifest hashes. All 49 candidate predictions reproduce metrics within rtol/atol 1e-6 with the same sample IDs and valid-pixel counts as reference/baseline. Raw evidence: `runs/carla_expanded_epoch_01/`, `runs/carla_expanded_epoch_01_carla_eval/` and `runs/carla_expanded_epoch_01_kitti_eval/` (the low-rate KITTI description-corrected rerun has suffix `_corrected`; its metrics are identical).
+
+```powershell
+.\.venv\Scripts\python.exe tools/train_carla_pilot.py --manifest data/training/carla_expanded_01/triplets.json --output runs/carla_expanded_epoch_01_next --steps 196 --learning-rate 0.000001 --device cuda --freeze-encoder
+```
+
 ## Decision and remaining work
 
-Keep the pretrained default. These controls measure sensitivity and early adaptation, not a converged or generally better depth model. Do not select a production checkpoint from isolated validation improvements. Reserve the new route until model/protocol choices are frozen. Broader training conditions, augmentation controls, repeated seeds, longer training, full Eigen evaluation and integrated CARLA FPS remain incomplete.
+Keep the pretrained default. The completed one-epoch pilot (when listed above) is a single pass, not convergence. It improves CARLA validation but regresses on KITTI; a lower self-supervised objective does not establish better cross-domain accuracy. Next expand condition/scene coverage and implement synchronized temporal augmentation before committing to longer training. These controls measure sensitivity and early adaptation, not a converged or generally better depth model. Do not select a production checkpoint from isolated validation improvements. Reserve the new route until model/protocol choices are frozen. Broader training conditions, augmentation controls, repeated seeds, longer training, full Eigen evaluation and integrated CARLA FPS remain incomplete.
 
 All 116 regression tests pass. Existing asset verification and baseline image/video smoke checks are recorded under `runs/lr_data_controls_01/`. [Complete numerical metadata](lr_data_training_controls_results.json) records hashes and metrics; [reference outputs](reference_outputs.md) describe the local gallery and backup boundary. Weights/raw datasets remain ignored and are not uploaded to Git.

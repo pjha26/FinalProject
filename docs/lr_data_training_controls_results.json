@@ -356,6 +356,168 @@
           }
         }
       }
+    },
+    "carla_expanded_epoch_01": {
+      "specification": {
+        "name": "carla_expanded_epoch_01",
+        "manifest": "data/training/carla_expanded_01/triplets.json",
+        "steps": 196,
+        "changed_factor": "Duration 10 -> 196 updates, one complete shuffled pass through expanded data",
+        "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf"
+      },
+      "training": {
+        "schema_version": 1,
+        "status": "sanity_complete",
+        "started_utc": "2026-10-24T20:07:02.010705+00:00",
+        "device": "cuda",
+        "steps_requested": 196,
+        "steps_completed": 196,
+        "seed": 42,
+        "batch_size": 1,
+        "learning_rate": 1e-06,
+        "freeze_depth_encoder": true,
+        "gradient_norm_clip": 10.0,
+        "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
+        "train_triplets": 196,
+        "validation_triplets": 25,
+        "initial_checkpoint_sha256": {
+          "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+          "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+          "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+          "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+        },
+        "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+        "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+        "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
+        "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+        "limitations": "Training sanity check on 196 correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+        "validation_before": {
+          "loss": 0.02373010091483593,
+          "photometric": 0.02371411703526974,
+          "smoothness": 1.598365375684807e-05,
+          "warp_fraction": 0.5491448020935059
+        },
+        "validation_after": {
+          "loss": 0.022279436513781548,
+          "photometric": 0.022262409254908563,
+          "smoothness": 1.702700748865027e-05,
+          "warp_fraction": 0.5601237273216247
+        },
+        "candidate_checkpoint_sha256": {
+          "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+          "depth.pth": "165ea0436e64f505db4813c9cd65aaf993d614f2bd7855c42973a9e93164a3f1",
+          "pose_encoder.pth": "e8a1d7a4912ef4b0c6453b3547439cf3553c26348ecc6f0275ad3f8ca4f9449d",
+          "pose.pth": "7c82d96e9d1a5f8442ba4878d3b1c910337ae3f60cd17c4f73558eba5f2d13a4"
+        },
+        "peak_torch_allocated_bytes": 774337024,
+        "elapsed_seconds": 26.226960499999997
+      },
+      "state_audit": {
+        "status": "pass",
+        "steps": 196,
+        "unique_targets": 196,
+        "same_target_order_as_high_lr_control": null,
+        "validation_rows_unchanged": true,
+        "complete_single_epoch": true,
+        "states": {
+          "encoder.pth": {
+            "total_tensors": 122,
+            "changed_tensors": 0,
+            "baseline_bytes_unchanged": true
+          },
+          "depth.pth": {
+            "total_tensors": 28,
+            "changed_tensors": 28,
+            "baseline_bytes_unchanged": true
+          },
+          "pose_encoder.pth": {
+            "total_tensors": 122,
+            "changed_tensors": 60,
+            "baseline_bytes_unchanged": true
+          },
+          "pose.pth": {
+            "total_tensors": 8,
+            "changed_tensors": 8,
+            "baseline_bytes_unchanged": true
+          }
+        },
+        "source_sha256": {
+          "src/training.py": "035fdfd934ac0214b849a24cc44d8e473c2a047bcbbb933e1830390a3768b4bc",
+          "tools/train_carla_pilot.py": "ace770c9e99dab3e1d2d93f5098414c65216be8d06d27e61709e7a8382b1de0a"
+        },
+        "target_counts_by_scene": {
+          "train_town04_09": 98,
+          "train_town04_14": 98
+        }
+      },
+      "comparison": {
+        "carla": {
+          "samples": 25,
+          "valid_pixels": 4338866,
+          "metrics_reproduced": true,
+          "max_metric_absolute_difference": 4.577587198184574e-09,
+          "baseline": {
+            "abs_rel": 0.18140801021130007,
+            "sq_rel": 1.6326090089263219,
+            "rmse": 8.352287019913117,
+            "rmse_log": 0.34514984305932717,
+            "a1": 0.764108079677858,
+            "a2": 0.8787390122142469,
+            "a3": 0.9428669117752311
+          },
+          "reference": {
+            "abs_rel": 0.17956312965558985,
+            "sq_rel": 1.6073978789716536,
+            "rmse": 8.296954756755955,
+            "rmse_log": 0.34180792019785633,
+            "a1": 0.7690175837965235,
+            "a2": 0.8816726303101042,
+            "a3": 0.9442413555843868
+          },
+          "candidate": {
+            "abs_rel": 0.14768231797329567,
+            "sq_rel": 1.2198533500089257,
+            "rmse": 7.35063128409474,
+            "rmse_log": 0.2845227504671814,
+            "a1": 0.8204056792118857,
+            "a2": 0.9268661824738365,
+            "a3": 0.9623220697802666
+          }
+        },
+        "kitti": {
+          "samples": 24,
+          "valid_pixels": 1782495,
+          "metrics_reproduced": true,
+          "max_metric_absolute_difference": 1.0901602554014289e-07,
+          "baseline": {
+            "abs_rel": 0.09362687132453361,
+            "sq_rel": 0.6896455021779558,
+            "rmse": 4.219609616896688,
+            "rmse_log": 0.14903443240625655,
+            "a1": 0.9128543584774701,
+            "a2": 0.9752481364642772,
+            "a3": 0.9909762486532604
+          },
+          "reference": {
+            "abs_rel": 0.09406125576020608,
+            "sq_rel": 0.7000415011944162,
+            "rmse": 4.224400709630952,
+            "rmse_log": 0.1492505208098527,
+            "a1": 0.9132753012674756,
+            "a2": 0.9749928641054003,
+            "a3": 0.9909286734325534
+          },
+          "candidate": {
+            "abs_rel": 0.10897620849725115,
+            "sq_rel": 0.9839537377099249,
+            "rmse": 4.723875320114641,
+            "rmse_log": 0.16266304428317513,
+            "a1": 0.9059824620784173,
+            "a2": 0.97010892295425,
+            "a3": 0.9888857227726952
+          }
+        }
+      }
     }
   },
   "tests": 116,
