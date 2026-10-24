@@ -200,6 +200,10 @@ This is a small **cropped-validation diagnostic**, not an official KITTI/Eigen b
 
 Use fresh output paths on a repeat. Keep the ZIP, prepared data and raw run evidence outside Git. The validation subset must not become fine-tuning data.
 
+## Temporal training-data preparation
+
+A tested [CARLA triplet preparation tool](docs/carla_training_pilot.md) now groups audited captures into RGB-only previous/current/next inputs, with camera calibration, stationary-triplet rejection, image hashes and disjoint train/validation maps. The full suite passes 95 tests. Synthetic fixture tests establish preparation behavior; native CARLA capture and actual fine-tuning still require separate acceptance.
+
 ## Driving-scene improvement roadmap
 
 Follow the [driving validation and presentation plan](docs/driving_validation.md) for the next work:
