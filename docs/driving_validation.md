@@ -24,6 +24,8 @@ Use a unique output directory each time. Demo failures after output creation sav
 
 ## 2. Review driving quality before changing models
 
+Completed on 24 October 2026: both models processed matching 300-frame prefixes from three pinned daytime clips. All six runs completed and 87 tests passed. See the [paired driving review](driving_review_results.md) and [input catalogue](driving_review_inputs.json) for actual findings, throughput, provenance and reproduction. This limited review adds overpass/traffic and winding shaded-road cases; it supplies no aligned GT or accuracy score.
+
 Use the pinned daytime highway clip as a repeatable reference. Add legally usable clips covering urban traffic, turning, shadows, nearby vehicles, thin structures and reflective surfaces. Treat night/rain as challenge cases, not supported conditions established by the current result. Keep source attribution, licenses and hashes with each clip. Prefer full short sequences from multiple scenes over many adjacent images from one drive.
 
 Run each model on the same clips and same frame range with separate outputs:

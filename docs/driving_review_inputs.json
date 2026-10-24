@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "source_revision": "91b080357290da37f533e2d0832f601c3e770d51",
+  "license": "MIT, retained upstream LICENSE",
+  "license_file": "data/driving_review/UDACITY_LICENSE.txt",
+  "license_sha256": "404cc661d6b73f01ae0a6a7bb89f3bbf84844c2d993df254a3e0affe3c593dd1",
+  "license_url": "https://raw.githubusercontent.com/udacity/CarND-Advanced-Lane-Lines/91b080357290da37f533e2d0832f601c3e770d51/LICENSE",
+  "ground_truth": "unavailable",
+  "clips": [
+    {
+      "id": "highway",
+      "file": "data/demo/driving.mp4",
+      "source_file": "project_video.mp4",
+      "sha256": "651949922042c223375d40bf8929def97dbb62c6ade651d1f5b08eea47127d5f",
+      "git_blob": null,
+      "video": {
+        "decoded_frames": 1260,
+        "width": 1280,
+        "height": 720,
+        "source_fps": 25.0,
+        "source_duration_seconds": 50.4
+      },
+      "url": "https://raw.githubusercontent.com/udacity/CarND-Advanced-Lane-Lines/91b080357290da37f533e2d0832f601c3e770d51/project_video.mp4"
+    },
+    {
+      "id": "challenge",
+      "file": "data/driving_review/challenge_video.mp4",
+      "source_file": "challenge_video.mp4",
+      "sha256": "81062ee3b472732828098c7798a6a459ff239e7add8e94de69042c806dd3369f",
+      "git_blob": "3d84bbdb53ca4d0d7dfab5ce4bb1c9d22b6867aa",
+      "video": {
+        "decoded_frames": 484,
+        "width": 1280,
+        "height": 720,
+        "source_fps": 29.97002997002997,
+        "source_duration_seconds": 16.149466666666665
+      },
+      "url": "https://raw.githubusercontent.com/udacity/CarND-Advanced-Lane-Lines/91b080357290da37f533e2d0832f601c3e770d51/challenge_video.mp4"
+    },
+    {
+      "id": "harder",
+      "file": "data/driving_review/harder_challenge_video.mp4",
+      "source_file": "harder_challenge_video.mp4",
+      "sha256": "45879f48cdc43e40771317a7d03c973cb4c45db47f145e28837d9610d121732c",
+      "git_blob": "543f275e9b7129ff52cac2589d61507f6e1687c6",
+      "video": {
+        "decoded_frames": 1199,
+        "width": 1280,
+        "height": 720,
+        "source_fps": 25.0,
+        "source_duration_seconds": 47.96
+      },
+      "url": "https://raw.githubusercontent.com/udacity/CarND-Advanced-Lane-Lines/91b080357290da37f533e2d0832f601c3e770d51/harder_challenge_video.mp4"
+    }
+  ]
+}

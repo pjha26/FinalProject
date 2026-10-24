@@ -125,3 +125,8 @@ Final local gate, 19 October 2026: **61 regression tests and all eight integrate
 ## New-laptop continuation - 24 October 2026
 
 Both existing backends passed all eight delivery checks, 87 regression tests and separate 650-frame displayed rehearsals on the i7-13620H / 16 GB RAM / RTX 4050 6 GB laptop. This completes environment reconstruction and the per-machine software/display gate for the prepared driving clip. Read [the validation record](docs/new_laptop_validation.md) for exact workloads, FPS, memory, provenance and pending work. Application source, requirements, default model and accepted weights were preserved. Follow the existing driving-quality and aligned-depth evaluation roadmap before fine-tuning; the original research targets remain incomplete.
+
+
+## Paired driving review - 24 October 2026
+
+The next roadmap step is now recorded in [paired driving review results](docs/driving_review_results.md): three checksum-frozen daytime clips, identical 300-frame ranges for both existing backends, six successful sequential CUDA runs, 42 numerically valid review maps and 87 passing tests. Existing inference commands were reused; source, defaults and baseline weights were preserved. Small showed clearer outlines in inspected previews but did not sustain 10 FPS in every workload. No driving accuracy score is available without aligned GT. KITTI acquisition/provenance and a small held-out pilot are next; no local KITTI data is currently available.
