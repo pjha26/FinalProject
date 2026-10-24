@@ -2,7 +2,7 @@
 
 A final-year computer vision project that estimates **relative scene depth from a single RGB image or successive video frames**. The application integrates pretrained neural networks, a desktop visualization, optional point-cloud export, runtime profiling and reproducible evaluation.
 
-**Current delivery:** image and recorded driving-video inference have been demonstrated locally. Physical webcam validation and testing on the presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
+**Current delivery:** image and recorded driving-video inference have been demonstrated locally. On 24 October 2026, both backends passed all eight delivery checks and 60-second displayed rehearsals on the RTX 4050 laptop; see [new-laptop validation](docs/new_laptop_validation.md) for measurements and limits. Physical webcam validation and rehearsals on any other presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
 
 ## Features
 
@@ -173,7 +173,7 @@ Measured local observations on 21 October 2026:
 | Depth Anything V2 Small-294, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 8.37 FPS over 77.66 s; displayed duration gate passed | Periodic review exports and a 10,000-point first-frame cloud |
 | Depth Anything V2 Small-294, five indoor reference frames | GTX 1650 | AbsRel 0.2033 versus baseline 0.4960 | Small GT-median-aligned diagnostic; not a driving benchmark |
 
-These are observations, not hardware guarantees or controlled comparisons between unlike workloads. Earlier run history is retained in the phase documents and reports. Source clip rate, CPU processing, rendering, exports, pacing and system load affect completed FPS. GPU model latency alone is not displayed throughput. The RTX 3050 and RTX 4050 have not been tested; **14–20 FPS on CPU is not an established project result**.
+These are observations, not hardware guarantees or controlled comparisons between unlike workloads. Earlier run history is retained in the phase documents and reports. Source clip rate, CPU processing, rendering, exports, pacing and system load affect completed FPS. GPU model latency alone is not displayed throughput. The RTX 3050 remains untested; RTX 4050 results are recorded separately in the [24 October validation](docs/new_laptop_validation.md); **14–20 FPS on CPU is not an established project result**.
 
 The reliability update passed **87 automated tests and all eight baseline delivery checks**, with unchanged source during validation. The local evidence is retained in ignored `runs/presentation_reliability_delivery_01/`; a fresh clone must produce its own run evidence. Software acceptance on this development laptop does not replace the presentation-machine rehearsal.
 
