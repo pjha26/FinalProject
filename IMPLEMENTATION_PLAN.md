@@ -140,3 +140,8 @@ Added a tested local-ZIP importer and evaluated both unchanged pretrained backen
 ## Native CARLA continuation - 25 October 2026
 
 The [CARLA pilot guide](docs/carla_training_pilot.md) records the new RGB-triplet preparer, project-local client cache, delayed-camera matching to historical world snapshots, and cleanup ordering. All 104 regression tests pass; the frozen demo input, CUDA image inference and 10-frame video smoke test also pass. Native Town04 captured and audited 100 consecutive paired frames, and the static facade probe identified camera-axis depth within 0.0616 m. Town05 lost its server connection on both the shared and fresh-server attempts, leaving the overall data gate incomplete. Next: diagnose Town05, accept audited disjoint-map triplets, then implement bounded self-supervised fine-tuning and candidate-versus-baseline evaluation. No project-specific training or new weights are claimed.
+
+
+## Map-disjoint CARLA input pilot - 25 October 2026
+
+Town05 seed 43 passed a fresh-server 100-frame capture and audit after seed 42 failed during warmup. Together with the accepted Town04 seed-42 recording, the unchanged preparer produced 98 training and 25 validation RGB triplets, rejecting 73 stationary validation windows. This completes the bounded native input-preparation gate, not representative training-data coverage or the seed-42 failure diagnosis. Next: freeze a CARLA validation baseline, implement/test the self-supervised training path, and run a separate bounded training experiment before any broader accuracy claim. Selected actual outputs and hashes are preserved in the local reference folder documented in [reference outputs](docs/reference_outputs.md).

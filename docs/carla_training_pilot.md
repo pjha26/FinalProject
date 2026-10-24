@@ -75,3 +75,21 @@ Measured on the i7-13620H / 16 GB / RTX 4050 6 GB laptop, CARLA client/server 0.
 The Town04 metadata SHA256 is `779b7dafda6fcf993d09128ab3f16d9c26278fcd884c842ab54877b5b01b2bfb`; its frame-index SHA256 is `547fece7c855b294d7f61d607aa594fca5a791027be326acc9e91c7af21165c7`. These fingerprints identify local evidence, not downloadable Git assets. Capture metadata retains its original generic wall-check-pending text; the separate geometry report above establishes the measured convention for this probe without rewriting recorded source evidence.
 
 Both multi-stage pilot summaries remain failed overall because Town05 did not complete. No map-separated triplet dataset or new trained weights were accepted. The cause of the Town05 native server exit is unresolved; longer timeouts did not fix it. Diagnose that failure before broadening capture, then audit both maps and run the existing triplet preparer with fresh output paths. Do not substitute KITTI validation examples into training or relax the map-separation requirement to bypass this gate. Low-quality daylight samples and a short facade probe do not establish weather/night robustness, long-run reliability or calibrated model predictions. Simulation Hz is not wall-clock model FPS.
+
+## Map-disjoint native pilot accepted - 25 October 2026
+
+An isolated Town05 probe passed map loading, traffic-manager initialization, synchronous mode and seed setup. A traced seed-42 capture then reached vehicle/camera creation and failed during warmup; the owned server exited with code 3. The precise native failure is unresolved. Changing the existing capture seed to **43** produced 100 consecutive Town05 RGB/depth frames with clean capture exit and audit. This is a measured working configuration, not a general seed-42 or server-stability fix; application source and default seed remain unchanged.
+
+Accepted source scenes are `data/carla/train_town04_09` (Town04, seed 42, 100 frames) and `data/carla/validation_town05_13` (Town05, seed 43, 100 frames). Town05 has 17,837,428 valid depth pixels below 80 m and a 9.90000015-second simulation span. All 100 RGBs were checked for native 640x480 dimensions/nonuniformity, first/last files differ, and the first RGB was visually inspected as a rendered road scene. Its metadata SHA256 is `ffacb607d049619e7de8f69c41f27a903193660458e80c0f74baf24e551bc2db`; index SHA256 is `c96bee28f43621453bd1f717e48f52a1f4a8b7a53f70b7be85416d62cf7296f5`. Full run evidence is `runs/native_carla_pilot_13/`; the captured scene metadata records the actual seed.
+
+The unchanged triplet preparer completed `data/training/carla_pilot_13`: **98 training triplets, 25 validation triplets, 127 unique RGB images**. It rejected 73 stationary Town05 windows and zero Town04 windows. Both adjacent steps of each retained triple pass the 0.01 m translation filter. Reference depth is absent from the prepared training inputs. Only one short route per map has been accepted; correlated windows are not independent samples, and this Low-quality daylight pilot is too small to establish training benefit or generalization. Broader data collection, pose/loss training components, fine-tuning, full benchmark evaluation and integrated CARLA inference/FPS remain pending.
+
+Reproduce on a running server with new paths (retain the explicit seeds):
+
+```powershell
+.\.venv\Scripts\python.exe project.py collect --map Town04 --seed 42 --timeout 60 --frames 100 --output data/carla/train_town04_next
+.\.venv\Scripts\python.exe project.py collect --map Town05 --seed 43 --timeout 60 --frames 100 --output data/carla/validation_town05_next
+.\.venv\Scripts\python.exe tools/prepare_carla_triplets.py --train-scene data/carla/train_town04_next --validation-scene data/carla/validation_town05_next --output data/training/carla_pilot_next
+```
+
+The successful diagnostic used a fresh server for Town05, off-screen Low rendering, no sound, `-stdout -FullStdOutLogOutput`, and bounded capture. Do not assume a long-running mixed-map session has been validated. The separate [reference outputs guide](reference_outputs.md) describes the copied local evidence folder.
