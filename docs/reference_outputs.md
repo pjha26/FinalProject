@@ -10,3 +10,6 @@ Predicted depth is relative. KITTI pilot scores use per-image GT-median alignmen
 
 
 A second local folder, `../outputs/carla_baseline_reference_2026-10-25_01/`, contains the frozen 25-target CARLA baseline metrics/CSV, evaluation manifest, source audit, reproduced-score check, 107-test log, and first/highest-AbsRel prediction previews plus selected numerical prediction/reference arrays. Its `index.html`, `README.md` and SHA256 `manifest.json` explain selection, protocol and limits. Highest-error previews are chosen after scoring for review only. Both reference folders remain separate from Git and from training inputs.
+
+
+The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`, records the first ten-step self-supervised sanity experiment. Open `index.html` for the recorded loss/metric plot, actual target/reconstruction images and matched baseline/candidate CARLA/KITTI previews. It also holds selected numerical arrays, configuration, training CSV, 114-test log, checkpoint/state audit, comparison metrics and a SHA256 manifest. Candidate weights stay in the ignored experiment directory. KITTI regressed, so this candidate is retained as experimental and the accepted default remains pretrained.

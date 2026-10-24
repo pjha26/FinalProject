@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "training": {
+    "schema_version": 1,
+    "status": "sanity_complete",
+    "started_utc": "2026-10-24T19:40:47.029742+00:00",
+    "device": "cuda",
+    "steps_requested": 10,
+    "steps_completed": 10,
+    "seed": 42,
+    "batch_size": 1,
+    "learning_rate": 1e-05,
+    "manifest_sha256": "bb93ba2e4a1004854757e4fe13bd9cde7d363c8c907483ecb4e1286f531d7c1d",
+    "train_triplets": 98,
+    "validation_triplets": 25,
+    "initial_checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+      "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+      "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+    },
+    "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+    "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+    "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
+    "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+    "limitations": "Training sanity check on 98 correlated Town04 triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+    "validation_before": {
+      "loss": 0.02373010091483593,
+      "photometric": 0.02371411703526974,
+      "smoothness": 1.598365375684807e-05,
+      "warp_fraction": 0.5491448020935059
+    },
+    "validation_after": {
+      "loss": 0.02439778357744217,
+      "photometric": 0.024379283264279364,
+      "smoothness": 1.850021733844187e-05,
+      "warp_fraction": 0.5652875590324402
+    },
+    "candidate_checkpoint_sha256": {
+      "encoder.pth": "012d3f7b8a52f9d4c0ff27f8d9ad7708b339500acf482f851acabb63c08c6727",
+      "depth.pth": "4ba2fcf06d67a33b5f0e6d20d174050db677e514f24e03aab41d5c266239ba8d",
+      "pose_encoder.pth": "7f0fa696b88465a6068173688518c4a6c76858db21a649ad83d1785d8f4c6ed7",
+      "pose.pth": "21befbe5fbc3deb48dfd65349ee23e76ccf3345b34bdcb9ea1cb90b3f15b7364"
+    },
+    "peak_torch_allocated_bytes": 906529792,
+    "elapsed_seconds": 6.263862199999999
+  },
+  "checkpoint_audit": {
+    "status": "pass",
+    "steps": 10,
+    "unique_training_targets": 10,
+    "files": {
+      "encoder.pth": {
+        "changed_tensors": 60,
+        "total_tensors": 122,
+        "unchanged_batchnorm_buffers": 60,
+        "baseline_bytes_unchanged": true,
+        "candidate_sha256": "012d3f7b8a52f9d4c0ff27f8d9ad7708b339500acf482f851acabb63c08c6727"
+      },
+      "depth.pth": {
+        "changed_tensors": 28,
+        "total_tensors": 28,
+        "unchanged_batchnorm_buffers": 0,
+        "baseline_bytes_unchanged": true,
+        "candidate_sha256": "4ba2fcf06d67a33b5f0e6d20d174050db677e514f24e03aab41d5c266239ba8d"
+      },
+      "pose_encoder.pth": {
+        "changed_tensors": 60,
+        "total_tensors": 122,
+        "unchanged_batchnorm_buffers": 60,
+        "baseline_bytes_unchanged": true,
+        "candidate_sha256": "7f0fa696b88465a6068173688518c4a6c76858db21a649ad83d1785d8f4c6ed7"
+      },
+      "pose.pth": {
+        "changed_tensors": 8,
+        "total_tensors": 8,
+        "unchanged_batchnorm_buffers": 0,
+        "baseline_bytes_unchanged": true,
+        "candidate_sha256": "21befbe5fbc3deb48dfd65349ee23e76ccf3345b34bdcb9ea1cb90b3f15b7364"
+      }
+    },
+    "source_sha256": {
+      "src/training.py": "689ba7081a9a5f24525cef829332f7bf2ca44c4e85180cfee41d6067bb229528",
+      "tools/train_carla_pilot.py": "1137522b1df23540cf783135a4f2bcf3351f1bb79c92cba36090bef275d5f447",
+      "tests/test_training.py": "c3a6763673d1a64094da44df2b674cef400c0e0a260255f70dd57406ab60d4ca"
+    }
+  },
+  "comparison": {
+    "carla_pilot_01": {
+      "status": "pass",
+      "predictions": 25,
+      "valid_pixels": 4338866,
+      "maximum_metric_absolute_difference": 4.795845498506424e-09,
+      "baseline": {
+        "abs_rel": 0.18140801021130007,
+        "sq_rel": 1.6326090089263219,
+        "rmse": 8.352287019913117,
+        "rmse_log": 0.34514984305932717,
+        "a1": 0.764108079677858,
+        "a2": 0.8787390122142469,
+        "a3": 0.9428669117752311
+      },
+      "candidate": {
+        "abs_rel": 0.14515620136900034,
+        "sq_rel": 1.2259417719102261,
+        "rmse": 7.032226533274643,
+        "rmse_log": 0.2569764450585785,
+        "a1": 0.8330412987965188,
+        "a2": 0.9296164399086476,
+        "a3": 0.9659475513443608
+      }
+    },
+    "kitti_pilot_01": {
+      "status": "pass",
+      "predictions": 24,
+      "valid_pixels": 1782495,
+      "maximum_metric_absolute_difference": 5.283230368746672e-07,
+      "baseline": {
+        "abs_rel": 0.09362687132453361,
+        "sq_rel": 0.6896455021779558,
+        "rmse": 4.219609616896688,
+        "rmse_log": 0.14903443240625655,
+        "a1": 0.9128543584774701,
+        "a2": 0.9752481364642772,
+        "a3": 0.9909762486532604
+      },
+      "candidate": {
+        "abs_rel": 0.1196805279993536,
+        "sq_rel": 1.3194227880702167,
+        "rmse": 5.299157113859497,
+        "rmse_log": 0.17493542442689758,
+        "a1": 0.8959916613078632,
+        "a2": 0.9656554744285696,
+        "a3": 0.9858059602461747
+      }
+    }
+  },
+  "decision": "Keep pretrained baseline as default: KITTI pilot regressed; candidate is a sanity experiment only.",
+  "regression_tests": 114,
+  "source_parent_commit": "c2b2dd3d93e8737097b30c5948c8ab6cad0c59df"
+}
