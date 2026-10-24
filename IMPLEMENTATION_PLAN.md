@@ -217,3 +217,8 @@ Completed matched no-SSIM/no-automasking/no-smoothness controls and full-objecti
 ## Remaining Step 6 measured - 25 October 2026
 
 Completed selective acquisition/projection and matched full Eigen 697 evaluation with LANCZOS/Garg/GT-median/no-PP protocol. Pretrained AbsRel 0.114617, RMSE 4.863413 m; candidate 0.135153/5.253816 m. No default promotion; not all accuracy targets pass. Exact pilot overlap 0 frames, 7 shared drives. [Details](docs/full_eigen.md).
+
+
+## Remaining Step 7 measured - 25 October 2026
+
+Frozen model identities and complete source inventory preceded reserved-route scoring. Both models completed 100 identical frames/masks; AbsRel baseline/candidate 0.256899/0.264372, aligned RMSE 9.400815/8.750513 m. No reselection followed; route is consumed test evidence with shared-map/correlation limits. [Record](docs/reserved_test.md).

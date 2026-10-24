@@ -272,6 +272,8 @@ The remaining research work is now organized into a [nine-step implementation pl
 
 [Full KITTI Eigen evaluation](docs/full_eigen.md) now scores all 697 frames: pretrained AbsRel 0.114617 / RMSE 4.863413 m; experimental candidate 0.135153 / 5.253816 m. The candidate remains rejected. Proposal accuracy targets are only partly met.
 
+The [previously reserved CARLA route has now been scored](docs/reserved_test.md) under a frozen model/source protocol. It is consumed final-test evidence; earlier development sections describe its unscored status at that time. No test-driven retraining followed.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.

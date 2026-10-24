@@ -66,5 +66,28 @@
     "training_routes": 671.5182629908513,
     "validation_to_reserved_test": 154.29070528543707
   },
-  "reserved_test_rgb_overlap_with_prepared_dataset": 0
+  "reserved_test_rgb_overlap_with_prepared_dataset": 0,
+  "final_test": {
+    "status": "consumed_frozen_test",
+    "protocol_sha256": "2d65168bbc337c1c26b727dac4cc7e891d59cc109971259666e550ec8649abf8",
+    "baseline": {
+      "abs_rel": 0.25689876163933534,
+      "sq_rel": 3.051166008932552,
+      "rmse": 9.400814667888312,
+      "rmse_log": 0.3810166162950137,
+      "a1": 0.6535250609083996,
+      "a2": 0.8534911528644153,
+      "a3": 0.9127587994841501
+    },
+    "candidate": {
+      "abs_rel": 0.26437189765508995,
+      "sq_rel": 3.149345634917357,
+      "rmse": 8.7505132186874,
+      "rmse_log": 0.343038086010144,
+      "a1": 0.6641583653431935,
+      "a2": 0.8664165167412312,
+      "a3": 0.9266061797967378
+    },
+    "not_eligible_for_future_untouched_tuning": true
+  }
 }

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "protocol_sha256": "2d65168bbc337c1c26b727dac4cc7e891d59cc109971259666e550ec8649abf8",
+  "frozen_models": {
+    "baseline": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+    },
+    "candidate": {
+      "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+      "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+    }
+  },
+  "baseline": {
+    "schema_version": 1,
+    "status": "complete",
+    "role": "baseline",
+    "scene": "test_town05_16",
+    "frames": 100,
+    "protocol_sha256": "2d65168bbc337c1c26b727dac4cc7e891d59cc109971259666e550ec8649abf8",
+    "checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+    },
+    "mean_metrics": {
+      "abs_rel": 0.25689876163933534,
+      "sq_rel": 3.051166008932552,
+      "rmse": 9.400814667888312,
+      "rmse_log": 0.3810166162950137,
+      "a1": 0.6535250609083996,
+      "a2": 0.8534911528644153,
+      "a3": 0.9127587994841501
+    },
+    "total_valid_pixels": 16411405,
+    "limits": "One reserved route, same Town05 map as development; GT-median scoring only, not calibrated output or unseen-map generalization. Do not tune on this test after scoring."
+  },
+  "candidate": {
+    "schema_version": 1,
+    "status": "complete",
+    "role": "candidate",
+    "scene": "test_town05_16",
+    "frames": 100,
+    "protocol_sha256": "2d65168bbc337c1c26b727dac4cc7e891d59cc109971259666e550ec8649abf8",
+    "checkpoint_sha256": {
+      "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+      "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+    },
+    "mean_metrics": {
+      "abs_rel": 0.26437189765508995,
+      "sq_rel": 3.149345634917357,
+      "rmse": 8.7505132186874,
+      "rmse_log": 0.343038086010144,
+      "a1": 0.6641583653431935,
+      "a2": 0.8664165167412312,
+      "a3": 0.9266061797967378
+    },
+    "total_valid_pixels": 16411405,
+    "limits": "One reserved route, same Town05 map as development; GT-median scoring only, not calibrated output or unseen-map generalization. Do not tune on this test after scoring."
+  },
+  "decision": "No reselection/tuning after this test; keep pretrained default. Reserved route is now consumed test evidence, not eligible as untouched tuning data."
+}
