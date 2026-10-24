@@ -256,6 +256,8 @@ data/                      Ignored demo and evaluation assets
 runs/                      Ignored predictions, logs, measurements and diagnostics
 ```
 
+A [subsequent CARLA data expansion](docs/carla_data_expansion.md) adds a second Town04 training route, giving 196 prepared training triplets with the original 25 validation triplets. A separate 100-frame Town05 seed-45 route is reserved without model scoring; its roles/hashes are recorded in the route registry. This remains a small daylight simulator dataset.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.

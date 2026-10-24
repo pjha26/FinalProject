@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "captures": [
+    {
+      "scene": "train_town04_09",
+      "role": "train",
+      "map": "Town04",
+      "seed": 42,
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "779b7dafda6fcf993d09128ab3f16d9c26278fcd884c842ab54877b5b01b2bfb",
+        "frames.csv": "547fece7c855b294d7f61d607aa594fca5a791027be326acc9e91c7af21165c7"
+      }
+    },
+    {
+      "scene": "train_town04_14",
+      "role": "train",
+      "map": "Town04",
+      "seed": 44,
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "c295de00ecd0e54c7414f92981a4c2280d57c5a6b0fcc9768df2fc0782fab515",
+        "frames.csv": "858e3d5075a8736d7b766bd1f6bff3b7b0abdf64fdf26a62b5f1dbca7d92bc5b"
+      }
+    },
+    {
+      "scene": "validation_town05_13",
+      "role": "validation",
+      "map": "Town05",
+      "seed": 43,
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "ffacb607d049619e7de8f69c41f27a903193660458e80c0f74baf24e551bc2db",
+        "frames.csv": "c96bee28f43621453bd1f717e48f52a1f4a8b7a53f70b7be85416d62cf7296f5"
+      }
+    },
+    {
+      "scene": "test_town05_16",
+      "role": "reserved_test",
+      "map": "Town05",
+      "seed": 45,
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "7f022650c3602b3d22deb3a32104ed09b89065943d8b17d1d3a8d005fb61b5be",
+        "frames.csv": "99933da1db461f5c8d1d44f7e283422817899d9ad41be134d1f17c1d31ac3851"
+      }
+    }
+  ],
+  "expanded_manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
+  "expanded_counts": {
+    "train": 196,
+    "validation": 25
+  },
+  "held_out_policy": "test_town05_16: integrity-only; excluded from preparation, optimizer, validation and model scoring in these steps. Same Town05 map as validation, not map-independent or representative final testing.",
+  "failed_attempts": [
+    {
+      "scene": "test_town05_15",
+      "seed": 44,
+      "frames": 0,
+      "server_exit": 3,
+      "evidence": "runs/native_carla_pilot_15/summary.json"
+    }
+  ],
+  "minimum_sampled_xy_separation_m": {
+    "training_routes": 671.5182629908513,
+    "validation_to_reserved_test": 154.29070528543707
+  },
+  "reserved_test_rgb_overlap_with_prepared_dataset": 0
+}
