@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "protocol": {
+    "schema_version": 1,
+    "status": "predeclared",
+    "training_manifest": "data/training/carla_conditions_01/triplets.json",
+    "manifest_sha256": "fb9ed4ab6be2a2e6f5594851b35dfc34eca0525aacd7c6daded4d0cb53621b5b",
+    "learning_rate": 1e-06,
+    "freeze_encoder": true,
+    "batch_size": 1,
+    "cases": [
+      {
+        "name": "main_aug_s42",
+        "epochs": 3,
+        "seed": 42,
+        "extra": []
+      },
+      {
+        "name": "control_unaug_s42",
+        "epochs": 3,
+        "seed": 42,
+        "extra": [
+          "--no-color-augmentation"
+        ]
+      },
+      {
+        "name": "no_ssim_s42",
+        "epochs": 1,
+        "seed": 42,
+        "extra": [
+          "--no-ssim"
+        ]
+      },
+      {
+        "name": "no_automasking_s42",
+        "epochs": 1,
+        "seed": 42,
+        "extra": [
+          "--no-automasking"
+        ]
+      },
+      {
+        "name": "no_smoothness_s42",
+        "epochs": 1,
+        "seed": 42,
+        "extra": [
+          "--no-smoothness"
+        ]
+      },
+      {
+        "name": "repeat_s43",
+        "epochs": 1,
+        "seed": 43,
+        "extra": []
+      },
+      {
+        "name": "repeat_s44",
+        "epochs": 1,
+        "seed": 44,
+        "extra": []
+      }
+    ],
+    "selection": "Fixed final epoch 3 of main_aug_s42 is the research candidate; no best-checkpoint search. Retain pretrained deployment default if either KITTI pilot AbsRel or RMSE worsens. Reserved route is not consulted.",
+    "ablations": "Compare one-epoch cases with main_aug_s42/epoch_001, identical budget/data except named factor. Seed repeats are descriptive per-image/per-route results, not independent-frame confidence.",
+    "validation_manifest_sha256": "34704140bd6480b2ffdbdd80c334f89f5fb8790f40435c281d3b77aa6161c1e8"
+  },
+  "training": {
+    "schema_version": 1,
+    "status": "complete",
+    "configuration": {
+      "manifest_sha256": "fb9ed4ab6be2a2e6f5594851b35dfc34eca0525aacd7c6daded4d0cb53621b5b",
+      "learning_rate": 1e-06,
+      "device": "cuda",
+      "seed": 42,
+      "batch_size": 1,
+      "freeze_encoder": true,
+      "color_augmentation": true,
+      "no_ssim": false,
+      "no_automasking": false,
+      "no_smoothness": false
+    },
+    "epochs_requested": 3,
+    "epochs_completed": 3,
+    "started_from_epoch": 0,
+    "train_triplets": 392,
+    "validation_triplets": 152,
+    "initial_checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+      "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+      "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+    },
+    "resume_from": null,
+    "epoch_results": [
+      {
+        "epoch": 1,
+        "updates": 392,
+        "unique_targets": 392,
+        "mean_train_loss": 0.03370779912386622,
+        "validation": {
+          "loss": 0.038350136999629046,
+          "photometric": 0.038333751628861615,
+          "smoothness": 1.6385302603195766e-05,
+          "warp_fraction": 0.5652722016369042
+        },
+        "checkpoint": "epoch_001"
+      },
+      {
+        "epoch": 2,
+        "updates": 392,
+        "unique_targets": 392,
+        "mean_train_loss": 0.0288149474891929,
+        "validation": {
+          "loss": 0.038429791340604424,
+          "photometric": 0.03841378770180439,
+          "smoothness": 1.6003533932905012e-05,
+          "warp_fraction": 0.5667481338115115
+        },
+        "checkpoint": "epoch_002"
+      },
+      {
+        "epoch": 3,
+        "updates": 392,
+        "unique_targets": 392,
+        "mean_train_loss": 0.0278687726953352,
+        "validation": {
+          "loss": 0.038385984683899504,
+          "photometric": 0.03837008455670193,
+          "smoothness": 1.589983010992575e-05,
+          "warp_fraction": 0.5638780737001645
+        },
+        "checkpoint": "epoch_003"
+      }
+    ],
+    "limitations": "Small correlated CARLA dataset. Epoch-boundary resume only; failed mid-epoch work restarts from last completed checkpoint. CUDA sampling backward may be nondeterministic. No automatic checkpoint selection/default promotion.",
+    "checkpoint": "epoch_003",
+    "peak_torch_allocated_bytes": 778535936,
+    "elapsed_seconds": 176.5301173
+  },
+  "final": {
+    "checkpoint": "runs\\research_matrix_01\\main_aug_s42\\epoch_003",
+    "scores": {
+      "carla": {
+        "summary": {
+          "schema_version": 1,
+          "status": "complete",
+          "dataset": "CARLA multi-condition moving-target validation",
+          "data_kind": "simulated_rgbd",
+          "split": "validation",
+          "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+          "evaluated_samples": 152,
+          "expected_samples": 152,
+          "scenes": 4,
+          "protocol": {
+            "depth_units": "metres",
+            "aligned_to_rgb": true,
+            "min_depth": 0.001,
+            "max_depth": 80,
+            "scaling": "per_image_median",
+            "aggregation": "mean_of_images",
+            "crop": "none"
+          },
+          "manifest_sha256": "9fc85b11738204a6c66e869c405de41d4d0556da47c5f85fde74eb351020c0a4",
+          "checkpoint_sha256": {
+            "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+            "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+          },
+          "device": "cuda",
+          "mean_metrics": {
+            "abs_rel": 0.2911373297402653,
+            "sq_rel": 4.793619967974939,
+            "rmse": 12.901244629882559,
+            "rmse_log": 0.568266566423957,
+            "a1": 0.5952161777807085,
+            "a2": 0.7417604629557054,
+            "a3": 0.8044375877738199
+          },
+          "total_valid_pixels": 29131740,
+          "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+          "reference_checkpoint_sha256": {
+            "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+            "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+          },
+          "backend": "monodepth2",
+          "model_name": "Monodepth2 ResNet-18 mono_640x192",
+          "model_input": [
+            192,
+            640
+          ],
+          "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+        },
+        "routes": {
+          "validation_town05_13": {
+            "samples": 25,
+            "mean_metrics": {
+              "abs_rel": 0.14343660878523137,
+              "sq_rel": 1.2368933852069341,
+              "rmse": 7.4072815216555465,
+              "rmse_log": 0.2818765697948671,
+              "a1": 0.8097428857539749,
+              "a2": 0.9221388997475859,
+              "a3": 0.9627534906648054
+            }
+          },
+          "validation_town05_s43_wetcloudynoon_01": {
+            "samples": 25,
+            "mean_metrics": {
+              "abs_rel": 0.15455246368223988,
+              "sq_rel": 1.5029546991172886,
+              "rmse": 8.138635911968287,
+              "rmse_log": 0.30856034082636835,
+              "a1": 0.7910096982894343,
+              "a2": 0.8969967439348459,
+              "a3": 0.953799422763206
+            }
+          },
+          "validation_town05_s46_clearnoon_01": {
+            "samples": 51,
+            "mean_metrics": {
+              "abs_rel": 0.38526994072363185,
+              "sq_rel": 7.130321110120541,
+              "rmse": 15.677430111597168,
+              "rmse_log": 0.7205246285641169,
+              "a1": 0.48391354365851375,
+              "a2": 0.6543253129648986,
+              "a3": 0.7195237478932526
+            }
+          },
+          "validation_town05_s46_wetcloudynoon_01": {
+            "samples": 51,
+            "mean_metrics": {
+              "abs_rel": 0.3363603986652618,
+              "sq_rel": 5.8134834589791655,
+              "rmse": 15.152790435492115,
+              "rmse_log": 0.6837027308655024,
+              "a1": 0.5053814449999665,
+              "a2": 0.6646785944313058,
+              "a3": 0.7385290071247922
+            }
+          }
+        }
+      },
+      "kitti": {
+        "summary": {
+          "schema_version": 1,
+          "status": "complete",
+          "dataset": "KITTI selected validation cropped pilot",
+          "data_kind": "real_rgbd",
+          "split": "validation",
+          "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+          "evaluated_samples": 24,
+          "expected_samples": 24,
+          "scenes": 8,
+          "protocol": {
+            "depth_units": "metres",
+            "aligned_to_rgb": true,
+            "min_depth": 0.001,
+            "max_depth": 80,
+            "scaling": "per_image_median",
+            "aggregation": "mean_of_images",
+            "crop": "none"
+          },
+          "manifest_sha256": "295e66dc44cedde6a3bada207efefd7ed40c97fbca827beabeff1686a8977346",
+          "checkpoint_sha256": {
+            "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+            "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+          },
+          "device": "cuda",
+          "mean_metrics": {
+            "abs_rel": 0.11687637828401047,
+            "sq_rel": 0.8789821558655192,
+            "rmse": 4.520239068061532,
+            "rmse_log": 0.16784307854453007,
+            "a1": 0.8963498959748639,
+            "a2": 0.9730055163485573,
+            "a3": 0.9893061561260886
+          },
+          "total_valid_pixels": 1782495,
+          "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+          "reference_checkpoint_sha256": {
+            "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+            "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+          },
+          "backend": "monodepth2",
+          "model_name": "Monodepth2 ResNet-18 mono_640x192",
+          "model_input": [
+            192,
+            640
+          ],
+          "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+        },
+        "routes": {
+          "2011_09_26_drive_0002_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.09591615808893243,
+              "sq_rel": 0.340743781713921,
+              "rmse": 3.0387078357916693,
+              "rmse_log": 0.11907510056017227,
+              "a1": 0.937409463320475,
+              "a2": 0.9971256904988727,
+              "a3": 0.9997992153955457
+            }
+          },
+          "2011_09_26_drive_0013_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.12031490676583502,
+              "sq_rel": 1.10929607461738,
+              "rmse": 3.9724863469895286,
+              "rmse_log": 0.18324980783987252,
+              "a1": 0.9180954958021267,
+              "a2": 0.9699743133089248,
+              "a3": 0.9834593234404171
+            }
+          },
+          "2011_09_26_drive_0020_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.08939069255252008,
+              "sq_rel": 0.36566516446710734,
+              "rmse": 3.0331371990449,
+              "rmse_log": 0.12064456320825546,
+              "a1": 0.947367702347214,
+              "a2": 0.9901767327087638,
+              "a3": 0.9975345929569813
+            }
+          },
+          "2011_09_26_drive_0023_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.09585508887085276,
+              "sq_rel": 0.6297767509990961,
+              "rmse": 4.5454248094042695,
+              "rmse_log": 0.1475558294465487,
+              "a1": 0.915542942577551,
+              "a2": 0.9809258831075587,
+              "a3": 0.995663723538252
+            }
+          },
+          "2011_09_26_drive_0036_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.1331398736866551,
+              "sq_rel": 1.2025529291005659,
+              "rmse": 5.244859544193563,
+              "rmse_log": 0.18662340218257154,
+              "a1": 0.8672322452083998,
+              "a2": 0.976415107768323,
+              "a3": 0.9910544988465514
+            }
+          },
+          "2011_09_28_drive_0037_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.15413564110853187,
+              "sq_rel": 1.360674276078269,
+              "rmse": 5.948928783810165,
+              "rmse_log": 0.24184281912812958,
+              "a1": 0.8273041416449596,
+              "a2": 0.9186255090092833,
+              "a3": 0.9669532036194783
+            }
+          },
+          "2011_09_30_drive_0016_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.10681119604410753,
+              "sq_rel": 0.6287654244396165,
+              "rmse": 4.392139646176793,
+              "rmse_log": 0.14956274039504966,
+              "a1": 0.8957908514754628,
+              "a2": 0.9856770180309743,
+              "a3": 0.9952195929883118
+            }
+          },
+          "2011_10_03_drive_0047_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.13944746915464898,
+              "sq_rel": 1.3943828455081972,
+              "rmse": 5.98622837908137,
+              "rmse_log": 0.19419036559564085,
+              "a1": 0.8620563254227234,
+              "a2": 0.965123876355757,
+              "a3": 0.9847650982231717
+            }
+          }
+        }
+      }
+    }
+  },
+  "audit": {
+    "each_epoch_updates": 392,
+    "global_unique_targets": 392,
+    "total_updates": 1176,
+    "frozen_encoder_equal": true,
+    "checkpoint_hashes_verified": true,
+    "baseline_bytes_unchanged": true
+  },
+  "decision": "Reject default promotion: KITTI pilot AbsRel/RMSE regression; keep pretrained. Fixed final epoch3 remains a research-only checkpoint for predeclared final tests."
+}

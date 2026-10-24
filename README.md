@@ -266,6 +266,8 @@ The remaining research work is now organized into a [nine-step implementation pl
 
 [Epoch training now supports verified resume](docs/epoch_training.md), per-epoch validation/checkpoints and explicit loss controls for ablations. Multi-scene validation preparation is implemented; 126 tests pass. Longer training/experimental acceptance remain measured separately.
 
+[Controlled broader-data training](docs/research_experiments.md) completed three epochs (1,176 updates). CARLA development AbsRel improved to 0.291137 from 0.317736, while KITTI pilot AbsRel regressed to 0.116876 from 0.093627. The fixed candidate remains experimental and the pretrained default is preserved.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.

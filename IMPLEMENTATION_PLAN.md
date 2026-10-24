@@ -202,3 +202,8 @@ Validated capture weather selection and recorded two conditions/two routes per m
 ## Remaining Step 3 and ablation infrastructure - 25 October 2026
 
 Added atomic epoch model/optimizer/RNG checkpoints, config/hash-verified resume and per-epoch validation. CPU fixtures reproduce uninterrupted versus interrupted/resumed states exactly; invalid config/checksum and overwrite rejection pass. Added explicit loss controls and multi-scene native evaluation preparation. All 126 tests pass. [Details](docs/epoch_training.md). Research training/ablations and remaining data/runtime/delivery gates are not implied by these implementation tests.
+
+
+## Remaining Step 4 measured - 25 October 2026
+
+Three complete broader-data epochs: 1,176 updates, 392 distinct training targets, 152 development targets. Fixed epoch-3 candidate improves broader CARLA AbsRel 0.317736 to 0.291137 but regresses KITTI 0.093627 to 0.116876; reject default promotion. Encoder/baseline and checkpoint/hash audits pass. [Study record](docs/research_experiments.md). This is bounded experimental completion, not convergence or research-target success.
