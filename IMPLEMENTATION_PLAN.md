@@ -135,3 +135,8 @@ The next roadmap step is now recorded in [paired driving review results](docs/dr
 ## KITTI validation pilot - 24 October 2026
 
 Added a tested local-ZIP importer and evaluated both unchanged pretrained backends on the same 24 cropped-validation images from eight drives. Five overlapping drives were excluded using pinned Monodepth2 training/development split hashes; Small pretraining overlap is unknown. All 92 tests passed. Both evaluations completed, and all 48 saved predictions reproduced their scoring metrics. Read the [pilot guide/results](docs/kitti_pilot.md) and updated README for exact selection, conversions, masks, metrics and evidence. This advances Phase 4 driving-depth evidence; full Eigen evaluation, new training, CARLA capture and ablations remain pending. Validation examples must remain separate from future training data.
+
+
+## Native CARLA continuation - 25 October 2026
+
+The [CARLA pilot guide](docs/carla_training_pilot.md) records the new RGB-triplet preparer, project-local client cache, delayed-camera matching to historical world snapshots, and cleanup ordering. All 104 regression tests pass; the frozen demo input, CUDA image inference and 10-frame video smoke test also pass. Native Town04 captured and audited 100 consecutive paired frames, and the static facade probe identified camera-axis depth within 0.0616 m. Town05 lost its server connection on both the shared and fresh-server attempts, leaving the overall data gate incomplete. Next: diagnose Town05, accept audited disjoint-map triplets, then implement bounded self-supervised fine-tuning and candidate-versus-baseline evaluation. No project-specific training or new weights are claimed.

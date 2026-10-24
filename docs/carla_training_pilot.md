@@ -53,3 +53,25 @@ Four regression tests cover cache path/call order, cache failure, command timeou
 The official Windows 0.9.13 package is installed locally (5977917518 archive bytes, about 13.45 GiB extracted). Its locally computed archive SHA256 is `00cd8aeb56a6bbaba25fe4351918e0d0bcbd3c62eef2709337688c2e51b25c92`. This is a provenance fingerprint, not an independently published upstream checksum. The running API reported server/client 0.9.13 and listed Town04/Town05. Native connection, map loading and traffic-manager initialization have passed a bounded diagnostic; camera capture and the facade-depth gate have not yet passed. Zero-frame and interrupted recordings remain unaccepted.
 
 The existing `CaptureSettings.timeout` is now exposed as `--timeout` on `collect`, CARLA `demo`, and `calibrate-depth`. Its default remains 15 seconds; use `--timeout 60` for the measured cold-map diagnostic. Nonpositive/nonfinite values fail validation. Increasing the timeout did not by itself produce camera frames, and the cause of the earlier native abort is not established by the successful map-only probe. The shared cache fix and timeout option preserve all model/input contracts.
+
+## Delayed-camera fix and native evidence - 25 October 2026
+
+GPU camera callbacks can arrive after the world has advanced. Capture now polls bounded callback queues while ticking, retaining the world snapshot and ego pose for each frame ID. Returned RGB/depth timestamps must match that historical snapshot. Startup gaps may be skipped only during explicit unrecorded warmup; recorded frames must remain consecutive. Queue overflow, duplicate callbacks, missing snapshots, missing recorded frames and timestamp mismatches fail explicitly. The facade probe also waits for images whose stamped camera pose matches the requested probe position.
+
+Cleanup unregisters the ego vehicle from autopilot before actor destruction, then restores traffic-manager, world and weather settings. The earlier 100-frame attempt (`native_carla_pilot_08`) aborted in native world-settings restoration; it is excluded from acceptance despite having written frames. After this change, the Town04 capture returned normally and its separate audit passed. A single successful cleanup does not establish long-run native stability.
+
+Measured on the i7-13620H / 16 GB / RTX 4050 6 GB laptop, CARLA client/server 0.9.13, off-screen Low quality, ClearNoon, seed 42, 640x480 RGB/depth and 0.1-second simulation steps:
+
+| Check | Measured result | Local evidence (ignored) |
+|---|---|---|
+| Static facade geometry | Pass: 6 samples spanning 5/10/20 m; camera-axis Z maximum error 0.0615673 m against a 0.15 m tolerance; ray-distance interpretation rejected | `runs/native_carla_pilot_09/depth_geometry/summary.json` |
+| Town04 capture and cleanup | Pass: 100 paired frames, IDs 281-380; all RGBs nonuniform, first/last images differ; inspected preview shows a rendered roadway | `data/carla/train_town04_09/`; `runs/native_carla_pilot_09/train_capture.log` |
+| Town04 stored-scene audit | Pass: 9.90000015 simulation seconds, consecutive 10 Hz IDs/timestamps, 21,293,006 valid depth pixels below 80 m | `runs/native_carla_pilot_09/train_audit.json` |
+| Town05 after Town04 | Failed: simulator connection lost, no accepted validation frames | `runs/native_carla_pilot_09/validation_capture.log` |
+| Town05 on a fresh server | Failed: server connection lost before any recorded frames; map/traffic-manager files had been fetched | `runs/native_carla_pilot_10/` |
+| Software regression | All 104 tests pass, including five new delayed-frame/cleanup tests | `runs/carla_latency_validation_01/tests.log` |
+| Preserved inference paths | Frozen demo manifest verified; CUDA image inference on the captured Town04 RGB and 10-frame headless video smoke test completed | `runs/carla_latency_validation_01/` |
+
+The Town04 metadata SHA256 is `779b7dafda6fcf993d09128ab3f16d9c26278fcd884c842ab54877b5b01b2bfb`; its frame-index SHA256 is `547fece7c855b294d7f61d607aa594fca5a791027be326acc9e91c7af21165c7`. These fingerprints identify local evidence, not downloadable Git assets. Capture metadata retains its original generic wall-check-pending text; the separate geometry report above establishes the measured convention for this probe without rewriting recorded source evidence.
+
+Both multi-stage pilot summaries remain failed overall because Town05 did not complete. No map-separated triplet dataset or new trained weights were accepted. The cause of the Town05 native server exit is unresolved; longer timeouts did not fix it. Diagnose that failure before broadening capture, then audit both maps and run the existing triplet preparer with fresh output paths. Do not substitute KITTI validation examples into training or relax the map-separation requirement to bypass this gate. Low-quality daylight samples and a short facade probe do not establish weather/night robustness, long-run reliability or calibrated model predictions. Simulation Hz is not wall-clock model FPS.

@@ -202,7 +202,7 @@ Use fresh output paths on a repeat. Keep the ZIP, prepared data and raw run evid
 
 ## Temporal training-data preparation
 
-A tested [CARLA triplet preparation tool](docs/carla_training_pilot.md) now groups audited captures into RGB-only previous/current/next inputs, with camera calibration, stationary-triplet rejection, image hashes and disjoint train/validation maps. The full suite passes 99 tests. CARLA clients now use the project-local map cache, fixing the observed home-directory write failure, and capture commands accept an explicit `--timeout` while preserving the 15-second default. Synthetic fixture tests establish preparation behavior; native camera capture and actual fine-tuning still require separate acceptance.
+A tested [CARLA triplet preparation tool](docs/carla_training_pilot.md) now groups audited captures into RGB-only previous/current/next inputs, with camera calibration, stationary-triplet rejection, image hashes and disjoint train/validation maps. The full suite passes 104 tests. CARLA clients now use the project-local map cache, fixing the observed home-directory write failure, and capture commands accept an explicit `--timeout` while preserving the 15-second default. Delayed GPU callbacks now use matching historical world snapshots, and cleanup unregisters vehicle autopilot before destruction. A native Town04 pilot captured and audited 100 consecutive RGB/depth frames; the facade geometry probe passed (maximum axial-depth error 0.0616 m). Town05 capture failed, so map-separated training-data acceptance and actual fine-tuning remain pending. See the linked guide for measured scope and failure evidence.
 
 ## Driving-scene improvement roadmap
 
@@ -258,7 +258,7 @@ runs/                      Ignored predictions, logs, measurements and diagnosti
 
 ## Scope and limitations
 
-This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, native CARLA sensor capture and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
+This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
 
 The implementation history is recorded in the [master plan](IMPLEMENTATION_PLAN.md), [Phase 1](phases/phase_01_foundation/implementation.md), [Phase 2](phases/phase_02_data/implementation.md), [Phase 3](phases/phase_03_training/implementation.md), [Phase 4](phases/phase_04_evaluation/implementation.md) and [Phase 5](phases/phase_05_delivery/implementation.md). The [implementation PDF](output/pdf/implementation_progress_report.pdf) is a dated artifact; later changes are documented in source and the current guides.
 

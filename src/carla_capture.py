@@ -63,6 +63,35 @@ class FrameSynchronizer:
         except queue.Full:
             self.overflowed = True
 
+    def poll_pair(self, frame_id=None):
+        """Drain ready callbacks without stopping the ticks needed by delayed GPU cameras."""
+        if self.overflowed:
+            raise RuntimeError("Sensor queue overflow")
+        for name, incoming in self.queues.items():
+            if frame_id is not None:
+                self.pending[name] = {key: value for key, value in self.pending[name].items() if key >= frame_id}
+            while True:
+                try:
+                    measurement, arrived_at = incoming.get_nowait()
+                except queue.Empty:
+                    break
+                if frame_id is not None and measurement.frame < frame_id:
+                    continue
+                if measurement.frame in self.pending[name]:
+                    raise ValueError("Duplicate sensor frame")
+                self.pending[name][measurement.frame] = (measurement, arrived_at)
+                if len(self.pending[name]) > self.capacity:
+                    raise RuntimeError("Too many unmatched sensor frame IDs")
+        if self.overflowed:
+            raise RuntimeError("Sensor queue overflow")
+        common = self.pending["rgb"].keys() & self.pending["depth"].keys()
+        selected = min(common) if frame_id is None and common else frame_id
+        if selected not in common:
+            return None
+        rgb, arrived = self.pending["rgb"].pop(selected)
+        depth, _ = self.pending["depth"].pop(selected)
+        return {"rgb": rgb, "depth": depth, "arrival_timestamp": arrived}
+
     def get_pair(self, frame_id, timeout):
         deadline = time.monotonic() + timeout
         for name in self.queues:
@@ -128,8 +157,12 @@ def check_depth_geometry(settings, output):
             probes[name].listen(lambda image, sensor_name=name: sync.put(sensor_name, image))
 
         def tick():
-            base = capture.next_frame()
-            return sync.get_pair(base["frame_id"], settings.timeout)
+            for _ in range(sync.capacity):
+                capture.next_frame()
+                pair = sync.poll_pair()
+                if pair is not None:
+                    return pair
+            raise TimeoutError("Facade probe cameras did not provide a matched frame")
 
         last_failure = "No suitable building facade found"
         for box in boxes[:20]:
@@ -153,8 +186,12 @@ def check_depth_geometry(settings, output):
                     transform = carla.Transform(position, rotation)
                     for probe in probes.values():
                         probe.set_transform(transform)
-                    for _ in range(3):
+                    for _ in range(sync.capacity):
                         pair = tick()
+                        if all(np.allclose(pair[name].transform.get_matrix(), transform.get_matrix(), rtol=0, atol=1e-3) for name in probes):
+                            break
+                    else:
+                        raise TimeoutError("Probe images do not match the requested facade camera pose")
                     depth = decode_depth(pair["depth"].raw_data, 640, 480)
                     forward, right, up = transform.get_forward_vector(), transform.get_right_vector(), transform.get_up_vector()
                     for u, v in ((320, 240), (160, 240), (480, 240)):
@@ -197,6 +234,8 @@ class CarlaCapture:
         self.world = self.previous_settings = self.traffic_manager = None
         self.previous_weather = None
         self.sync = FrameSynchronizer()
+        self.snapshots = {}
+        self.expected_frame = None
 
     def __enter__(self):
         import carla
@@ -213,6 +252,7 @@ class CarlaCapture:
             self.previous_weather = self.world.get_weather()
             settings = self.world.get_settings()
             settings.synchronous_mode = True
+            settings.no_rendering_mode = False
             settings.fixed_delta_seconds = 0.1
             settings.substepping = True
             settings.max_substep_delta_time = 0.01
@@ -245,32 +285,55 @@ class CarlaCapture:
                 self.actors.append(sensor)
                 sensor.listen(lambda image, sensor_name=name: self.sync.put(sensor_name, image))
             for _ in range(cfg.warmup_frames):
-                self.next_frame()
+                self.next_frame(warmup=True)
             return self
         except BaseException:
             self.__exit__(*sys.exc_info())
             raise
 
-    def next_frame(self):
-        frame_id = self.world.tick(self.settings.timeout)
-        snapshot = self.world.get_snapshot()
-        pair = self.sync.get_pair(frame_id, self.settings.timeout)
-        if snapshot.frame != frame_id or abs(pair["rgb"].timestamp - pair["depth"].timestamp) > 1e-6:
-            raise RuntimeError("Sensor/snapshot timestamps do not match")
-        rgb, depth = pair["rgb"], pair["depth"]
-        vehicle_snapshot = snapshot.find(self.vehicle.id)
-        if vehicle_snapshot is None:
-            raise RuntimeError("Ego vehicle missing from matched snapshot")
-        cfg = self.settings
-        return {"frame_id": frame_id, "simulation_timestamp": rgb.timestamp,
-                "arrival_timestamp": pair["arrival_timestamp"],
-                "rgb": decode_rgb(rgb.raw_data, cfg.width, cfg.height),
-                "depth": decode_depth(depth.raw_data, cfg.width, cfg.height),
-                "ego_transform": transform_dict(vehicle_snapshot.get_transform()),
-                "sensor_transform": transform_dict(rgb.transform)}
+    def next_frame(self, warmup=False):
+        deadline = time.monotonic() + self.settings.timeout
+        while True:
+            pair = self.sync.poll_pair(None if warmup else self.expected_frame)
+            if pair is not None:
+                rgb, depth = pair["rgb"], pair["depth"]
+                frame_id = int(rgb.frame)
+                saved = self.snapshots.get(frame_id)
+                if saved is None:
+                    if self.expected_frame is None and (not self.snapshots or frame_id < min(self.snapshots)):
+                        continue  # Ignore pre-start callbacks before the first recorded snapshot.
+                    raise RuntimeError("Matched sensor frame has no retained world snapshot")
+                if abs(rgb.timestamp - depth.timestamp) > 1e-6 or abs(rgb.timestamp - saved["timestamp"]) > 1e-4:
+                    raise RuntimeError("Sensor/snapshot timestamps do not match")
+                self.expected_frame = None if warmup else frame_id + 1
+                self.snapshots = {key: value for key, value in self.snapshots.items() if key > frame_id}
+                cfg = self.settings
+                return {"frame_id": frame_id, "simulation_timestamp": rgb.timestamp,
+                        "arrival_timestamp": pair["arrival_timestamp"],
+                        "rgb": decode_rgb(rgb.raw_data, cfg.width, cfg.height),
+                        "depth": decode_depth(depth.raw_data, cfg.width, cfg.height),
+                        "ego_transform": saved["ego_transform"], "sensor_transform": transform_dict(rgb.transform)}
+            if time.monotonic() >= deadline or len(self.snapshots) >= self.sync.capacity:
+                raise TimeoutError("Cameras did not supply the next matched frame within the bounded snapshot window")
+            frame_id = self.world.tick(self.settings.timeout)
+            snapshot = self.world.get_snapshot()
+            if snapshot.frame != frame_id or (self.snapshots and frame_id <= max(self.snapshots)):
+                raise RuntimeError("World snapshot frame identity/order is invalid")
+            vehicle_snapshot = snapshot.find(self.vehicle.id)
+            if vehicle_snapshot is None:
+                raise RuntimeError("Ego vehicle missing from matched snapshot")
+            self.snapshots[frame_id] = dict(timestamp=snapshot.timestamp.elapsed_seconds,
+                                            ego_transform=transform_dict(vehicle_snapshot.get_transform()))
+            time.sleep(0.001)  # Let asynchronous camera callbacks acquire the Python GIL.
 
     def __exit__(self, exc_type, exc, traceback):
         errors = []
+        vehicle = getattr(self, "vehicle", None)
+        if vehicle is not None and self.traffic_manager is not None:
+            try:
+                vehicle.set_autopilot(False, self.settings.traffic_manager_port)
+            except Exception as error:
+                errors.append(str(error))
         for actor in reversed(self.actors):
             try:
                 if actor.type_id.startswith("sensor.") and actor.is_listening:
