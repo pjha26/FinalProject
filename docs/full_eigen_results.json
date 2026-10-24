@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "baseline": {
+    "schema_version": 1,
+    "status": "complete",
+    "dataset": "KITTI Eigen 697",
+    "evaluated_samples": 697,
+    "expected_samples": 697,
+    "manifest_sha256": "27af6bf899e5c5f8842a1982017335f3dc1fc32e178875ad177fab5c6e96ac85",
+    "checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+    },
+    "protocol": {
+      "min_depth": 0.001,
+      "max_depth": 80,
+      "crop": "garg",
+      "scaling": "per_image_median",
+      "input_resize": "PIL LANCZOS to 640x192; checkpoint-internal normalization",
+      "post_processing": false
+    },
+    "mean_metrics": {
+      "abs_rel": 0.1146166200934184,
+      "sq_rel": 0.9048079171297628,
+      "rmse": 4.863412887895675,
+      "rmse_log": 0.19277534308693656,
+      "a1": 0.8774286426843414,
+      "a2": 0.9592194785517794,
+      "a3": 0.9808703545870351
+    },
+    "total_valid_pixels": 11817275,
+    "limits": "Pinned full Eigen split with original sparse-LiDAR projection and LANCZOS input; no flip post-processing. Per-image GT median scaling is scoring only. Prior cropped-pilot overlap is reported separately; no test-driven retraining."
+  },
+  "candidate": {
+    "schema_version": 1,
+    "status": "complete",
+    "dataset": "KITTI Eigen 697",
+    "evaluated_samples": 697,
+    "expected_samples": 697,
+    "manifest_sha256": "27af6bf899e5c5f8842a1982017335f3dc1fc32e178875ad177fab5c6e96ac85",
+    "checkpoint_sha256": {
+      "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+      "depth.pth": "532937ca151809617d5cae166a8989043fe1cb9a348e409d57d3e3d42c864a58"
+    },
+    "protocol": {
+      "min_depth": 0.001,
+      "max_depth": 80,
+      "crop": "garg",
+      "scaling": "per_image_median",
+      "input_resize": "PIL LANCZOS to 640x192; checkpoint-internal normalization",
+      "post_processing": false
+    },
+    "mean_metrics": {
+      "abs_rel": 0.13515307014067748,
+      "sq_rel": 1.1929962002996402,
+      "rmse": 5.253815753975641,
+      "rmse_log": 0.20700138304055074,
+      "a1": 0.8559518266770839,
+      "a2": 0.9548884225262878,
+      "a3": 0.9788636004264394
+    },
+    "total_valid_pixels": 11817275,
+    "limits": "Pinned full Eigen split with original sparse-LiDAR projection and LANCZOS input; no flip post-processing. Per-image GT median scaling is scoring only. Prior cropped-pilot overlap is reported separately; no test-driven retraining."
+  },
+  "prior_pilot_overlap": {
+    "exact_frames": 0,
+    "drives": 7
+  },
+  "source": {
+    "split_sha256": "e226d4ca16e0e6e9695435014347dcf973588531330536fd8a68d298ef091a6b",
+    "utils_sha256": "7f927265725f3364542c94cd643c8b7f0350ddc0abaf5dc08206504185827835",
+    "compat_sha256": "4fc106f97617b57bc3ca82a12dacde3c1d209bb24533ccf8b46c2c90b2e094ca",
+    "archives": [
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_calib.zip",
+        "etag": "\"5d6cfb6bd7ec7c5f5231d16ead7ce9f1\"",
+        "archive_bytes": 4068,
+        "received_bytes": 4068,
+        "selected_files": {
+          "2011_09_26/calib_cam_to_cam.txt": "edc1eae281cb95e41798a98dcc545521449527145477ff852dbf3a4ec48c643c",
+          "2011_09_26/calib_velo_to_cam.txt": "9dc0c3e92dfceceb9500caa2c9488261a52640e43c3f7c3045ca1ed7927e7266",
+          "2011_09_26/calib_imu_to_velo.txt": "07ca9ed33a2d968fc6358617d2c70e048b6f8e0f6ee5b73ae963afc1b19456ce"
+        }
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_28_calib.zip",
+        "etag": "\"9bdc24e1cfee06e14166616cc76679d7\"",
+        "archive_bytes": 4073,
+        "received_bytes": 4073,
+        "selected_files": {
+          "2011_09_28/calib_cam_to_cam.txt": "e2ca2f12fbe7900e762b909f58438f7147e707eed120ad87511e752551a209ab",
+          "2011_09_28/calib_velo_to_cam.txt": "2d02e9436d95d942f02190c38397752a667bd0d901580acdca5e015c002607fd",
+          "2011_09_28/calib_imu_to_velo.txt": "07ca9ed33a2d968fc6358617d2c70e048b6f8e0f6ee5b73ae963afc1b19456ce"
+        }
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_29_calib.zip",
+        "etag": "\"bf7f7a150191338c7d0ce9790f3bc6d0\"",
+        "archive_bytes": 4071,
+        "received_bytes": 4071,
+        "selected_files": {
+          "2011_09_29/calib_cam_to_cam.txt": "6725741fc5556c7139518123c3f8f814d4f911e1668f25c1eee5870f6b613f97",
+          "2011_09_29/calib_velo_to_cam.txt": "81ec38c139fb714598ddc4441ecb8f4f4c3f6601fb9a9f01c65e792726cabdf5",
+          "2011_09_29/calib_imu_to_velo.txt": "07ca9ed33a2d968fc6358617d2c70e048b6f8e0f6ee5b73ae963afc1b19456ce"
+        }
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_30_calib.zip",
+        "etag": "\"a5c96ed5b604a33bf0c392116999713f\"",
+        "archive_bytes": 4073,
+        "received_bytes": 4073,
+        "selected_files": {
+          "2011_09_30/calib_cam_to_cam.txt": "7b795cefb1d2535dbc6a8faeaf0bd033c71163f57476758bf82d63cb4901b2a2",
+          "2011_09_30/calib_velo_to_cam.txt": "a544a0c00536e6aba5f832cf4c6e1bf9cdd944b91ac0a6ef3725f77972ef6f4d",
+          "2011_09_30/calib_imu_to_velo.txt": "07ca9ed33a2d968fc6358617d2c70e048b6f8e0f6ee5b73ae963afc1b19456ce"
+        }
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_10_03_calib.zip",
+        "etag": "\"20e722a129e0906a650481b5042e7f5c\"",
+        "archive_bytes": 4075,
+        "received_bytes": 4075,
+        "selected_files": {
+          "2011_10_03/calib_cam_to_cam.txt": "878f2e4873392ca8e94970e389ea3aa2026f33e48910bd20068e9f8bcbeb067a",
+          "2011_10_03/calib_velo_to_cam.txt": "a1b4a74c75443293c9a27790b511c12c17906bdf89afce06451b2e8e20c62579",
+          "2011_10_03/calib_imu_to_velo.txt": "07ca9ed33a2d968fc6358617d2c70e048b6f8e0f6ee5b73ae963afc1b19456ce"
+        }
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0013/2011_09_26_drive_0013_sync.zip",
+        "etag": "\"fc44314e968e786e4dc9bf119a6e69d0-76\"",
+        "archive_bytes": 630044598,
+        "received_bytes": 175861612
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0009/2011_09_26_drive_0009_sync.zip",
+        "etag": "\"4855015a692973e3ebaa3dc264d3c4b2-214\"",
+        "archive_bytes": 1791264044,
+        "received_bytes": 155485484
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0002/2011_09_26_drive_0002_sync.zip",
+        "etag": "\"de3de1116c4691081e63d7da1ef89893-39\"",
+        "archive_bytes": 319776816,
+        "received_bytes": 164587568
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0023/2011_09_26_drive_0023_sync.zip",
+        "etag": "\"cc2e0afe8b7851e2cd43c4bd9ad95226-239\"",
+        "archive_bytes": 1999129806,
+        "received_bytes": 172510414
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0020/2011_09_26_drive_0020_sync.zip",
+        "etag": "\"1581ce39da1fd624d68d8a5a70b4af3d-44\"",
+        "archive_bytes": 367093728,
+        "received_bytes": 172058592
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0027/2011_09_26_drive_0027_sync.zip",
+        "etag": "\"a3011db31e8dfb46e109fd1712623f23-102\"",
+        "archive_bytes": 849872514,
+        "received_bytes": 182978178
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0029/2011_09_26_drive_0029_sync.zip",
+        "etag": "\"cb732feb2679e7a2739effc88708adca-201\"",
+        "archive_bytes": 1684284933,
+        "received_bytes": 161752581
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0046/2011_09_26_drive_0046_sync.zip",
+        "etag": "\"5b7702834510ff8955ea28f11de505ec-59\"",
+        "archive_bytes": 486623395,
+        "received_bytes": 163661987
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0036/2011_09_26_drive_0036_sync.zip",
+        "etag": "\"eebe877bc4b25dba399a89923564dec3-389\"",
+        "archive_bytes": 3257339348,
+        "received_bytes": 172428756
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0048/2011_09_26_drive_0048_sync.zip",
+        "etag": "\"e96d077e4efa0f0a104070bfcecb4191-10\"",
+        "archive_bytes": 83650171,
+        "received_bytes": 123260150
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0052/2011_09_26_drive_0052_sync.zip",
+        "etag": "\"ea3d43b6ddc721dbe7669d430330e44a-34\"",
+        "archive_bytes": 285158280,
+        "received_bytes": 159329160
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0056/2011_09_26_drive_0056_sync.zip",
+        "etag": "\"7c9f22be3afc0a5ce72ecaf93fee3201-145\"",
+        "archive_bytes": 1214030003,
+        "received_bytes": 173842611
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0059/2011_09_26_drive_0059_sync.zip",
+        "etag": "\"38790433912c297acd5f16de505fcb35-181\"",
+        "archive_bytes": 1517489971,
+        "received_bytes": 163978854
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0064/2011_09_26_drive_0064_sync.zip",
+        "etag": "\"c90c41ed228aabf41f2aee549566471f-284\"",
+        "archive_bytes": 2376539657,
+        "received_bytes": 182918665
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0084/2011_09_26_drive_0084_sync.zip",
+        "etag": "\"4d5ef7ed2dfcc8a0fd4e71d8c7085bfe-188\"",
+        "archive_bytes": 1574584300,
+        "received_bytes": 175783916
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0086/2011_09_26_drive_0086_sync.zip",
+        "etag": "\"88a0e2d8a557d04d00bc3ea512e66d50-365\"",
+        "archive_bytes": 3055393176,
+        "received_bytes": 182137648
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0093/2011_09_26_drive_0093_sync.zip",
+        "etag": "\"6caddf8a4a7a0da6c4b75f741f3d3056-206\"",
+        "archive_bytes": 1720308957,
+        "received_bytes": 178902237
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0096/2011_09_26_drive_0096_sync.zip",
+        "etag": "\"e922b6df7a75be0905a8a3bde3200fb4-241\"",
+        "archive_bytes": 2016323567,
+        "received_bytes": 177121263
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0101/2011_09_26_drive_0101_sync.zip",
+        "etag": "\"d4341e87b794660068df943117d3273c-432\"",
+        "archive_bytes": 3617310729,
+        "received_bytes": 165398537
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0106/2011_09_26_drive_0106_sync.zip",
+        "etag": "\"1203f615f9539cb48b4c128d6b910ad7-112\"",
+        "archive_bytes": 936875950,
+        "received_bytes": 177706926
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_26_drive_0117/2011_09_26_drive_0117_sync.zip",
+        "etag": "\"7bb51740a5920b21c0ba34bd2393779c-333\"",
+        "archive_bytes": 2786458483,
+        "received_bytes": 183892851
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_28_drive_0002/2011_09_28_drive_0002_sync.zip",
+        "etag": "\"57c9f403568ce97a5aeb70180b029c93-174\"",
+        "archive_bytes": 1458258535,
+        "received_bytes": 170607207
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_30_drive_0016/2011_09_30_drive_0016_sync.zip",
+        "etag": "\"3c82243fb21d248c1bf845c63e0ce77f-136\"",
+        "archive_bytes": 1134226963,
+        "received_bytes": 177925651
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_29_drive_0071/2011_09_29_drive_0071_sync.zip",
+        "etag": "\"952567082c92df5f4f7d5e4ab508a9df-518\"",
+        "archive_bytes": 4337332333,
+        "received_bytes": 172388461
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_30_drive_0018/2011_09_30_drive_0018_sync.zip",
+        "etag": "\"e933e363d73c5e057e18e6890463b47a-1350\"",
+        "archive_bytes": 11320688364,
+        "received_bytes": 176422636
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_09_30_drive_0027/2011_09_30_drive_0027_sync.zip",
+        "etag": "\"d052d5d208cb8d0f42724b9a1a7a738f-528\"",
+        "archive_bytes": 4424930450,
+        "received_bytes": 171906194
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_10_03_drive_0027/2011_10_03_drive_0027_sync.zip",
+        "etag": "\"afa5df3a9b1a6e1e8b4d729fe3433d62-2188\"",
+        "archive_bytes": 18349607637,
+        "received_bytes": 173591253
+      },
+      {
+        "url": "https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_10_03_drive_0047/2011_10_03_drive_0047_sync.zip",
+        "etag": "\"3e957c10c8f8162897905a16ab574667-370\"",
+        "archive_bytes": 3103291675,
+        "received_bytes": 173570331
+      }
+    ]
+  },
+  "decision": "Retain pretrained; candidate worsens full Eigen. Not all proposal thresholds met.",
+  "limits": "No exact prior-pilot frame overlap but seven shared drives; not wholly untouched at drive level. Median alignment is scoring-only; no calibrated prediction scale."
+}

@@ -212,3 +212,8 @@ Three complete broader-data epochs: 1,176 updates, 392 distinct training targets
 ## Remaining Step 5 measured - 25 October 2026
 
 Completed matched no-SSIM/no-automasking/no-smoothness controls and full-objective seeds 42/43/44, one epoch/392 updates each, plus the unaugmented three-epoch control. Target/augmentation order audits pass; per-route counts, seven metrics and descriptive variation are in [results](docs/ablation_results.json). Correlated samples and limited seeds restrict inference. No default promotion.
+
+
+## Remaining Step 6 measured - 25 October 2026
+
+Completed selective acquisition/projection and matched full Eigen 697 evaluation with LANCZOS/Garg/GT-median/no-PP protocol. Pretrained AbsRel 0.114617, RMSE 4.863413 m; candidate 0.135153/5.253816 m. No default promotion; not all accuracy targets pass. Exact pilot overlap 0 frames, 7 shared drives. [Details](docs/full_eigen.md).

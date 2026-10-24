@@ -270,6 +270,8 @@ The remaining research work is now organized into a [nine-step implementation pl
 
 [One-factor loss ablations and seeds 42/43/44](docs/research_experiments.md) are now measured at a matched 392-update budget with per-route counts and descriptive variation. They do not select a superior deployment model.
 
+[Full KITTI Eigen evaluation](docs/full_eigen.md) now scores all 697 frames: pretrained AbsRel 0.114617 / RMSE 4.863413 m; experimental candidate 0.135153 / 5.253816 m. The candidate remains rejected. Proposal accuracy targets are only partly met.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
