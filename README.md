@@ -202,7 +202,7 @@ Use fresh output paths on a repeat. Keep the ZIP, prepared data and raw run evid
 
 ## Temporal training-data preparation
 
-A tested [CARLA triplet preparation tool](docs/carla_training_pilot.md) now groups audited captures into RGB-only previous/current/next inputs, with camera calibration, stationary-triplet rejection, image hashes and disjoint train/validation maps. The full suite passes 95 tests. Synthetic fixture tests establish preparation behavior; native CARLA capture and actual fine-tuning still require separate acceptance.
+A tested [CARLA triplet preparation tool](docs/carla_training_pilot.md) now groups audited captures into RGB-only previous/current/next inputs, with camera calibration, stationary-triplet rejection, image hashes and disjoint train/validation maps. The full suite passes 99 tests. CARLA clients now use the project-local map cache, fixing the observed home-directory write failure, and capture commands accept an explicit `--timeout` while preserving the 15-second default. Synthetic fixture tests establish preparation behavior; native camera capture and actual fine-tuning still require separate acceptance.
 
 ## Driving-scene improvement roadmap
 

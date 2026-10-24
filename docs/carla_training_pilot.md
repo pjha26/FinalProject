@@ -40,3 +40,16 @@ Use new paths after a failed attempt. The depth geometry probe distinguishes ray
 ## Initial implementation acceptance
 
 Three new regression tests cover ordered temporal grouping/calibration/hash preservation, no depth files in model inputs, map/directory separation, refusal to overwrite, and rejection of stationary/partial/gapped captures. These use explicitly synthetic fixtures and do not prove native simulator operation. The full suite passes 95 tests. Native simulator/data acceptance and project-specific training are pending until separately measured below.
+
+## Project-local client cache fix
+
+The first native attempt reached the server but map access tried to create `USERPROFILE/carlaCache`, which was not writable in this execution environment. Both capture and optional `project.py check --carla` now use one shared client factory that creates `.cache/carla` inside the repository, calls CARLA 0.9.13's supported `set_files_base_folder` before any map RPC, and preserves the requested host, port and timeout. A rejected cache setting fails explicitly; it never silently falls back to the home directory.
+
+Four regression tests cover cache path/call order, cache failure, command timeout forwarding and invalid timeout rejection. The full suite passes **99 tests**. A native retry reported server version 0.9.13 and resolved the initial map through the project cache, confirming that this specific permission failure was fixed. That retry then ended in native client exit `0xC0000409` before camera frames; its zero-frame recording is not accepted. An isolated 60-second-timeout probe subsequently loaded Town04 and initialized its traffic manager successfully. A separate capture retry then timed out waiting for RGB frame 9 before cleanup aborted; delayed-camera synchronization is being investigated. No native capture or trained weights are claimed by this cache fix.
+
+
+## Setup diagnostics - 25 October 2026
+
+The official Windows 0.9.13 package is installed locally (5977917518 archive bytes, about 13.45 GiB extracted). Its locally computed archive SHA256 is `00cd8aeb56a6bbaba25fe4351918e0d0bcbd3c62eef2709337688c2e51b25c92`. This is a provenance fingerprint, not an independently published upstream checksum. The running API reported server/client 0.9.13 and listed Town04/Town05. Native connection, map loading and traffic-manager initialization have passed a bounded diagnostic; camera capture and the facade-depth gate have not yet passed. Zero-frame and interrupted recordings remain unaccepted.
+
+The existing `CaptureSettings.timeout` is now exposed as `--timeout` on `collect`, CARLA `demo`, and `calibrate-depth`. Its default remains 15 seconds; use `--timeout 60` for the measured cold-map diagnostic. Nonpositive/nonfinite values fail validation. Increasing the timeout did not by itself produce camera frames, and the cause of the earlier native abort is not established by the successful map-only probe. The shared cache fix and timeout option preserve all model/input contracts.

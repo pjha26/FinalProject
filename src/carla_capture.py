@@ -14,6 +14,18 @@ from PIL import Image
 from src.preprocess import camera_intrinsics, decode_rgb, decode_depth, PREPROCESSING_ID
 
 
+def create_client(host, port, timeout):
+    import carla
+
+    cache = Path(__file__).resolve().parents[1] / ".cache" / "carla"
+    cache.mkdir(parents=True, exist_ok=True)
+    client = carla.Client(host, port)
+    if not client.set_files_base_folder(str(cache)):
+        raise RuntimeError("CARLA could not initialize the project-local map cache")
+    client.set_timeout(timeout)
+    return client
+
+
 @dataclass
 class CaptureSettings:
     host: str = "127.0.0.1"
@@ -30,7 +42,7 @@ class CaptureSettings:
     def __post_init__(self):
         if self.map not in ("Town04", "Town05"):
             raise ValueError("Phase 1 supports Town04 and Town05")
-        if (self.width, self.height) != (640, 480) or self.timeout <= 0 or self.warmup_frames < 0:
+        if (self.width, self.height) != (640, 480) or not np.isfinite(self.timeout) or self.timeout <= 0 or self.warmup_frames < 0:
             raise ValueError("Expected 640x480 camera, positive timeout, and nonnegative warmup")
         camera_intrinsics(self.width, self.height, self.fov)
 
@@ -191,8 +203,7 @@ class CarlaCapture:
 
         try:
             cfg = self.settings
-            self.client = carla.Client(cfg.host, cfg.port)
-            self.client.set_timeout(cfg.timeout)
+            self.client = create_client(cfg.host, cfg.port, cfg.timeout)
             if self.client.get_server_version().split("-")[0] != "0.9.13" or self.client.get_client_version().split("-")[0] != "0.9.13":
                 raise RuntimeError("Both CARLA server and client must be 0.9.13")
             self.world = self.client.get_world()

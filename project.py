@@ -342,9 +342,8 @@ def environment_report(args):
         report["cuda_error"] = str(error)
     if getattr(args, "carla", False):
         try:
-            import carla
-            client = carla.Client(args.host, args.port)
-            client.set_timeout(3)
+            from src.carla_capture import create_client
+            client = create_client(args.host, args.port, 3)
             report["carla_client"] = client.get_client_version()
             report["carla_server"] = client.get_server_version()
             report["maps"] = client.get_available_maps()
@@ -409,7 +408,7 @@ def infer_image(args):
 
 def capture_settings(args):
     from src.carla_capture import CaptureSettings
-    return CaptureSettings(host=args.host, port=args.port, map=args.map, seed=args.seed)
+    return CaptureSettings(host=args.host, port=args.port, map=args.map, seed=args.seed, timeout=getattr(args, "timeout", 15.0))
 
 
 def audit_scene(args):
@@ -818,6 +817,8 @@ def parser():
     for child in (check, collect, playback, geometry):
         child.add_argument("--host", default="127.0.0.1")
         child.add_argument("--port", type=int, default=2000)
+    for child in (collect, playback, geometry):
+        child.add_argument("--timeout", type=float, default=15.0, help="CARLA RPC/sensor wait timeout in seconds")
     for child in (collect, playback):
         child.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
         child.add_argument("--seed", type=int, default=42)
