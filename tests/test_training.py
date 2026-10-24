@@ -125,4 +125,48 @@ class EncoderFreezeTests(unittest.TestCase):
         self.assertTrue(all(p.requires_grad for p in model.encoder.parameters()))
 
 
+class TemporalAugmentationTests(unittest.TestCase):
+    def test_shared_transform_is_seeded_and_preserves_original_rgb(self):
+        from src.training import augment_triplet
+        image=torch.linspace(0.1,0.9,3*8*12).reshape(1,3,8,12)
+        colors=torch.stack((image,image,image),1)
+        original=colors.clone()
+        result,parameters=augment_triplet(colors,torch.Generator().manual_seed(0))
+        repeated,again=augment_triplet(colors,torch.Generator().manual_seed(0))
+        self.assertTrue(parameters['applied'])
+        self.assertEqual(set(parameters['order']),{'brightness','contrast','saturation','hue'})
+        self.assertTrue(torch.equal(result,repeated));self.assertEqual(parameters,again)
+        self.assertTrue(torch.equal(result[:,0],result[:,1]))
+        self.assertTrue(torch.equal(result[:,1],result[:,2]))
+        self.assertTrue(torch.equal(colors,original))
+        self.assertFalse(torch.equal(result,colors))
+        self.assertTrue(torch.isfinite(result).all())
+        self.assertTrue(((result>=0)&(result<=1)).all())
+
+    def test_skip_and_invalid_input_boundaries(self):
+        from src.training import augment_triplet
+        colors=torch.full((1,3,3,8,12),0.4)
+        result,parameters=augment_triplet(colors,torch.Generator().manual_seed(42))
+        self.assertFalse(parameters['applied']);self.assertTrue(torch.equal(result,colors))
+        for bad in (colors.double(),colors[:,0],torch.full_like(colors,float('nan')),colors+2):
+            with self.assertRaises(ValueError):augment_triplet(bad,torch.Generator().manual_seed(0))
+
+    def test_augmented_network_input_uses_unaugmented_loss_targets_and_camera(self):
+        from src.training import training_objective
+        colors=torch.linspace(0.1,0.9,1*3*3*8*12).reshape(1,3,3,8,12)
+        original=colors.clone();k=torch.eye(4).unsqueeze(0);before_k=k.clone()
+        seen={}
+        def model(inputs):seen['input']=inputs.clone();return 'disparities','transforms'
+        def objective(targets,camera,disparities,transforms):
+            self.assertIs(targets,colors);self.assertIs(camera,k)
+            self.assertTrue(torch.equal(targets,original));self.assertTrue(torch.equal(camera,before_k))
+            self.assertEqual((disparities,transforms),('disparities','transforms'))
+            return {'loss':torch.tensor(0.)}
+        result,parameters=training_objective(model,objective,colors,k,torch.Generator().manual_seed(0))
+        self.assertTrue(parameters['applied']);self.assertFalse(torch.equal(seen['input'],original))
+        self.assertTrue(torch.equal(colors,original));self.assertEqual(float(result['loss']),0.)
+        _,disabled=training_objective(model,objective,colors,k)
+        self.assertFalse(disabled['applied']);self.assertTrue(torch.equal(seen['input'],original))
+
+
 if __name__=="__main__":unittest.main()

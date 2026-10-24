@@ -18,7 +18,7 @@ from project import BASELINE, write_json
 from src.demo_data import checkpoint_hashes
 from src.model import UPSTREAM_REVISION, sha256
 from src.preprocess import PREPROCESSING_ID
-from src.training import POSE_WEIGHT_SHA256, POSE_SOURCE_SHA256, TripletDataset, TrainableModel, SelfSupervisedLoss
+from src.training import POSE_WEIGHT_SHA256, POSE_SOURCE_SHA256, TripletDataset, TrainableModel, SelfSupervisedLoss, training_objective
 
 
 def scalars(result):
@@ -39,7 +39,7 @@ def validate(model, objective, dataset, device):
     return {key:float(np.mean([row[key] for row in rows])) for key in rows[0]}
 
 
-def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, freeze_encoder=False):
+def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, freeze_encoder=False, color_augmentation=False):
     if not isinstance(steps,int) or steps<=0 or not np.isfinite(learning_rate) or learning_rate<=0:
         raise ValueError("Need positive steps and finite positive learning rate")
     output=Path(output).resolve()
@@ -59,15 +59,17 @@ def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, 
     objective=SelfSupervisedLoss().to(device)
     optimizer=torch.optim.Adam([p for p in model.parameters() if p.requires_grad],lr=learning_rate)
     order=torch.Generator().manual_seed(seed)
+    augmentation_generator=torch.Generator().manual_seed(seed) if color_augmentation else None
     output.mkdir(parents=True,exist_ok=False)
     started=time.perf_counter()
     record=dict(schema_version=1,status="running",started_utc=datetime.now(timezone.utc).isoformat(),device=str(device),
                 steps_requested=steps,steps_completed=0,seed=seed,batch_size=1,learning_rate=learning_rate,
                 freeze_depth_encoder=freeze_encoder,gradient_norm_clip=10.0,
+                color_augmentation=dict(enabled=color_augmentation,probability=0.5,brightness=[0.8,1.2],contrast=[0.8,1.2],saturation=[0.8,1.2],hue=[-0.1,0.1],shared_order=True,input_only=True,generator_seed=seed),
                 manifest_sha256=train.fingerprint,train_triplets=len(train),validation_triplets=len(val),
                 initial_checkpoint_sha256=initial,pose_source_sha256=POSE_SOURCE_SHA256,
                 objective="Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
-                adaptations="Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; no augmentation, LR schedule or resume",
+                adaptations="Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; optional input-only shared colour augmentation; no LR schedule or resume",
                 reproducibility="Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
                 limitations="Training sanity check on {} correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.".format(len(train)))
     write_json(output/"summary.json",record)
@@ -82,8 +84,7 @@ def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, 
                 except StopIteration:iterator=iter(loader);batch=next(iterator)
                 model.train();objective.train();optimizer.zero_grad(set_to_none=True)
                 colors,k=batch["rgb"].to(device),batch["K"].to(device)
-                disparities,transforms=model(colors)
-                result=objective(colors,k,disparities,transforms)
+                result,augmentation=training_objective(model,objective,colors,k,augmentation_generator)
                 if not torch.isfinite(result["loss"]):raise RuntimeError("Nonfinite training objective")
                 result["loss"].backward()
                 norms={}
@@ -94,7 +95,7 @@ def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, 
                     if norms[name+"_grad_norm"]<=0:raise RuntimeError("Zero "+name+" gradient")
                 torch.nn.utils.clip_grad_norm_(model.parameters(),10.0,error_if_nonfinite=True)
                 optimizer.step()
-                row=dict(step=step+1,target=batch["id"][0],**scalars(result),**norms)
+                row=dict(step=step+1,target=batch["id"][0],augmentation=json.dumps(augmentation,sort_keys=True),**scalars(result),**norms)
                 if writer is None:writer=csv.DictWriter(stream,fieldnames=list(row));writer.writeheader()
                 writer.writerow(row);stream.flush()
                 record["steps_completed"]=step+1
@@ -122,7 +123,7 @@ def run(manifest, output, steps=10, learning_rate=1e-5, device="cuda", seed=42, 
             hashes={name:sha256(staged/name) for name in states}
             write_json(staged/"manifest.json",dict(schema_version=1,model="monodepth2_carla_sanity_candidate",modality="monocular",
                        preprocessing_id=PREPROCESSING_ID,upstream_revision=UPSTREAM_REVISION,sha256=hashes,
-                       parent_checkpoint_sha256=initial,training_manifest_sha256=train.fingerprint,training_steps=steps,
+                       parent_checkpoint_sha256=initial,training_manifest_sha256=train.fingerprint,training_steps=steps,color_augmentation=color_augmentation,
                        scope="Experimental sanity checkpoint; not selected for deployment or an accuracy improvement"))
             staged.replace(output/"checkpoint")
         record.update(status="sanity_complete",candidate_checkpoint_sha256=hashes,
@@ -144,5 +145,6 @@ if __name__=="__main__":
     parser.add_argument("--learning-rate",type=float,default=1e-5)
     parser.add_argument("--device",choices=("cuda","cpu"),default="cuda")
     parser.add_argument("--freeze-encoder",action="store_true",help="Freeze depth-encoder parameters; depth decoder and pose networks remain trainable")
+    parser.add_argument("--color-augmentation",action="store_true",help="Apply shared colour jitter only to training network inputs; preserve original reconstruction targets")
     args=parser.parse_args()
-    run(args.manifest,args.output,args.steps,args.learning_rate,args.device,freeze_encoder=args.freeze_encoder)
+    run(args.manifest,args.output,args.steps,args.learning_rate,args.device,freeze_encoder=args.freeze_encoder,color_augmentation=args.color_augmentation)

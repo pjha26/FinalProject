@@ -187,3 +187,8 @@ Completed 196 updates on 196 unique targets under the predeclared protocol. CARL
 ## Remaining-work sequence - 25 October 2026
 
 The [remaining implementation plan](docs/remaining_implementation_plan.md) now defines nine ordered gates: synchronized augmentation; broader CARLA conditions/routes; epoch/resume support; controlled longer training; loss/seed ablations; full KITTI protocol; frozen-model reserved testing; integrated CARLA FPS acceptance; final research delivery. Start with a matched augmented-versus-unaugmented 196-step epoch, keeping original reconstruction targets and validation unchanged. This supplements the prototype delivery plan rather than claiming the original research scope is complete.
+
+
+## Remaining-plan Step 1 complete - 25 October 2026
+
+Implemented opt-in input-only synchronized temporal colour jitter with independent seeded sampling and original RGB/camera loss targets. Three new tests bring the suite to 119 passing tests; fresh baseline assets/image/video checks pass. Same-source unaugmented/augmented 196-update runs used identical target order and unchanged frozen encoder/validation rows. Colour augmentation applied to 100/196 triplets. CARLA AbsRel control/augmented: 0.147681 / 0.147788; KITTI: 0.108975 / 0.108827. Tiny single-seed differences do not establish benefit; retain pretrained default. All 98 predictions reproduce metrics. [Details](docs/temporal_augmentation.md), [metadata](docs/temporal_augmentation_results.json) and the updated [remaining plan](docs/remaining_implementation_plan.md) record completion and limits. Next: broader conditions/routes, then epoch/resume support and controlled longer training. Reserved testing remains unscored.

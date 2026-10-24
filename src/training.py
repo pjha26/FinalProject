@@ -81,6 +81,33 @@ class TripletDataset(torch.utils.data.Dataset):
         return dict(rgb=torch.stack(colors), K=torch.from_numpy(k), id=row["scene"]+"_"+str(row["frame_ids"][1]))
 
 
+
+def augment_triplet(colors, generator):
+    """Share sampled colour parameters across frames; never modify reconstruction targets."""
+    from torchvision.transforms import functional as color
+
+    if colors.ndim != 5 or tuple(colors.shape[:3]) != (1,3,3) or min(colors.shape[-2:]) <= 0 or colors.dtype != torch.float32:
+        raise ValueError("Colour augmentation requires batch-one float32 RGB triplets")
+    if not torch.isfinite(colors).all() or (colors < 0).any() or (colors > 1).any():
+        raise ValueError("Augmentation RGB must be finite and in [0,1]")
+    if float(torch.rand((), generator=generator)) >= 0.5:
+        return colors.clone(), dict(applied=False)
+    factors = {name:float(torch.empty(()).uniform_(low,high,generator=generator))
+               for name,low,high in (("brightness",0.8,1.2),("contrast",0.8,1.2),("saturation",0.8,1.2),("hue",-0.1,0.1))}
+    names = list(factors)
+    order = [names[i] for i in torch.randperm(4,generator=generator).tolist()]
+    augmented = colors.flatten(0,1).clone()
+    for name in order:
+        augmented = getattr(color,"adjust_"+name)(augmented,factors[name])
+    return augmented.reshape_as(colors), dict(applied=True,order=order,**factors)
+
+
+def training_objective(model, objective, colors, k, augmentation_generator=None):
+    inputs, parameters = (colors, dict(applied=False)) if augmentation_generator is None else augment_triplet(colors,augmentation_generator)
+    disparities, transforms = model(inputs)
+    return objective(colors,k,disparities,transforms), parameters
+
+
 def temporal_transforms(encoder, decoder, colors):
     _, layers = training_layers()
     transforms = []

@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "protocol": {
+    "schema_version": 1,
+    "status": "predeclared_before_training",
+    "source_parent_commit": "f3208aa0537264204f1befb7721eddc761fbc16b",
+    "source_sha256": {
+      "src/training.py": "94259098deda5f4b69c9da646612cf03e1ded9a0f79a735dc5764f33ae90d548",
+      "tools/train_carla_pilot.py": "df63d6fa2c909f4668552ae723c9c09894b2d5ce834ba13d6702e22fffd969fa",
+      "tests/test_training.py": "f1d32d12669aa241649060b2d866f27039399951d337604a2ea46b56667e53cf"
+    },
+    "manifest": "data/training/carla_expanded_01/triplets.json",
+    "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
+    "steps": 196,
+    "seed": 42,
+    "batch_size": 1,
+    "learning_rate": 1e-06,
+    "freeze_encoder": true,
+    "runs": [
+      {
+        "name": "carla_augmentation_control_01",
+        "color_augmentation": false
+      },
+      {
+        "name": "carla_color_aug_epoch_01",
+        "color_augmentation": true
+      }
+    ],
+    "only_changed_factor": "Input-only shared colour jitter; same-source comparison, same target order and original photometric targets",
+    "validation": "25 CARLA targets + 24 KITTI pilot images, no augmentation; per-image GT-median scoring; reserved route unscored",
+    "augmentation": {
+      "probability": 0.5,
+      "brightness": [
+        0.8,
+        1.2
+      ],
+      "contrast": [
+        0.8,
+        1.2
+      ],
+      "saturation": [
+        0.8,
+        1.2
+      ],
+      "hue": [
+        -0.1,
+        0.1
+      ],
+      "shared_operation_order": true,
+      "independent_generator_seed": 42
+    }
+  },
+  "runs": {
+    "carla_augmentation_control_01": {
+      "schema_version": 1,
+      "status": "sanity_complete",
+      "started_utc": "2026-10-24T20:19:03.097040+00:00",
+      "device": "cuda",
+      "steps_requested": 196,
+      "steps_completed": 196,
+      "seed": 42,
+      "batch_size": 1,
+      "learning_rate": 1e-06,
+      "freeze_depth_encoder": true,
+      "gradient_norm_clip": 10.0,
+      "color_augmentation": {
+        "enabled": false,
+        "probability": 0.5,
+        "brightness": [
+          0.8,
+          1.2
+        ],
+        "contrast": [
+          0.8,
+          1.2
+        ],
+        "saturation": [
+          0.8,
+          1.2
+        ],
+        "hue": [
+          -0.1,
+          0.1
+        ],
+        "shared_order": true,
+        "input_only": true,
+        "generator_seed": 42
+      },
+      "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
+      "train_triplets": 196,
+      "validation_triplets": 25,
+      "initial_checkpoint_sha256": {
+        "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+        "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+        "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+        "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+      },
+      "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+      "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+      "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; optional input-only shared colour augmentation; no LR schedule or resume",
+      "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+      "limitations": "Training sanity check on 196 correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+      "validation_before": {
+        "loss": 0.02373010091483593,
+        "photometric": 0.02371411703526974,
+        "smoothness": 1.598365375684807e-05,
+        "warp_fraction": 0.5491448020935059
+      },
+      "validation_after": {
+        "loss": 0.022280429154634476,
+        "photometric": 0.022263402044773103,
+        "smoothness": 1.7026918503688647e-05,
+        "warp_fraction": 0.5601374793052674
+      },
+      "candidate_checkpoint_sha256": {
+        "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+        "depth.pth": "39f6b2dc8324751cb99b927b25e9ae16969680b9819380ce7bd1edf5ad8863d4",
+        "pose_encoder.pth": "83f7e2cddf00994a7f37e377e7c3784d101a8a1f714b9b8d8833a023fc720613",
+        "pose.pth": "86fec31c8096cbc728afbf961faffb1c369f98d8ee14bd61116661dda7481862"
+      },
+      "peak_torch_allocated_bytes": 774337024,
+      "elapsed_seconds": 25.6236218
+    },
+    "carla_color_aug_epoch_01": {
+      "schema_version": 1,
+      "status": "sanity_complete",
+      "started_utc": "2026-10-24T20:19:33.802567+00:00",
+      "device": "cuda",
+      "steps_requested": 196,
+      "steps_completed": 196,
+      "seed": 42,
+      "batch_size": 1,
+      "learning_rate": 1e-06,
+      "freeze_depth_encoder": true,
+      "gradient_norm_clip": 10.0,
+      "color_augmentation": {
+        "enabled": true,
+        "probability": 0.5,
+        "brightness": [
+          0.8,
+          1.2
+        ],
+        "contrast": [
+          0.8,
+          1.2
+        ],
+        "saturation": [
+          0.8,
+          1.2
+        ],
+        "hue": [
+          -0.1,
+          0.1
+        ],
+        "shared_order": true,
+        "input_only": true,
+        "generator_seed": 42
+      },
+      "manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
+      "train_triplets": 196,
+      "validation_triplets": 25,
+      "initial_checkpoint_sha256": {
+        "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+        "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46",
+        "pose_encoder.pth": "bc9e85d241997d945cce6c342c0fe7d003772d13b16a59f77c86b82ff2f40e1f",
+        "pose.pth": "bf8fa3fa475c5cc801fc74e8f6380a1751e940b1698949116f1bfc690e8aad9a"
+      },
+      "pose_source_sha256": "e369613794a6e03d4ddb280d9530018c26581aae93eac583cec2771a55e992cf",
+      "objective": "Four-scale minimum reprojection; 0.85 SSIM + 0.15 L1; identity automasking; normalized edge-aware smoothness 1e-3 / 2**scale",
+      "adaptations": "Batch-one pilot; frozen BatchNorm running statistics; half-pixel resize intrinsics; align_corners=True projection; optional input-only shared colour augmentation; no LR schedule or resume",
+      "reproducibility": "Seeded sampling/model/tie noise; CUDA grid_sample backward may remain nondeterministic",
+      "limitations": "Training sanity check on 196 correlated training triplets, not converged training, generalization, official benchmark or calibrated depth evidence.",
+      "validation_before": {
+        "loss": 0.02373010091483593,
+        "photometric": 0.02371411703526974,
+        "smoothness": 1.598365375684807e-05,
+        "warp_fraction": 0.5491448020935059
+      },
+      "validation_after": {
+        "loss": 0.022274111062288285,
+        "photometric": 0.022257095128297807,
+        "smoothness": 1.7015841222018936e-05,
+        "warp_fraction": 0.5603152191638947
+      },
+      "candidate_checkpoint_sha256": {
+        "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+        "depth.pth": "6637d5d14047aacfd1adcdd4fef23eaf2e6199b205555399b6dee2951c952229",
+        "pose_encoder.pth": "e8aff1e0c2d873905e01c064e1e34eba6a94019303c103db3b8e779325f7c428",
+        "pose.pth": "ff1c211909162a941de480a5afd161f404db0c817c2afa8d81e81d3a3e20d817"
+      },
+      "peak_torch_allocated_bytes": 782303744,
+      "elapsed_seconds": 27.380344800000003
+    }
+  },
+  "state_audits": {
+    "carla_augmentation_control_01": {
+      "status": "pass",
+      "steps": 196,
+      "unique_targets": 196,
+      "same_target_order_as_reference": true,
+      "validation_rows_unchanged": true,
+      "complete_single_epoch": true,
+      "states": {
+        "encoder.pth": {
+          "total_tensors": 122,
+          "changed_tensors": 0,
+          "baseline_bytes_unchanged": true
+        },
+        "depth.pth": {
+          "total_tensors": 28,
+          "changed_tensors": 28,
+          "baseline_bytes_unchanged": true
+        },
+        "pose_encoder.pth": {
+          "total_tensors": 122,
+          "changed_tensors": 60,
+          "baseline_bytes_unchanged": true
+        },
+        "pose.pth": {
+          "total_tensors": 8,
+          "changed_tensors": 8,
+          "baseline_bytes_unchanged": true
+        }
+      },
+      "source_sha256": {
+        "src/training.py": "94259098deda5f4b69c9da646612cf03e1ded9a0f79a735dc5764f33ae90d548",
+        "tools/train_carla_pilot.py": "df63d6fa2c909f4668552ae723c9c09894b2d5ce834ba13d6702e22fffd969fa",
+        "tests/test_training.py": "f1d32d12669aa241649060b2d866f27039399951d337604a2ea46b56667e53cf"
+      },
+      "augmentation_applied_steps": 0,
+      "color_augmentation_enabled": false,
+      "target_counts_by_scene": {
+        "train_town04_09": 98,
+        "train_town04_14": 98
+      }
+    },
+    "carla_color_aug_epoch_01": {
+      "status": "pass",
+      "steps": 196,
+      "unique_targets": 196,
+      "same_target_order_as_reference": true,
+      "validation_rows_unchanged": true,
+      "complete_single_epoch": true,
+      "states": {
+        "encoder.pth": {
+          "total_tensors": 122,
+          "changed_tensors": 0,
+          "baseline_bytes_unchanged": true
+        },
+        "depth.pth": {
+          "total_tensors": 28,
+          "changed_tensors": 28,
+          "baseline_bytes_unchanged": true
+        },
+        "pose_encoder.pth": {
+          "total_tensors": 122,
+          "changed_tensors": 60,
+          "baseline_bytes_unchanged": true
+        },
+        "pose.pth": {
+          "total_tensors": 8,
+          "changed_tensors": 8,
+          "baseline_bytes_unchanged": true
+        }
+      },
+      "source_sha256": {
+        "src/training.py": "94259098deda5f4b69c9da646612cf03e1ded9a0f79a735dc5764f33ae90d548",
+        "tools/train_carla_pilot.py": "df63d6fa2c909f4668552ae723c9c09894b2d5ce834ba13d6702e22fffd969fa",
+        "tests/test_training.py": "f1d32d12669aa241649060b2d866f27039399951d337604a2ea46b56667e53cf"
+      },
+      "augmentation_applied_steps": 100,
+      "color_augmentation_enabled": true,
+      "target_counts_by_scene": {
+        "train_town04_09": 98,
+        "train_town04_14": 98
+      }
+    }
+  },
+  "comparisons": {
+    "carla_augmentation_control_01": {
+      "carla": {
+        "samples": 25,
+        "valid_pixels": 4338866,
+        "metrics_reproduced": true,
+        "max_metric_absolute_difference": 4.230948924544009e-09,
+        "baseline": {
+          "abs_rel": 0.18140801021130007,
+          "sq_rel": 1.6326090089263219,
+          "rmse": 8.352287019913117,
+          "rmse_log": 0.34514984305932717,
+          "a1": 0.764108079677858,
+          "a2": 0.8787390122142469,
+          "a3": 0.9428669117752311
+        },
+        "reference": {
+          "abs_rel": 0.14768231797329567,
+          "sq_rel": 1.2198533500089257,
+          "rmse": 7.35063128409474,
+          "rmse_log": 0.2845227504671814,
+          "a1": 0.8204056792118857,
+          "a2": 0.9268661824738365,
+          "a3": 0.9623220697802666
+        },
+        "candidate": {
+          "abs_rel": 0.14768100087179178,
+          "sq_rel": 1.219975868447145,
+          "rmse": 7.350936214847886,
+          "rmse_log": 0.28454481598806913,
+          "a1": 0.820379900050006,
+          "a2": 0.926851833840357,
+          "a3": 0.9623172391457486
+        }
+      },
+      "kitti": {
+        "samples": 24,
+        "valid_pixels": 1782495,
+        "metrics_reproduced": true,
+        "max_metric_absolute_difference": 2.0674779221963036e-08,
+        "baseline": {
+          "abs_rel": 0.09362687132453361,
+          "sq_rel": 0.6896455021779558,
+          "rmse": 4.219609616896688,
+          "rmse_log": 0.14903443240625655,
+          "a1": 0.9128543584774701,
+          "a2": 0.9752481364642772,
+          "a3": 0.9909762486532604
+        },
+        "reference": {
+          "abs_rel": 0.10897620849725115,
+          "sq_rel": 0.9839537377099249,
+          "rmse": 4.723875320114641,
+          "rmse_log": 0.16266304428317513,
+          "a1": 0.9059824620784173,
+          "a2": 0.97010892295425,
+          "a3": 0.9888857227726952
+        },
+        "candidate": {
+          "abs_rel": 0.1089749761647406,
+          "sq_rel": 0.9838504800655595,
+          "rmse": 4.723707812167009,
+          "rmse_log": 0.16265972965762557,
+          "a1": 0.9059840910715752,
+          "a2": 0.9701076771392789,
+          "a3": 0.9888856987994906
+        }
+      }
+    },
+    "carla_color_aug_epoch_01": {
+      "carla": {
+        "samples": 25,
+        "valid_pixels": 4338866,
+        "metrics_reproduced": true,
+        "max_metric_absolute_difference": 3.549684102210904e-09,
+        "baseline": {
+          "abs_rel": 0.18140801021130007,
+          "sq_rel": 1.6326090089263219,
+          "rmse": 8.352287019913117,
+          "rmse_log": 0.34514984305932717,
+          "a1": 0.764108079677858,
+          "a2": 0.8787390122142469,
+          "a3": 0.9428669117752311
+        },
+        "reference": {
+          "abs_rel": 0.14768100087179178,
+          "sq_rel": 1.219975868447145,
+          "rmse": 7.350936214847886,
+          "rmse_log": 0.28454481598806913,
+          "a1": 0.820379900050006,
+          "a2": 0.926851833840357,
+          "a3": 0.9623172391457486
+        },
+        "candidate": {
+          "abs_rel": 0.1477884778046713,
+          "sq_rel": 1.221484168440563,
+          "rmse": 7.354224048817034,
+          "rmse_log": 0.28470214512864345,
+          "a1": 0.8196060656913667,
+          "a2": 0.9265823405468814,
+          "a3": 0.9623094789712563
+        }
+      },
+      "kitti": {
+        "samples": 24,
+        "valid_pixels": 1782495,
+        "metrics_reproduced": true,
+        "max_metric_absolute_difference": 1.274798755446227e-07,
+        "baseline": {
+          "abs_rel": 0.09362687132453361,
+          "sq_rel": 0.6896455021779558,
+          "rmse": 4.219609616896688,
+          "rmse_log": 0.14903443240625655,
+          "a1": 0.9128543584774701,
+          "a2": 0.9752481364642772,
+          "a3": 0.9909762486532604
+        },
+        "reference": {
+          "abs_rel": 0.1089749761647406,
+          "sq_rel": 0.9838504800655595,
+          "rmse": 4.723707812167009,
+          "rmse_log": 0.16265972965762557,
+          "a1": 0.9059840910715752,
+          "a2": 0.9701076771392789,
+          "a3": 0.9888856987994906
+        },
+        "candidate": {
+          "abs_rel": 0.1088266078178667,
+          "sq_rel": 0.9802533933004735,
+          "rmse": 4.718728897604016,
+          "rmse_log": 0.1624864744306366,
+          "a1": 0.9060979829171231,
+          "a2": 0.9701626141189253,
+          "a3": 0.988920052492747
+        }
+      }
+    }
+  },
+  "tests": 119,
+  "decision": "Implementation gate complete; no meaningful benefit established by these tiny single-seed differences; keep pretrained default and reserved test unscored."
+}

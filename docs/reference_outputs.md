@@ -19,3 +19,6 @@ The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`
 
 
 `../outputs/training_controls_2026-10-25_01/` contains the predeclared lower-rate, expanded-data and duration-control reference cases as they complete. Open `index.html` for status and per-case galleries. Each completed case retains actual first-sample previews, selected prediction arrays, configuration, state/scoring audits, metric tables and source hashes; a cumulative manifest checks saved files. No reserved-test predictions or full checkpoints are included.
+
+
+`../outputs/temporal_augmentation_reference_2026-10-25_01/` records Step 1 of the remaining plan. Open `index.html` for actual paired-control prediction previews, selected arrays, the numerical comparison plot and a labelled replay of a logged shared colour transform. Configuration, 119-test log, checkpoint/state/scoring audits and SHA256 manifest identify 40 selected files. The colour example is a CPU illustration of actual logged parameters, not a new metric result. Full weights/datasets remain in ignored repository directories; reserved-test predictions are excluded.

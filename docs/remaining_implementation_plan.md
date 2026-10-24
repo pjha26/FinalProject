@@ -6,7 +6,7 @@ Proceed in this order. Each completed logical step gets tests/evidence, a README
 
 | Order | Work | Completion gate | Current state |
 |---|---|---|---|
-| 1 | Synchronized temporal colour augmentation | Same sampled brightness/contrast/saturation/hue settings and order across previous/current/next model inputs; original RGB remains the photometric/smoothness target; validation and camera geometry unchanged. Tests plus a matched 196-step comparison against the unaugmented epoch. | Starting |
+| 1 | Synchronized temporal colour augmentation | Same sampled brightness/contrast/saturation/hue settings and order across previous/current/next model inputs; original RGB remains the photometric/smoothness target; validation and camera geometry unchanged. Tests plus a matched 196-step comparison against the unaugmented epoch. | Complete: implemented, tested and paired pilot recorded; no accuracy acceptance |
 | 2 | Broader CARLA conditions and routes | Add explicit tested weather/condition selection to capture, then audit at least two conditions and two routes per condition in train/validation maps. Register source hashes, roles and moving-window counts before training; keep reserved testing separate. Report native failures and actual coverage. | Pending |
 | 3 | Training checkpoint and epoch support | Add bounded multi-epoch execution, per-epoch validation, optimizer/RNG checkpoint state and verified resume. Test interrupted/resumed behavior and refuse incompatible manifests or overwritten outputs. Keep it within installed PyTorch/standard-library tools. | Pending |
 | 4 | Controlled longer training | Predeclare data, epoch budget, learning rate, seed and checkpoint-selection/quality guards. Compare against the pretrained baseline and unaugmented control on identical development protocols. Stop/report nonfinite states or domain regressions; do not adopt a candidate from loss reduction alone. | Pending steps 1-3 |
@@ -21,6 +21,10 @@ Proceed in this order. Each completed logical step gets tests/evidence, a README
 Use the existing expanded 196-training/25-validation manifest, frozen depth encoder, Adam 1e-6, seed 42, batch one and 196 updates. Start from the same official depth/pose weights as the unaugmented epoch. Change only augmentation. Sample a shared transform with probability 0.5: brightness/contrast/saturation factors 0.8-1.2, hue -0.1 to 0.1, random operation order shared across the triplet. Use a dedicated seeded generator so target sampling order is preserved. Do not add flips/crops/geometric transforms in this step.
 
 Apply augmented RGB only to depth/pose network inputs; reconstruct and compare unaugmented RGB for photometric consistency and smoothness. Validate and score without augmentation on the same frozen 25-target CARLA and 24-image KITTI pilots. Audit source hashes, exact target order, frozen encoder state, finite gradients/checkpoints and all saved predictions. Keep the pretrained default unless separately accepted; the reserved route remains unscored. These are development diagnostics, not full Eigen/final testing or convergence evidence.
+
+## Step 1 completion record
+
+Shared input-only augmentation is implemented and tested; both same-source 196-update runs completed. All 119 tests and baseline smoke checks pass. The augmented/control differences are tiny, and KITTI still regresses versus pretrained, so the default remains unchanged. [Augmentation details](temporal_augmentation.md) and [numerical evidence](temporal_augmentation_results.json) record scope, hashes and results. Step 2 is next; later rows remain pending.
 
 ## External dependencies and limits
 
