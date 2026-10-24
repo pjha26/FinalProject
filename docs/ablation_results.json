@@ -1,0 +1,1838 @@
+{
+  "schema_version": 1,
+  "cases": {
+    "main_aug_s42_e1": {
+      "checkpoint": "runs\\research_matrix_01\\main_aug_s42\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "e06f675043184f92893e9dc0867403c790c84753fafea7d9910b1c04024a8591",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "427c01651d7a7548692bd7ec9c3ba29882a62f28983e2b6cd45eb2dae71c7489"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.2897535306672742,
+              "sq_rel": 5.12577170828858,
+              "rmse": 13.072712328824956,
+              "rmse_log": 0.5744462341539962,
+              "a1": 0.606314056233411,
+              "a2": 0.7483593213560225,
+              "a3": 0.8053085006953263
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "427c01651d7a7548692bd7ec9c3ba29882a62f28983e2b6cd45eb2dae71c7489"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.13324692259426865,
+                "sq_rel": 1.179997357188657,
+                "rmse": 7.279786108955213,
+                "rmse_log": 0.27238031048487266,
+                "a1": 0.825717552115385,
+                "a2": 0.9311175971976857,
+                "a3": 0.9647599824738028
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.1450412684698788,
+                "sq_rel": 1.471667557592412,
+                "rmse": 8.115267120104681,
+                "rmse_log": 0.30270565763771495,
+                "a1": 0.8075979322252995,
+                "a2": 0.9031638008851796,
+                "a3": 0.9549826505964204
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3934063458224473,
+                "sq_rel": 8.036755570772259,
+                "rmse": 16.10466311663165,
+                "rmse_log": 0.7362495903196086,
+                "a1": 0.4938538889794763,
+                "a2": 0.6600503675209362,
+                "a3": 0.7193901733684668
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.33375702446818006,
+                "sq_rel": 5.940218483940234,
+                "rmse": 15.310551456993768,
+                "rmse_log": 0.6939205741576998,
+                "a1": 0.5125549235491778,
+                "a2": 0.6711963362838435,
+                "a3": 0.7396946556302402
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "a19e36ca2932bdea78e4ae104f1d43ee054161395fdddbcf6d4cf75f287787f3",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "427c01651d7a7548692bd7ec9c3ba29882a62f28983e2b6cd45eb2dae71c7489"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.12160511020388537,
+              "sq_rel": 1.0143397067544087,
+              "rmse": 4.776496406714776,
+              "rmse_log": 0.17213986453062194,
+              "a1": 0.8952026527402667,
+              "a2": 0.9699027109136913,
+              "a3": 0.9887102347054975
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "427c01651d7a7548692bd7ec9c3ba29882a62f28983e2b6cd45eb2dae71c7489"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.0971068497276289,
+                "sq_rel": 0.3736326344427327,
+                "rmse": 3.1922063919420367,
+                "rmse_log": 0.12052351981230602,
+                "a1": 0.9423922864863932,
+                "a2": 0.9957490700846773,
+                "a3": 0.9995706298458592
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.12339312387233699,
+                "sq_rel": 1.2973993944957969,
+                "rmse": 4.130317943978033,
+                "rmse_log": 0.18477418566839984,
+                "a1": 0.9236987631338636,
+                "a2": 0.9710210792634455,
+                "a3": 0.9826440162428032
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09063377553447577,
+                "sq_rel": 0.3855864814495264,
+                "rmse": 3.0895284002362104,
+                "rmse_log": 0.12117201577845838,
+                "a1": 0.9466031437608043,
+                "a2": 0.9897052781404102,
+                "a3": 0.9972255726642926
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10103761996330168,
+                "sq_rel": 0.7215210278939105,
+                "rmse": 4.802498586135062,
+                "rmse_log": 0.15051546499790602,
+                "a1": 0.9176803291532031,
+                "a2": 0.977922682786958,
+                "a3": 0.9946695240621718
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.14644343651631497,
+                "sq_rel": 1.6246229738612612,
+                "rmse": 6.140818701450534,
+                "rmse_log": 0.2026908449719286,
+                "a1": 0.8575014242982882,
+                "a2": 0.9587532300341076,
+                "a3": 0.9910514656074353
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.15848861035995124,
+                "sq_rel": 1.5131400774674126,
+                "rmse": 6.075009226684581,
+                "rmse_log": 0.24562405782064742,
+                "a1": 0.8264769603487986,
+                "a2": 0.9196383663323164,
+                "a3": 0.9646396366704139
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10981805865253047,
+                "sq_rel": 0.6469707563289419,
+                "rmse": 4.475586346339714,
+                "rmse_log": 0.1514143981840778,
+                "a1": 0.8942541323504636,
+                "a2": 0.9848771130819546,
+                "a3": 0.9954578383605573
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.14591940700454306,
+                "sq_rel": 1.5518443080956892,
+                "rmse": 6.306005656952034,
+                "rmse_log": 0.20040442901125155,
+                "a1": 0.8530141823903207,
+                "a2": 0.9615548675856594,
+                "a3": 0.9844231941904447
+              }
+            }
+          }
+        }
+      }
+    },
+    "no_ssim_s42_e1": {
+      "checkpoint": "runs\\research_matrix_01\\no_ssim_s42\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "6316d9ce70deab93fbdf023af1c95b01012c43337b7812e0b4d3bc3fe720b612",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "0f26da08bcb600c7594910ca190bf7534295cb3f9610d510e7ec3a42b19fd9cc"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.28956069463825346,
+              "sq_rel": 5.026688811584757,
+              "rmse": 13.108134169831418,
+              "rmse_log": 0.577362441246966,
+              "a1": 0.6014413190334787,
+              "a2": 0.745074145184654,
+              "a3": 0.803371088990357
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "0f26da08bcb600c7594910ca190bf7534295cb3f9610d510e7ec3a42b19fd9cc"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.13966922183152897,
+                "sq_rel": 1.2568765645278481,
+                "rmse": 7.489129800597103,
+                "rmse_log": 0.28476855144072155,
+                "a1": 0.8130653384779581,
+                "a2": 0.9221092539763274,
+                "a3": 0.9620110411279705
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.14982123174805037,
+                "sq_rel": 1.5337662900757743,
+                "rmse": 8.256911539217217,
+                "rmse_log": 0.31201863248101225,
+                "a1": 0.7987486448942367,
+                "a2": 0.8956174723006208,
+                "a3": 0.9516884613398529
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.38820655438220875,
+                "sq_rel": 7.704252351252926,
+                "rmse": 16.019663921129858,
+                "rmse_log": 0.7342144746082697,
+                "a1": 0.49136928247213607,
+                "a2": 0.6589201091639417,
+                "a3": 0.7179395551259856
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3328907837653413,
+                "sq_rel": 5.9092893741547705,
+                "rmse": 15.329068634144978,
+                "rmse_log": 0.6940092797347792,
+                "a1": 0.5110568137785276,
+                "a2": 0.6706505165447597,
+                "a3": 0.7383333461453613
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "34138ef364d83deb91f2a056b888a3b6db9948ba906d707726b39ac3d84e0ebb",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "0f26da08bcb600c7594910ca190bf7534295cb3f9610d510e7ec3a42b19fd9cc"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.11617461251015149,
+              "sq_rel": 0.9175009629388041,
+              "rmse": 4.5709201949842955,
+              "rmse_log": 0.166891721298565,
+              "a1": 0.9016148176306361,
+              "a2": 0.9715939431265683,
+              "a3": 0.9893417870824789
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "0f26da08bcb600c7594910ca190bf7534295cb3f9610d510e7ec3a42b19fd9cc"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09236009583314019,
+                "sq_rel": 0.3305037291928435,
+                "rmse": 3.021590567613972,
+                "rmse_log": 0.11493791920307138,
+                "a1": 0.9542789819728675,
+                "a2": 0.9967476701598854,
+                "a3": 0.9996293207302381
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.11978015067757652,
+                "sq_rel": 1.1949125819341837,
+                "rmse": 4.082168117238591,
+                "rmse_log": 0.1818536736542057,
+                "a1": 0.9220324349495582,
+                "a2": 0.9717808406231997,
+                "a3": 0.9845562119983003
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.08558009469076572,
+                "sq_rel": 0.3483257946429445,
+                "rmse": 2.9669685090038924,
+                "rmse_log": 0.11609630963865752,
+                "a1": 0.9524749140155971,
+                "a2": 0.9905770661398501,
+                "a3": 0.9975817811047089
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09557368329962451,
+                "sq_rel": 0.6498938255581261,
+                "rmse": 4.596782000617494,
+                "rmse_log": 0.1463777162069779,
+                "a1": 0.919875840916299,
+                "a2": 0.9788413725886732,
+                "a3": 0.9954935316148349
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.13915076464798912,
+                "sq_rel": 1.432961147455026,
+                "rmse": 5.732008587408546,
+                "rmse_log": 0.1946274033532408,
+                "a1": 0.8668465554844342,
+                "a2": 0.9645463448046626,
+                "a3": 0.9911542545874079
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1538039046994857,
+                "sq_rel": 1.4288786379091514,
+                "rmse": 5.971822782472326,
+                "rmse_log": 0.24225122872359706,
+                "a1": 0.8304024128447723,
+                "a2": 0.9194471435112518,
+                "a3": 0.965415166656414
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10446181969108205,
+                "sq_rel": 0.5930121065716677,
+                "rmse": 4.268798558757212,
+                "rmse_log": 0.14639892671347254,
+                "a1": 0.8998775190692151,
+                "a2": 0.9864332263721818,
+                "a3": 0.9955295576937814
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.13868638654154788,
+                "sq_rel": 1.361519880246492,
+                "rmse": 5.927222436762335,
+                "rmse_log": 0.19259059289529734,
+                "a1": 0.8671298817923466,
+                "a2": 0.9643778808128416,
+                "a3": 0.9853744722741453
+              }
+            }
+          }
+        }
+      }
+    },
+    "no_automasking_s42_e1": {
+      "checkpoint": "runs\\research_matrix_01\\no_automasking_s42\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "85f3b302d00a10b56232cbfda2eecd49ade507da7861b0a866acc839152d13fc",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "6bc3511af218a12b574ebeeba5b7fc5b8f821f2a850ffcc7c5cb71e33dc92c10"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.2937237195441944,
+              "sq_rel": 5.389966976323049,
+              "rmse": 12.882344538603009,
+              "rmse_log": 0.559676401979947,
+              "a1": 0.613769790761258,
+              "a2": 0.7546027584984646,
+              "a3": 0.8087427121565728
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "6bc3511af218a12b574ebeeba5b7fc5b8f821f2a850ffcc7c5cb71e33dc92c10"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.12896871046945774,
+                "sq_rel": 1.042744522095406,
+                "rmse": 6.765847557118636,
+                "rmse_log": 0.24945905297916057,
+                "a1": 0.8497088350751547,
+                "a2": 0.9429986246903368,
+                "a3": 0.9686959396395649
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.1369480070983359,
+                "sq_rel": 1.2917313476698395,
+                "rmse": 7.631521431896793,
+                "rmse_log": 0.27832207812624776,
+                "a1": 0.8218290960673923,
+                "a2": 0.9283692967499674,
+                "a3": 0.9631362721173027
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.4068044978779931,
+                "sq_rel": 8.917308931562552,
+                "rmse": 16.213730661029786,
+                "rmse_log": 0.7277794753191099,
+                "a1": 0.4965209421990869,
+                "a2": 0.6601924638588069,
+                "a3": 0.7217628972862229
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3382560399950016,
+                "sq_rel": 6.002555453868281,
+                "rmse": 15.123174145681448,
+                "rmse_log": 0.6815594427851391,
+                "a1": 0.5133723895096888,
+                "a2": 0.6714824627247031,
+                "a3": 0.7416309645545109
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "0eb7f0693aec02d0f79545971661ab457f794451d12366af24c9a6529a5bb5e9",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "6bc3511af218a12b574ebeeba5b7fc5b8f821f2a850ffcc7c5cb71e33dc92c10"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.13672945296928607,
+              "sq_rel": 1.4373874138805312,
+              "rmse": 5.710862070330286,
+              "rmse_log": 0.18882434264378722,
+              "a1": 0.8733113526834706,
+              "a2": 0.9617957884386956,
+              "a3": 0.9848347776899229
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "6bc3511af218a12b574ebeeba5b7fc5b8f821f2a850ffcc7c5cb71e33dc92c10"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10812909873991712,
+                "sq_rel": 0.5500851426470893,
+                "rmse": 3.9599800574779125,
+                "rmse_log": 0.13488636575849744,
+                "a1": 0.910870974518556,
+                "a2": 0.9921716933730248,
+                "a3": 0.9990514090352783
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.13533375690446334,
+                "sq_rel": 1.7213291584545782,
+                "rmse": 4.7523359342565215,
+                "rmse_log": 0.19701990213560303,
+                "a1": 0.9140052402736512,
+                "a2": 0.9665219536341129,
+                "a3": 0.9790727138565328
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10455984066603512,
+                "sq_rel": 0.5857563009974031,
+                "rmse": 3.835322658907291,
+                "rmse_log": 0.13758584579805125,
+                "a1": 0.9190087567619635,
+                "a2": 0.9867060241736056,
+                "a3": 0.9952980086881306
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.11617807439282896,
+                "sq_rel": 1.045326790122111,
+                "rmse": 5.76850737470857,
+                "rmse_log": 0.16750538737299892,
+                "a1": 0.8844132150687826,
+                "a2": 0.9722819574579383,
+                "a3": 0.9919272866336314
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1692537054770117,
+                "sq_rel": 2.6124438858538928,
+                "rmse": 7.890773045568881,
+                "rmse_log": 0.22994241666911908,
+                "a1": 0.846410969924832,
+                "a2": 0.9324006035205049,
+                "a3": 0.9772746133031527
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.17315200892969074,
+                "sq_rel": 1.912672047100951,
+                "rmse": 6.614022429346281,
+                "rmse_log": 0.25786173888936004,
+                "a1": 0.8170005380824045,
+                "a2": 0.9169144452841858,
+                "a3": 0.9607986362612809
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1243655463660931,
+                "sq_rel": 0.9221514007903587,
+                "rmse": 5.44625965416049,
+                "rmse_log": 0.16701525923729968,
+                "a1": 0.8695722382078602,
+                "a2": 0.9752656486777203,
+                "a3": 0.9951848613022181
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.16286359227824854,
+                "sq_rel": 2.149334585077868,
+                "rmse": 7.4196954082163495,
+                "rmse_log": 0.21877782528936876,
+                "a1": 0.8252088886297156,
+                "a2": 0.9521039813884721,
+                "a3": 0.9800706924391576
+              }
+            }
+          }
+        }
+      }
+    },
+    "no_smoothness_s42_e1": {
+      "checkpoint": "runs\\research_matrix_01\\no_smoothness_s42\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "729fb69b5214894942766ef61ef4de1a5417a9818a6e76fee9db33af410b3487",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "560af90f46905ebed928cb55c772aa32919319966d00eeecddda06cae252bf03"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.28972058020779484,
+              "sq_rel": 5.126535706672663,
+              "rmse": 13.072215225983848,
+              "rmse_log": 0.5743946691465137,
+              "a1": 0.6063837012048147,
+              "a2": 0.7484319864810135,
+              "a3": 0.8053180902010899
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "560af90f46905ebed928cb55c772aa32919319966d00eeecddda06cae252bf03"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.13318876661970117,
+                "sq_rel": 1.1794438369733837,
+                "rmse": 7.27811548309038,
+                "rmse_log": 0.272292944411047,
+                "a1": 0.8258086142122951,
+                "a2": 0.9311779693501075,
+                "a3": 0.9647677294678079
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.1449695250668902,
+                "sq_rel": 1.471120188457013,
+                "rmse": 8.11400863292848,
+                "rmse_log": 0.3026233044943853,
+                "a1": 0.8076810979414336,
+                "a2": 0.9032287069684165,
+                "a3": 0.9550050493839649
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3934151632014282,
+                "sq_rel": 8.039604061484232,
+                "rmse": 16.1051667784589,
+                "rmse_log": 0.7362242119569754,
+                "a1": 0.4939196693116579,
+                "a2": 0.66014754669166,
+                "a3": 0.7193949681417129
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.33371367796367035,
+                "sq_rel": 5.940186659662538,
+                "rmse": 15.31000207348371,
+                "rmse_log": 0.6938754642711475,
+                "a1": 0.5126113067528266,
+                "a2": 0.671254316781889,
+                "a3": 0.7397036640008622
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "31dd5b290cb56bf4775909a6abd277eb2ce1023bcfb5f3d5836f2f69f3e358c0",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "560af90f46905ebed928cb55c772aa32919319966d00eeecddda06cae252bf03"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.121664061824586,
+              "sq_rel": 1.0156265891149465,
+              "rmse": 4.779234276688527,
+              "rmse_log": 0.17220308710332521,
+              "a1": 0.8950866419100559,
+              "a2": 0.9698765326321298,
+              "a3": 0.9887043747647316
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "560af90f46905ebed928cb55c772aa32919319966d00eeecddda06cae252bf03"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09715682103165979,
+                "sq_rel": 0.374213213082087,
+                "rmse": 3.1947340436137366,
+                "rmse_log": 0.12058300900907282,
+                "a1": 0.9421357507303378,
+                "a2": 0.9957371235099098,
+                "a3": 0.9995644518580299
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.12345054079703428,
+                "sq_rel": 1.2988104336028157,
+                "rmse": 4.131375787428667,
+                "rmse_log": 0.18482916474412,
+                "a1": 0.9236905171858453,
+                "a2": 0.9710013912084859,
+                "a3": 0.982625664768551
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09067412419718246,
+                "sq_rel": 0.38604496056592086,
+                "rmse": 3.0910802308015235,
+                "rmse_log": 0.12121548395541948,
+                "a1": 0.946513199265968,
+                "a2": 0.9897121174307655,
+                "a3": 0.9972255726642926
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10108966580437341,
+                "sq_rel": 0.722580841531586,
+                "rmse": 4.805404188058544,
+                "rmse_log": 0.15056772548420844,
+                "a1": 0.917617467704785,
+                "a2": 0.9779114722301635,
+                "a3": 0.9946488051146943
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.14652909584905774,
+                "sq_rel": 1.627762742356494,
+                "rmse": 6.147371290455691,
+                "rmse_log": 0.20279553823871646,
+                "a1": 0.8574123862449521,
+                "a2": 0.9586630498922709,
+                "a3": 0.9910514656074353
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1585519947292857,
+                "sq_rel": 1.5143921551689996,
+                "rmse": 6.076375153442945,
+                "rmse_log": 0.24567771474383446,
+                "a1": 0.8263460527140972,
+                "a2": 0.9196280244824698,
+                "a3": 0.9646503577028219
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10987362391212928,
+                "sq_rel": 0.6477579068772242,
+                "rmse": 4.478662449861754,
+                "rmse_log": 0.15147297072292343,
+                "a1": 0.8941590509383005,
+                "a2": 0.9848229008534877,
+                "a3": 0.9954578383605573
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.14598662827596537,
+                "sq_rel": 1.5534504597344438,
+                "rmse": 6.308871069845353,
+                "rmse_log": 0.20048308992830657,
+                "a1": 0.8528187104961628,
+                "a2": 0.9615361814494839,
+                "a3": 0.9844108420414696
+              }
+            }
+          }
+        }
+      }
+    },
+    "repeat_s43_e1": {
+      "checkpoint": "runs\\research_matrix_01\\repeat_s43\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "08509a2a94bc129cad1c6aeae496f3aae7b73e19ba2a4c64c00be2b132091c08",
+            "checkpoint_sha256": {
+              "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+              "depth.pth": "ad1e35acff491ea6a64d9276444bb5be20ef87b8c724c4f0c0104c45dd04206e"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.29056590774713414,
+              "sq_rel": 5.242688615076683,
+              "rmse": 13.03887431684056,
+              "rmse_log": 0.5712298969827404,
+              "a1": 0.6100719218021977,
+              "a2": 0.7513238556870493,
+              "a3": 0.8067108328837052
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+              "depth.pth": "ad1e35acff491ea6a64d9276444bb5be20ef87b8c724c4f0c0104c45dd04206e"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.1295819592512033,
+                "sq_rel": 1.1181702841447683,
+                "rmse": 7.0859002798220265,
+                "rmse_log": 0.2633973467684028,
+                "a1": 0.8355844619902412,
+                "a2": 0.9369481354114387,
+                "a3": 0.9665332506437853
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.14203495270264174,
+                "sq_rel": 1.4121220878457696,
+                "rmse": 7.965888017480417,
+                "rmse_log": 0.29468752619825034,
+                "a1": 0.8125908902634704,
+                "a2": 0.9110281085208193,
+                "a3": 0.9581684524442245
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3982205648724516,
+                "sq_rel": 8.411237475364327,
+                "rmse": 16.198895006933363,
+                "rmse_log": 0.7366499742166621,
+                "a1": 0.4963940555804875,
+                "a2": 0.6615475351032316,
+                "a3": 0.7203932861598279
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.33463424255339635,
+                "sq_rel": 5.9736911558492505,
+                "rmse": 15.28373614458043,
+                "rmse_log": 0.6922681143560871,
+                "a1": 0.51393042103895,
+                "a2": 0.6718214838403956,
+                "a3": 0.7404401260190532
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "546aea2e89552655835b77ff0847f3b61cb6041da6251370c1079a843abd7c47",
+            "checkpoint_sha256": {
+              "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+              "depth.pth": "ad1e35acff491ea6a64d9276444bb5be20ef87b8c724c4f0c0104c45dd04206e"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.1259192631333557,
+              "sq_rel": 1.1258769293100153,
+              "rmse": 5.0371404910666335,
+              "rmse_log": 0.17672330374088785,
+              "a1": 0.8888067613514048,
+              "a2": 0.96760844058943,
+              "a3": 0.9879810600661063
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+              "depth.pth": "ad1e35acff491ea6a64d9276444bb5be20ef87b8c724c4f0c0104c45dd04206e"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10047116834356858,
+                "sq_rel": 0.41992574047180914,
+                "rmse": 3.4020749304500466,
+                "rmse_log": 0.12464266315261972,
+                "a1": 0.9308053151438892,
+                "a2": 0.9946922534095607,
+                "a3": 0.9994934049979921
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.12622798975992075,
+                "sq_rel": 1.400985916976518,
+                "rmse": 4.232146041792401,
+                "rmse_log": 0.18717693898922158,
+                "a1": 0.9228420647796859,
+                "a2": 0.9698692254907192,
+                "a3": 0.9813829277087458
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09414528143715785,
+                "sq_rel": 0.4353379724831588,
+                "rmse": 3.2865579942513676,
+                "rmse_log": 0.1253660631805257,
+                "a1": 0.9403485242008173,
+                "a2": 0.988712715909454,
+                "a3": 0.9968972736075682
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10538967671492422,
+                "sq_rel": 0.8088609521406819,
+                "rmse": 5.078627889959731,
+                "rmse_log": 0.15494736384820992,
+                "a1": 0.9097194518467765,
+                "a2": 0.9769200865372177,
+                "a3": 0.9939457500655134
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.15332413083702504,
+                "sq_rel": 1.8831980888638922,
+                "rmse": 6.670033678034396,
+                "rmse_log": 0.2107114106638227,
+                "a1": 0.8530903627223431,
+                "a2": 0.9504108696529765,
+                "a3": 0.9899083767100759
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1622565080797695,
+                "sq_rel": 1.6052888096470683,
+                "rmse": 6.209046738716913,
+                "rmse_log": 0.2485974755591426,
+                "a1": 0.8231681019763378,
+                "a2": 0.9192654475121195,
+                "a3": 0.9636441527383406
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.11409101074492622,
+                "sq_rel": 0.7170588792608954,
+                "rmse": 4.748711404575045,
+                "rmse_log": 0.15585915418151827,
+                "a1": 0.8872975792049774,
+                "a2": 0.9822202024815713,
+                "a3": 0.9955355685904653
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.15144833914955325,
+                "sq_rel": 1.7363590746360977,
+                "rmse": 6.6699252507531765,
+                "rmse_log": 0.20648536035204212,
+                "a1": 0.8431826909364112,
+                "a2": 0.9587767237218211,
+                "a3": 0.9830410261101473
+              }
+            }
+          }
+        }
+      }
+    },
+    "repeat_s44_e1": {
+      "checkpoint": "runs\\research_matrix_01\\repeat_s44\\epoch_001",
+      "scores": {
+        "carla": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "CARLA multi-condition moving-target validation",
+            "data_kind": "simulated_rgbd",
+            "split": "validation",
+            "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 152,
+            "expected_samples": 152,
+            "scenes": 4,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "a7f16837780d0aa322c652b1210420a5b8d09bb5cf4f43d091087fb1fabd6e16",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "dfb3ca064df41aa3c02821a6370349230778374d6dd7fe151cf5cce98354d78e"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.2906397940302352,
+              "sq_rel": 5.1894635226910495,
+              "rmse": 13.109763393885576,
+              "rmse_log": 0.5761393701082509,
+              "a1": 0.6061086624281147,
+              "a2": 0.7480066608061359,
+              "a3": 0.8048954094181382
+            },
+            "total_valid_pixels": 29131740,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "dfb3ca064df41aa3c02821a6370349230778374d6dd7fe151cf5cce98354d78e"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "validation_town05_13": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.1336611605474514,
+                "sq_rel": 1.1830840663228777,
+                "rmse": 7.279102144868292,
+                "rmse_log": 0.27359246194989023,
+                "a1": 0.8252051866461236,
+                "a2": 0.9304399795354099,
+                "a3": 0.9642621345162847
+              }
+            },
+            "validation_town05_s43_wetcloudynoon_01": {
+              "samples": 25,
+              "mean_metrics": {
+                "abs_rel": 0.145372099990978,
+                "sq_rel": 1.4795301013775077,
+                "rmse": 8.130421962541448,
+                "rmse_log": 0.3040664174329014,
+                "a1": 0.8062091709376016,
+                "a2": 0.9020516054101873,
+                "a3": 0.9546928827519576
+              }
+            },
+            "validation_town05_s46_clearnoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3951473803412732,
+                "sq_rel": 8.191717931592928,
+                "rmse": 16.17821051503732,
+                "rmse_log": 0.7384097781483235,
+                "a1": 0.49455868512148926,
+                "a2": 0.6601649588503673,
+                "a3": 0.71891892924285
+              }
+            },
+            "validation_town05_s46_wetcloudynoon_01": {
+              "samples": 51,
+              "mean_metrics": {
+                "abs_rel": 0.3342921721907863,
+                "sq_rel": 5.969715426378237,
+                "rmse": 15.34033719447964,
+                "rmse_log": 0.695545364437644,
+                "a1": 0.5121698982016544,
+                "a2": 0.6709080375985104,
+                "a3": 0.7393208119306977
+              }
+            }
+          }
+        },
+        "kitti": {
+          "summary": {
+            "schema_version": 1,
+            "status": "complete",
+            "dataset": "KITTI selected validation cropped pilot",
+            "data_kind": "real_rgbd",
+            "split": "validation",
+            "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+            "evaluated_samples": 24,
+            "expected_samples": 24,
+            "scenes": 8,
+            "protocol": {
+              "depth_units": "metres",
+              "aligned_to_rgb": true,
+              "min_depth": 0.001,
+              "max_depth": 80,
+              "scaling": "per_image_median",
+              "aggregation": "mean_of_images",
+              "crop": "none"
+            },
+            "manifest_sha256": "2360ddb96033b1490bf853e30f9e3f17734b9447976763188daca73751feced3",
+            "checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "dfb3ca064df41aa3c02821a6370349230778374d6dd7fe151cf5cce98354d78e"
+            },
+            "device": "cuda",
+            "mean_metrics": {
+              "abs_rel": 0.1218001893056065,
+              "sq_rel": 1.0366500850917366,
+              "rmse": 4.823526212770702,
+              "rmse_log": 0.1725323864917181,
+              "a1": 0.8953707521389006,
+              "a2": 0.9694726747390598,
+              "a3": 0.9885850394555713
+            },
+            "total_valid_pixels": 1782495,
+            "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+            "reference_checkpoint_sha256": {
+              "encoder.pth": "0b85e76ec5df9c32e0e0b314c6e4bb5b4ac26e1f3c9611b11035f4ee10f5e330",
+              "depth.pth": "dfb3ca064df41aa3c02821a6370349230778374d6dd7fe151cf5cce98354d78e"
+            },
+            "backend": "monodepth2",
+            "model_name": "Monodepth2 ResNet-18 mono_640x192",
+            "model_input": [
+              192,
+              640
+            ],
+            "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+          },
+          "routes": {
+            "2011_09_26_drive_0002_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.0970492067518845,
+                "sq_rel": 0.3756834601246622,
+                "rmse": 3.2079874638295984,
+                "rmse_log": 0.12045739311008939,
+                "a1": 0.9421095391200566,
+                "a2": 0.9957496283565851,
+                "a3": 0.9995459178945417
+              }
+            },
+            "2011_09_26_drive_0013_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.12385581087788128,
+                "sq_rel": 1.3263168812007387,
+                "rmse": 4.156660432781275,
+                "rmse_log": 0.18522908565497667,
+                "a1": 0.9231392064745072,
+                "a2": 0.9711333323248211,
+                "a3": 0.9822283116514505
+              }
+            },
+            "2011_09_26_drive_0020_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.09056873111981383,
+                "sq_rel": 0.390295535966446,
+                "rmse": 3.108640435986463,
+                "rmse_log": 0.12126473925275062,
+                "a1": 0.9460859642368411,
+                "a2": 0.9895018514000347,
+                "a3": 0.9972559916273488
+              }
+            },
+            "2011_09_26_drive_0023_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.101028201704166,
+                "sq_rel": 0.7429003131354374,
+                "rmse": 4.862295883119001,
+                "rmse_log": 0.1509616818466532,
+                "a1": 0.9177409717802113,
+                "a2": 0.9777879437539664,
+                "a3": 0.9942724737783549
+              }
+            },
+            "2011_09_26_drive_0036_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.14787692709660474,
+                "sq_rel": 1.7054972576637688,
+                "rmse": 6.3039537408661275,
+                "rmse_log": 0.20467812594184154,
+                "a1": 0.8577486497541521,
+                "a2": 0.9558690096565422,
+                "a3": 0.9909136092672161
+              }
+            },
+            "2011_09_28_drive_0037_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.1588128033748092,
+                "sq_rel": 1.5347943900605758,
+                "rmse": 6.102269841206507,
+                "rmse_log": 0.24605183069763836,
+                "a1": 0.8265463234441318,
+                "a2": 0.9198234608453761,
+                "a3": 0.9645088630597515
+              }
+            },
+            "2011_09_30_drive_0016_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.10986805594553546,
+                "sq_rel": 0.6564080217897637,
+                "rmse": 4.517543113056279,
+                "rmse_log": 0.15164577412055028,
+                "a1": 0.8942770215902565,
+                "a2": 0.9840700449758722,
+                "a3": 0.9955711526256014
+              }
+            },
+            "2011_10_03_drive_0047_sync": {
+              "samples": 3,
+              "mean_metrics": {
+                "abs_rel": 0.145341777574157,
+                "sq_rel": 1.5613048207924987,
+                "rmse": 6.328858791320354,
+                "rmse_log": 0.19997046130924465,
+                "a1": 0.8553183407110486,
+                "a2": 0.9618461265992807,
+                "a3": 0.984383995740307
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "unaugmented_longer_control": {
+    "checkpoint": "runs\\research_matrix_01\\control_unaug_s42\\epoch_003",
+    "scores": {
+      "carla": {
+        "summary": {
+          "schema_version": 1,
+          "status": "complete",
+          "dataset": "CARLA multi-condition moving-target validation",
+          "data_kind": "simulated_rgbd",
+          "split": "validation",
+          "limitations": "Correlated short route/condition validation captures on one map; not untouched final testing, broad robustness, KITTI/Eigen or calibrated prediction evidence. Fixed research matrix candidate; no default promotion.",
+          "evaluated_samples": 152,
+          "expected_samples": 152,
+          "scenes": 4,
+          "protocol": {
+            "depth_units": "metres",
+            "aligned_to_rgb": true,
+            "min_depth": 0.001,
+            "max_depth": 80,
+            "scaling": "per_image_median",
+            "aggregation": "mean_of_images",
+            "crop": "none"
+          },
+          "manifest_sha256": "5d7bf9fc6be30094ca7e188b8d16495ada240e50e19a2ef413cfd0866961d3a8",
+          "checkpoint_sha256": {
+            "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+            "depth.pth": "590245955709e681efb80d005979e25df1e5a9f0a34f3cbf214e144e624b0ff8"
+          },
+          "device": "cuda",
+          "mean_metrics": {
+            "abs_rel": 0.29236660664659936,
+            "sq_rel": 4.805834578130266,
+            "rmse": 12.915830855769693,
+            "rmse_log": 0.569462421436387,
+            "a1": 0.5940703962794135,
+            "a2": 0.7407323423122366,
+            "a3": 0.8043234434756211
+          },
+          "total_valid_pixels": 29131740,
+          "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+          "reference_checkpoint_sha256": {
+            "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+            "depth.pth": "590245955709e681efb80d005979e25df1e5a9f0a34f3cbf214e144e624b0ff8"
+          },
+          "backend": "monodepth2",
+          "model_name": "Monodepth2 ResNet-18 mono_640x192",
+          "model_input": [
+            192,
+            640
+          ],
+          "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+        },
+        "routes": {
+          "validation_town05_13": {
+            "samples": 25,
+            "mean_metrics": {
+              "abs_rel": 0.14464661505811865,
+              "sq_rel": 1.2384655531116624,
+              "rmse": 7.409311864675882,
+              "rmse_log": 0.2824411744403075,
+              "a1": 0.8092623537942824,
+              "a2": 0.9219357422147614,
+              "a3": 0.9627445545063956
+            }
+          },
+          "validation_town05_s43_wetcloudynoon_01": {
+            "samples": 25,
+            "mean_metrics": {
+              "abs_rel": 0.15610756674103865,
+              "sq_rel": 1.509392546068585,
+              "rmse": 8.14884012122662,
+              "rmse_log": 0.30968328855533567,
+              "a1": 0.7884884915827719,
+              "a2": 0.8965319503426925,
+              "a3": 0.9537291248194026
+            }
+          },
+          "validation_town05_s46_clearnoon_01": {
+            "samples": 51,
+            "mean_metrics": {
+              "abs_rel": 0.3862810802159001,
+              "sq_rel": 7.144667582949422,
+              "rmse": 15.692574161775848,
+              "rmse_log": 0.721605153664027,
+              "a1": 0.48280448298571704,
+              "a2": 0.6526754288885539,
+              "a3": 0.7193387896911584
+            }
+          },
+          "validation_town05_s46_wetcloudynoon_01": {
+            "samples": 51,
+            "mean_metrics": {
+              "abs_rel": 0.33765754067241716,
+              "sq_rel": 5.831614836585762,
+              "rmse": 15.17512172899731,
+              "rmse_log": 0.685359091109301,
+              "a1": 0.5045470679955464,
+              "a2": 0.6635917028275946,
+              "a3": 0.738412610801967
+            }
+          }
+        }
+      },
+      "kitti": {
+        "summary": {
+          "schema_version": 1,
+          "status": "complete",
+          "dataset": "KITTI selected validation cropped pilot",
+          "data_kind": "real_rgbd",
+          "split": "validation",
+          "limitations": "Small cropped validation diagnostic; not official KITTI/Eigen scoring. Scenes excluded using pinned Monodepth2 Eigen-Zhou training/development lists; Depth Anything pretraining overlap is unknown. Three correlated frames per drive; evaluation examples remain excluded from training. Fixed research matrix candidate; no default promotion.",
+          "evaluated_samples": 24,
+          "expected_samples": 24,
+          "scenes": 8,
+          "protocol": {
+            "depth_units": "metres",
+            "aligned_to_rgb": true,
+            "min_depth": 0.001,
+            "max_depth": 80,
+            "scaling": "per_image_median",
+            "aggregation": "mean_of_images",
+            "crop": "none"
+          },
+          "manifest_sha256": "efd3d5da748eda6010637ec759e84ff6b0ab4c8dcd69bd89c02c74a51960cf6e",
+          "checkpoint_sha256": {
+            "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+            "depth.pth": "590245955709e681efb80d005979e25df1e5a9f0a34f3cbf214e144e624b0ff8"
+          },
+          "device": "cuda",
+          "mean_metrics": {
+            "abs_rel": 0.1158215896777811,
+            "sq_rel": 0.8701912728154846,
+            "rmse": 4.507009575697342,
+            "rmse_log": 0.16693975925279247,
+            "a1": 0.8975220635385946,
+            "a2": 0.9731991724782841,
+            "a3": 0.9893939094058656
+          },
+          "total_valid_pixels": 1782495,
+          "depth_claim": "Predictions remain relative; scores use per-image GT median scaling, not recovered metric scale.",
+          "reference_checkpoint_sha256": {
+            "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+            "depth.pth": "590245955709e681efb80d005979e25df1e5a9f0a34f3cbf214e144e624b0ff8"
+          },
+          "backend": "monodepth2",
+          "model_name": "Monodepth2 ResNet-18 mono_640x192",
+          "model_input": [
+            192,
+            640
+          ],
+          "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1"
+        },
+        "routes": {
+          "2011_09_26_drive_0002_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.09476829186346014,
+              "sq_rel": 0.33197633181752734,
+              "rmse": 3.007581422628204,
+              "rmse_log": 0.11777701021942599,
+              "a1": 0.9406313571753805,
+              "a2": 0.9972552234239943,
+              "a3": 0.9998517282920952
+            }
+          },
+          "2011_09_26_drive_0013_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.11946234315418214,
+              "sq_rel": 1.0955950846075968,
+              "rmse": 3.947302742488271,
+              "rmse_log": 0.18237165644239242,
+              "a1": 0.9178349675959443,
+              "a2": 0.9702712820596243,
+              "a3": 0.9838820367243354
+            }
+          },
+          "2011_09_26_drive_0020_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.08807249575524966,
+              "sq_rel": 0.36185561980578584,
+              "rmse": 3.0250141322272968,
+              "rmse_log": 0.11947799086248567,
+              "a1": 0.948388052419047,
+              "a2": 0.990222871453621,
+              "a3": 0.9976181953420619
+            }
+          },
+          "2011_09_26_drive_0023_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.09441770939589711,
+              "sq_rel": 0.6193880800779297,
+              "rmse": 4.518548891778644,
+              "rmse_log": 0.14650053848793837,
+              "a1": 0.9170163751580273,
+              "a2": 0.9814214958804447,
+              "a3": 0.9956563249678988
+            }
+          },
+          "2011_09_26_drive_0036_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.1322420488736858,
+              "sq_rel": 1.1871215851997163,
+              "rmse": 5.2281898220092,
+              "rmse_log": 0.18572518883334532,
+              "a1": 0.8671671049029497,
+              "a2": 0.976703714927862,
+              "a3": 0.9910485841258488
+            }
+          },
+          "2011_09_28_drive_0037_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.1531441993584072,
+              "sq_rel": 1.3494559474171453,
+              "rmse": 5.955963176351189,
+              "rmse_log": 0.24119819296632594,
+              "a1": 0.8287659275913947,
+              "a2": 0.9186890569890446,
+              "a3": 0.967082125190268
+            }
+          },
+          "2011_09_30_drive_0016_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.10584048282785781,
+              "sq_rel": 0.6259199417499849,
+              "rmse": 4.392809519048442,
+              "rmse_log": 0.1488464867331766,
+              "a1": 0.8963477918922452,
+              "a2": 0.9859776999297548,
+              "a3": 0.9952328387670476
+            }
+          },
+          "2011_10_03_drive_0047_sync": {
+            "samples": 3,
+            "mean_metrics": {
+              "abs_rel": 0.13862514619350888,
+              "sq_rel": 1.390217591848191,
+              "rmse": 5.980666899047488,
+              "rmse_log": 0.1936210094772495,
+              "a1": 0.8640249315737671,
+              "a2": 0.9650520351619284,
+              "a3": 0.9847794418373698
+            }
+          }
+        }
+      }
+    }
+  },
+  "seed_variation": {
+    "carla": {
+      "abs_rel": {
+        "values": [
+          0.2897535306672742,
+          0.29056590774713414,
+          0.2906397940302352
+        ],
+        "mean": 0.29031974414821454,
+        "sample_std": 0.0004917449290094682
+      },
+      "rmse": {
+        "values": [
+          13.072712328824956,
+          13.03887431684056,
+          13.109763393885576
+        ],
+        "mean": 13.073783346517033,
+        "sample_std": 0.03545667243617302
+      },
+      "a1": {
+        "values": [
+          0.606314056233411,
+          0.6100719218021977,
+          0.6061086624281147
+        ],
+        "mean": 0.6074982134879078,
+        "sample_std": 0.0022312614188161315
+      }
+    },
+    "kitti": {
+      "abs_rel": {
+        "values": [
+          0.12160511020388537,
+          0.1259192631333557,
+          0.1218001893056065
+        ],
+        "mean": 0.12310818754761586,
+        "sample_std": 0.0024364161027088556
+      },
+      "rmse": {
+        "values": [
+          4.776496406714776,
+          5.0371404910666335,
+          4.823526212770702
+        ],
+        "mean": 4.879054370184037,
+        "sample_std": 0.13891136338037516
+      },
+      "a1": {
+        "values": [
+          0.8952026527402667,
+          0.8888067613514048,
+          0.8953707521389006
+        ],
+        "mean": 0.8931267220768574,
+        "sample_std": 0.003742139742720031
+      }
+    }
+  },
+  "paired_one_factor_target_order_and_augmentation_parameters_match": true,
+  "limits": "One epoch/392 updates per ablation or seed run; 152 correlated validation targets and 24 KITTI pilot images. Descriptive seed variation only; no independent-frame confidence intervals or convergence claim."
+}

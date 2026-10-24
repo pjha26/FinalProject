@@ -268,6 +268,8 @@ The remaining research work is now organized into a [nine-step implementation pl
 
 [Controlled broader-data training](docs/research_experiments.md) completed three epochs (1,176 updates). CARLA development AbsRel improved to 0.291137 from 0.317736, while KITTI pilot AbsRel regressed to 0.116876 from 0.093627. The fixed candidate remains experimental and the pretrained default is preserved.
 
+[One-factor loss ablations and seeds 42/43/44](docs/research_experiments.md) are now measured at a matched 392-update budget with per-route counts and descriptive variation. They do not select a superior deployment model.
+
 ## Scope and limitations
 
 This is a pretrained-model integration and evaluation project. It does not currently deliver calibrated metre-scale depth, object detection/tracking, collision warnings, vehicle control, SLAM, validated night/weather robustness or a full driving-depth benchmark. Physical webcam, complete map-separated CARLA training data and other-laptop acceptance remain incomplete. A website is not required to run the desktop demonstration.
