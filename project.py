@@ -408,7 +408,7 @@ def infer_image(args):
 
 def capture_settings(args):
     from src.carla_capture import CaptureSettings
-    return CaptureSettings(host=args.host, port=args.port, map=args.map, seed=args.seed, timeout=getattr(args, "timeout", 15.0))
+    return CaptureSettings(host=args.host, port=args.port, map=args.map, seed=args.seed, timeout=getattr(args, "timeout", 15.0), weather=getattr(args,"weather","ClearNoon"))
 
 
 def audit_scene(args):
@@ -819,6 +819,7 @@ def parser():
         child.add_argument("--port", type=int, default=2000)
     for child in (collect, playback, geometry):
         child.add_argument("--timeout", type=float, default=15.0, help="CARLA RPC/sensor wait timeout in seconds")
+        child.add_argument("--weather",choices=("ClearNoon","WetCloudyNoon"),default="ClearNoon")
     for child in (collect, playback):
         child.add_argument("--map", choices=("Town04", "Town05"), default="Town04")
         child.add_argument("--seed", type=int, default=42)

@@ -86,7 +86,7 @@ def prepare(train_scenes, validation_scenes, output):
                 if any(file_hash(source / p) != digest for p, digest in before.items()):
                     raise ValueError("Capture metadata/index changed during preparation")
                 manifest["captures"].append(dict(scene=name, split=split, map=meta["settings"]["map"],
-                                                source_sha256=before, retained_triplets=retained,
+                                                weather=meta["settings"].get("weather","ClearNoon"), source_sha256=before, retained_triplets=retained,
                                                 rejected_stationary_triplets=stationary,
                                                 audit=audit_path.name, audit_sha256=file_hash(audit_path)))
         write_json(staged / "triplets.json", manifest)

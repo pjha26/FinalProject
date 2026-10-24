@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "manifest_sha256": "fb9ed4ab6be2a2e6f5594851b35dfc34eca0525aacd7c6daded4d0cb53621b5b",
+  "counts": {
+    "train": 392,
+    "validation": 152
+  },
+  "captures": [
+    {
+      "scene": "train_town04_09",
+      "split": "train",
+      "map": "Town04",
+      "weather": "ClearNoon",
+      "source_sha256": {
+        "metadata.json": "779b7dafda6fcf993d09128ab3f16d9c26278fcd884c842ab54877b5b01b2bfb",
+        "frames.csv": "547fece7c855b294d7f61d607aa594fca5a791027be326acc9e91c7af21165c7"
+      },
+      "retained_triplets": 98,
+      "rejected_stationary_triplets": 0,
+      "audit": "train_town04_09_audit.json",
+      "audit_sha256": "b8a9a40ad3604acf57af5e41b9f15911bb99303bed2976fddce01f0b8025b0dd"
+    },
+    {
+      "scene": "train_town04_14",
+      "split": "train",
+      "map": "Town04",
+      "weather": "ClearNoon",
+      "source_sha256": {
+        "metadata.json": "c295de00ecd0e54c7414f92981a4c2280d57c5a6b0fcc9768df2fc0782fab515",
+        "frames.csv": "858e3d5075a8736d7b766bd1f6bff3b7b0abdf64fdf26a62b5f1dbca7d92bc5b"
+      },
+      "retained_triplets": 98,
+      "rejected_stationary_triplets": 0,
+      "audit": "train_town04_14_audit.json",
+      "audit_sha256": "c08d0d63851e495d660d25ced72149082472da63b1ab3eb7b8269bcf053dd4ba"
+    },
+    {
+      "scene": "train_town04_s42_wetcloudynoon_01",
+      "split": "train",
+      "map": "Town04",
+      "weather": "WetCloudyNoon",
+      "source_sha256": {
+        "metadata.json": "eafc29e380e15709cbefba99783af73ebf8f91750a842bdccb4e6c2ae3aa24f2",
+        "frames.csv": "36b2d38597adf6de32c61e33610f586fcd4282051cf4ca7feb2e81fde7f3dac8"
+      },
+      "retained_triplets": 98,
+      "rejected_stationary_triplets": 0,
+      "audit": "train_town04_s42_wetcloudynoon_01_audit.json",
+      "audit_sha256": "8e4805f9c11311d68e2b2c73fc504a44c4f5f47270caebbfd1ad8999d44f6543"
+    },
+    {
+      "scene": "train_town04_s44_wetcloudynoon_01",
+      "split": "train",
+      "map": "Town04",
+      "weather": "WetCloudyNoon",
+      "source_sha256": {
+        "metadata.json": "470b136bac3566aac7dfcfe4cfd2cf90ad26c5ee9ca9191e79274045a97809a2",
+        "frames.csv": "414cf72e3b6be8202ff78995edd0da7521833376cfb25e73b3f7fa112a855a31"
+      },
+      "retained_triplets": 98,
+      "rejected_stationary_triplets": 0,
+      "audit": "train_town04_s44_wetcloudynoon_01_audit.json",
+      "audit_sha256": "b5434ba00fa09db50d18c6624d9b2aa2122065809252dd8df464e1b21d48a328"
+    },
+    {
+      "scene": "validation_town05_13",
+      "split": "validation",
+      "map": "Town05",
+      "weather": "ClearNoon",
+      "source_sha256": {
+        "metadata.json": "ffacb607d049619e7de8f69c41f27a903193660458e80c0f74baf24e551bc2db",
+        "frames.csv": "c96bee28f43621453bd1f717e48f52a1f4a8b7a53f70b7be85416d62cf7296f5"
+      },
+      "retained_triplets": 25,
+      "rejected_stationary_triplets": 73,
+      "audit": "validation_town05_13_audit.json",
+      "audit_sha256": "978e21f53992848644648d717dc249893606a483e232d06d9b7e0c866d9c4750"
+    },
+    {
+      "scene": "validation_town05_s46_clearnoon_01",
+      "split": "validation",
+      "map": "Town05",
+      "weather": "ClearNoon",
+      "source_sha256": {
+        "metadata.json": "7a2e6b36dbc70fda200083df089342e9a9fc4cc22231d06f502be426f59d5d64",
+        "frames.csv": "63d9243d14398b7ffcd9e055e923cb7a3db350ff43d258b1320a530e310aee3f"
+      },
+      "retained_triplets": 51,
+      "rejected_stationary_triplets": 47,
+      "audit": "validation_town05_s46_clearnoon_01_audit.json",
+      "audit_sha256": "09f0d5c65155c8406cb6e9a2291fd1acda56bd356924f19ee1852095d0fac055"
+    },
+    {
+      "scene": "validation_town05_s43_wetcloudynoon_01",
+      "split": "validation",
+      "map": "Town05",
+      "weather": "WetCloudyNoon",
+      "source_sha256": {
+        "metadata.json": "8dca68e6541181cc6520ec0858efed0b10c3042f8f37f4def926e46d7268d9e1",
+        "frames.csv": "4848c801e4bf17f24a1fa65a1d16d4560576562f1be47aa0d0488cfabac1a53c"
+      },
+      "retained_triplets": 25,
+      "rejected_stationary_triplets": 73,
+      "audit": "validation_town05_s43_wetcloudynoon_01_audit.json",
+      "audit_sha256": "7bb3b4358d4578b00b13fad1c169d63449165791bfa82fd8c3322282b5db24dc"
+    },
+    {
+      "scene": "validation_town05_s46_wetcloudynoon_01",
+      "split": "validation",
+      "map": "Town05",
+      "weather": "WetCloudyNoon",
+      "source_sha256": {
+        "metadata.json": "ccebbfb1670aa60e18d639c28f30c4c891ae0e6c4486aa884e664cbfd7b52316",
+        "frames.csv": "ada5c11aa9981560bb5bed6ed020979e4bc1120433996d7ab48763cdd03e37ef"
+      },
+      "retained_triplets": 51,
+      "rejected_stationary_triplets": 47,
+      "audit": "validation_town05_s46_wetcloudynoon_01_audit.json",
+      "audit_sha256": "29abe671fa91a12bc1dd2df1874cdff38aa409655abd4e53224a02913601fb49"
+    }
+  ],
+  "capture_batch": [
+    {
+      "role": "validation",
+      "town": "Town05",
+      "seed": 46,
+      "weather": "ClearNoon",
+      "returncode": 0
+    },
+    {
+      "role": "train",
+      "town": "Town04",
+      "seed": 42,
+      "weather": "WetCloudyNoon",
+      "returncode": 0
+    },
+    {
+      "role": "train",
+      "town": "Town04",
+      "seed": 44,
+      "weather": "WetCloudyNoon",
+      "returncode": 0
+    },
+    {
+      "role": "validation",
+      "town": "Town05",
+      "seed": 43,
+      "weather": "WetCloudyNoon",
+      "returncode": 0
+    },
+    {
+      "role": "validation",
+      "town": "Town05",
+      "seed": 46,
+      "weather": "WetCloudyNoon",
+      "returncode": 0
+    }
+  ],
+  "reserved_test": "test_town05_16 excluded and unscored; nearest new sampled validation route 246.01 m",
+  "limits": "800 total source frames across 8 captures, 100 each; two route seeds per condition/map; Low rendering/daylight only, not independent-map or broad robustness evidence"
+}

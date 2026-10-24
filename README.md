@@ -262,7 +262,7 @@ A [subsequent CARLA data expansion](docs/carla_data_expansion.md) adds a second 
 
 Predeclared [learning-rate/data/duration controls](docs/lr_data_training_controls.md) now record 3 completed follow-up experiment(s), with matched validation masks and preserved baseline weights. The accepted default remains pretrained; reserved test data remains unscored.
 
-The remaining research work is now organized into a [nine-step implementation plan](docs/remaining_implementation_plan.md), with dependencies and measured completion gates. Step 1 is now implemented: [shared input-only temporal colour augmentation](docs/temporal_augmentation.md), with 119 passing tests and paired 196-update controls. The measured differences are tiny and do not resolve the KITTI regression, so the pretrained default is retained. Step 2 is broader CARLA conditions/routes; reserved testing stays unscored.
+The remaining research work is now organized into a [nine-step implementation plan](docs/remaining_implementation_plan.md), with dependencies and measured completion gates. Step 1 is now implemented: [shared input-only temporal colour augmentation](docs/temporal_augmentation.md), with 119 passing tests and paired 196-update controls. The measured differences are tiny and do not resolve the KITTI regression, so the pretrained default is retained. [Step 2 now adds explicit ClearNoon/WetCloudyNoon capture](docs/carla_conditions.md), eight audited source captures and 392 training / 152 validation triplets. Reserved testing stays unscored.
 
 ## Scope and limitations
 

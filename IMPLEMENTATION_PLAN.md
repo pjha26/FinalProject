@@ -192,3 +192,8 @@ The [remaining implementation plan](docs/remaining_implementation_plan.md) now d
 ## Remaining-plan Step 1 complete - 25 October 2026
 
 Implemented opt-in input-only synchronized temporal colour jitter with independent seeded sampling and original RGB/camera loss targets. Three new tests bring the suite to 119 passing tests; fresh baseline assets/image/video checks pass. Same-source unaugmented/augmented 196-update runs used identical target order and unchanged frozen encoder/validation rows. Colour augmentation applied to 100/196 triplets. CARLA AbsRel control/augmented: 0.147681 / 0.147788; KITTI: 0.108975 / 0.108827. Tiny single-seed differences do not establish benefit; retain pretrained default. All 98 predictions reproduce metrics. [Details](docs/temporal_augmentation.md), [metadata](docs/temporal_augmentation_results.json) and the updated [remaining plan](docs/remaining_implementation_plan.md) record completion and limits. Next: broader conditions/routes, then epoch/resume support and controlled longer training. Reserved testing remains unscored.
+
+
+## Remaining Step 2 complete - 25 October 2026
+
+Validated capture weather selection and recorded two conditions/two routes per map: eight audited 100-frame source scenes, 392 training and 152 validation triplets. Reserved route remains excluded/unscored. [Condition record](docs/carla_conditions.md) and [hash/count metadata](docs/carla_conditions_results.json) describe acceptance and limits.

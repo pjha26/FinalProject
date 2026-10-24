@@ -45,3 +45,14 @@ class CarlaCacheTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class WeatherTests(unittest.TestCase):
+    def test_presets_are_explicit_and_invalid_weather_is_rejected(self):
+        from project import parser,capture_settings
+        for command in ["collect","demo","calibrate-depth"]:
+            extra=["--output","unused"] if command!="demo" else []
+            args=parser().parse_args([command]+extra+["--weather","WetCloudyNoon"])
+            self.assertEqual(capture_settings(args).weather,"WetCloudyNoon")
+        self.assertEqual(CaptureSettings().weather,"ClearNoon")
+        with self.assertRaises(ValueError):CaptureSettings(weather="unknown")

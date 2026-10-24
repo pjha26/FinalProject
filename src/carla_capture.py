@@ -38,12 +38,15 @@ class CaptureSettings:
     timeout: float = 15.0
     traffic_manager_port: int = 8001
     warmup_frames: int = 10
+    weather: str = "ClearNoon"
 
     def __post_init__(self):
         if self.map not in ("Town04", "Town05"):
             raise ValueError("Phase 1 supports Town04 and Town05")
         if (self.width, self.height) != (640, 480) or not np.isfinite(self.timeout) or self.timeout <= 0 or self.warmup_frames < 0:
             raise ValueError("Expected 640x480 camera, positive timeout, and nonnegative warmup")
+        if self.weather not in ("ClearNoon", "WetCloudyNoon"):
+            raise ValueError("Supported capture weather: ClearNoon, WetCloudyNoon")
         camera_intrinsics(self.width, self.height, self.fov)
 
 
@@ -258,7 +261,7 @@ class CarlaCapture:
             settings.max_substep_delta_time = 0.01
             settings.max_substeps = 10
             self.world.apply_settings(settings)
-            self.world.set_weather(carla.WeatherParameters.ClearNoon)
+            self.world.set_weather(getattr(carla.WeatherParameters,cfg.weather))
             self.traffic_manager = self.client.get_trafficmanager(cfg.traffic_manager_port)
             self.traffic_manager.set_synchronous_mode(True)
             self.traffic_manager.set_random_device_seed(cfg.seed)
