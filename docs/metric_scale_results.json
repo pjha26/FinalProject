@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "scale": 16.162327824804848,
+  "status": "rejected_development",
+  "gate": {
+    "mean_abs_rel": 0.27433547750115395,
+    "p95_frame_abs_rel": 0.3584492430090904,
+    "thresholds": {
+      "mean_abs_rel": 0.25,
+      "p95_frame_abs_rel": 0.5
+    },
+    "passed": false
+  },
+  "checkpoint_sha256": {
+    "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+    "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+  },
+  "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1",
+  "protocol_sha256": "3f4c29a26cda24a3e572f185b3233f357553fc4435de1321d33875915c63ead7",
+  "camera": {
+    "width": 640,
+    "height": 480,
+    "fov": 90,
+    "mount_x": 1.5,
+    "mount_z": 1.7
+  },
+  "fit_frames": 40,
+  "validation_frames": 80,
+  "ground_truth_used": "fit and evaluation only; not runtime scaling",
+  "limits": "Already-seen development scenes; fixed-scale experiment only. Not metric deployment certification or unseen-route final acceptance."
+}
