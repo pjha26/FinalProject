@@ -16,3 +16,6 @@ The new presentation launcher separately completed 780 frames over 65.0081 secon
 The accepted model remains official pretrained Monodepth2. The three-epoch candidate worsened full KITTI AbsRel from 0.1146166 to 0.1351531. Baseline AbsRel and delta1 meet proposal targets; RMSE 4.8634, SqRel 0.9048 and log-RMSE 0.1928 miss their targets. Scores use GT median alignment only during evaluation.
 
 The original proposal remains unchanged. The new research report supplements it with actual results and failed targets. Physical webcam, another laptop, physically disconnected-network rehearsal, calibrated metre-scale prediction, convergence and broad robustness are not established. Presentation files and selected large outputs remain in the local outputs bundle and require separate backup. Raw datasets, full weights and simulator/runtime are not committed to Git.
+
+
+Subsequent experimental extension: the latest integrated rerun passes 149 tests and eight checks. A separate simulator-reference controller passed clear-road and two obstacle trials; model calibration failed and learned actuation is disabled. See [extension results](metric_control_results.md). The original depth-demo scope and failed accuracy targets remain unchanged.

@@ -2,7 +2,7 @@
   "updated": "2026-10-26",
   "accepted_model": "Official pretrained Monodepth2 mono_640x192; experimental CARLA candidate not promoted",
   "software_steps_2_to_9": "implemented and evidenced within the bounded protocols",
-  "tests_passed": 137,
+  "tests_passed": 149,
   "delivery_checks_passed": 8,
   "native_launcher": {
     "frames": 780,
@@ -18,5 +18,13 @@
     "Calibrated metric inference"
   ],
   "delivery_source_hashes_verified": true,
-  "local_reference_bundle": "../outputs/research_completion_2026-10-25_01/"
+  "local_reference_bundle": "../outputs/research_completion_2026-10-25_01/",
+  "metric_control_extension": {
+    "reference_trials_passed": 3,
+    "metric_calibration_accepted": false,
+    "learned_actuation_enabled": false,
+    "shadow_missed_brake_triggers": 2,
+    "delivery_run": "runs/metric_control_delivery_01",
+    "results": "docs/metric_control_results.md"
+  }
 }

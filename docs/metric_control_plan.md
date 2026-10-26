@@ -13,3 +13,7 @@ This is a bounded development plan, not a promise of validated full autonomous d
 
 Primary API references: https://carla.readthedocs.io/en/0.9.13/python_api/ and https://carla.readthedocs.io/en/0.9.13/ref_sensors/.
 
+
+## Execution record
+
+Steps 1-3 implemented and tested. Step 4 completed three displayed simulator-reference trials with simultaneous learned shadow predictions. Step 5 accepted the bounded reference trials and rejected metric calibration/learned actuation; both shadow brake triggers were missed. Step 6 saves a dated evidence gallery, videos, traces, source/configuration hashes and updated documentation. The 149-test/eight-check baseline delivery rerun passes. Full learned closed-loop driving remains blocked by measured prediction errors, rather than being enabled by bypassing the gates.

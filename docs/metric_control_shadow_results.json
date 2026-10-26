@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "name": "clear_s42",
+      "reference_obstacle_brake_triggers": 0,
+      "model_would_miss_same_trigger": 0,
+      "model_brake_frames_on_clear_route": 0
+    },
+    {
+      "name": "obstacle_s42",
+      "reference_obstacle_brake_triggers": 1,
+      "model_would_miss_same_trigger": 1,
+      "model_brake_frames_on_clear_route": null
+    },
+    {
+      "name": "obstacle_s44_wet",
+      "reference_obstacle_brake_triggers": 1,
+      "model_would_miss_same_trigger": 1,
+      "model_brake_frames_on_clear_route": null
+    }
+  ],
+  "scope": "Offline counterfactual commands on recorded reference-controller trajectories; not a learned closed-loop trial or a collision prediction",
+  "learned_actuation": "blocked by rejected calibration"
+}

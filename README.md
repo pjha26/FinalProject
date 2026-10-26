@@ -2,9 +2,15 @@
 
 A final-year computer vision project that estimates **relative scene depth from a single RGB image or successive video frames**. The application integrates pretrained neural networks, a desktop visualization, optional point-cloud export, runtime profiling and reproducible evaluation.
 
-**Presentation, 26 October 2026:** start with the [live-demo runbook](docs/presentation_runbook.md). Run `./tools/present.ps1 -Mode carla` for live simulator inference or `-Mode video` for the recorded-input fallback. The accepted baseline remains pretrained. Native CARLA measured 12.0440 FPS over 65.0114 seconds; full KITTI Eigen evaluation covers 697 frames. Accuracy targets are only partly met. The latest delivery passed 137 tests and all eight checks; the new launcher rehearsal reached 12.00 FPS over 65 seconds. See [final research status](docs/final_research_status.md).
+**Presentation, 26 October 2026:** start with the [live-demo runbook](docs/presentation_runbook.md). Run `./tools/present.ps1 -Mode carla` for live simulator inference or `-Mode video` for the recorded-input fallback. The accepted baseline remains pretrained. Native CARLA measured 12.0440 FPS over 65.0114 seconds; full KITTI Eigen evaluation covers 697 frames. Accuracy targets are only partly met. The latest delivery passed 149 tests and all eight checks; the new launcher rehearsal reached 12.00 FPS over 65 seconds. See [final research status](docs/final_research_status.md).
 
 **Earlier prototype delivery:** image and recorded driving-video inference have been demonstrated locally. On 24 October 2026, both backends passed all eight delivery checks and 60-second displayed rehearsals on the RTX 4050 laptop; see [new-laptop validation](docs/new_laptop_validation.md) for measurements and limits. Physical webcam validation and rehearsals on any other presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
+
+## Experimental distance and vehicle-control extension
+
+A separate CARLA-only extension now fits and validates a frozen distance scale, logs learned estimates in shadow, and demonstrates low-speed map-waypoint following and obstacle stopping using **simulator-reference depth**. All three bounded reference trials passed; the scale-calibrated model failed its accuracy gate and missed the corresponding brake triggers in offline shadow review. **Learned vehicle actuation is disabled.** This does not establish calibrated deployment distances or camera-only autonomous driving.
+
+See the [implementation plan](docs/metric_control_plan.md), [scale result](docs/metric_scale_results.md), [controller results and commands](docs/metric_control_results.md), and [shadow review](docs/metric_control_shadow_results.json). The original presentation launcher remains the accepted RGB-only relative-depth demo. Selected clips and traces are saved locally under ../outputs/metric_control_extension_2026-10-26/.
 
 ## Features
 

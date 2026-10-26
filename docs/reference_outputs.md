@@ -25,3 +25,6 @@ The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`
 
 
 The completed steps 2-9 bundle is ../outputs/research_completion_2026-10-25_01/. Open index.html for saved previews, the report supplement, editable presentation and per-step evidence. manifest.json hashes selected files. Step 9 includes the 137-test delivery log, source-hash-verified integrated summary and fresh live launcher rehearsal. This supersedes historical statements above that training/full Eigen/reserved testing were pending. Large raw assets and full checkpoints still require separate backup.
+
+
+../outputs/metric_control_extension_2026-10-26/ contains the separate rejected-scale calibration and passing simulator-reference control trials. Open index.html for actual rendered experiment videos and shadow estimates; the videos use simulation time. A SHA256 manifest covers selected files. Learned vehicle actuation is disabled, and these clips must not be presented as learned camera-only autonomous driving.

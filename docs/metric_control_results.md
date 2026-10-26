@@ -13,7 +13,7 @@
 
 | Native displayed trial | Outcome | Frames | Progress | Minimum vehicle gap | Maximum sensor age |
 |---|---|---:|---:|---:|---:|
-| ClearNoon, clear road, seed 42 | Reached goal and stopped | 212 | 30.3704 m | N/A | See full JSON |
+| ClearNoon, clear road, seed 42 | Reached goal and stopped | 212 | 30.3704 m | N/A | 0.2890 s |
 | ClearNoon, obstacle, seed 42 | Stopped without collision | 99 | 12.8849 m | 6.1949 m | 0.2839 s |
 | WetCloudyNoon, obstacle, seed 44 | Stopped without collision | 97 | 13.1929 m | 6.0153 m | 0.3016 s |
 
@@ -46,3 +46,9 @@ Suggested explanation: "We added a low-speed CARLA route-following and obstacle-
 
 Original demo: .\tools\present.ps1 -Mode carla remains the accepted RGB-only relative-depth demonstration. Optional reference-control trials are supplemental. Full learned autonomous driving and validated deployment metre distances remain unfinished research, not achieved features.
 
+
+## Integrated baseline recheck and shadow review
+
+After these additions, runs/metric_control_delivery_01 passed all eight checks and 149 tests, including a displayed 650-frame recorded-input rehearsal lasting 66.9169 seconds at 9.7135 FPS under the original 10-FPS video cap. This is separate from the prior native CARLA throughput measurement. The validator source bytes remained unchanged throughout.
+
+Offline counterfactual command review found no model false-stop commands on the recorded clear route, but the model would have missed the initial reference braking trigger in both obstacle trials. These are counterfactual commands on the reference trajectory, not a learned closed-loop run or proof that a collision would occur. Learned actuation remains blocked. Full details are in metric_control_shadow_results.json.
