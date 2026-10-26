@@ -64,3 +64,35 @@ class MetricControlTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+class ControlArtifactTests(unittest.TestCase):
+    def artifact(self):
+        return dict(schema_version=1, preprocessing_id="rgb_bilinear_192x640_monodepth2_internal_v1", checkpoint_sha256={"encoder.pth": "abc", "depth.pth": "def"}, scale=2.0, status="rejected_development", gate={"passed": False}, camera=dict(width=640, height=480, fov=90, mount_x=1.5, mount_z=1.7))
+
+    def load(self, data, actuate=False):
+        import json
+        from unittest.mock import patch
+        from tools.carla_control_demo import load_calibration
+        with patch("tools.carla_control_demo.checkpoint_hashes", return_value={"encoder.pth": "abc", "depth.pth": "def"}), patch("pathlib.Path.read_text", return_value=json.dumps(data)):
+            return load_calibration("calibration.json", "checkpoint", actuate)
+
+    def test_rejected_calibration_is_shadow_only(self):
+        self.assertEqual(self.load(self.artifact())["scale"], 2.0)
+        with self.assertRaisesRegex(ValueError, "actuation is disabled"):
+            self.load(self.artifact(), actuate=True)
+
+    def test_even_development_pass_does_not_unlock_driving(self):
+        artifact = self.artifact()
+        artifact["status"] = "accepted_development"
+        artifact["gate"]["passed"] = True
+        with self.assertRaisesRegex(ValueError, "actuation is disabled"):
+            self.load(artifact, actuate=True)
+
+    def test_camera_model_and_scale_mismatch(self):
+        for field, value in [("camera", {}), ("checkpoint_sha256", {}), ("preprocessing_id", "wrong"), ("scale", float("nan"))]:
+            artifact = self.artifact()
+            artifact[field] = value
+            with self.assertRaises(ValueError):
+                self.load(artifact)
+
