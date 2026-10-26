@@ -45,6 +45,62 @@
         "metadata.json": "7f022650c3602b3d22deb3a32104ed09b89065943d8b17d1d3a8d005fb61b5be",
         "frames.csv": "99933da1db461f5c8d1d44f7e283422817899d9ad41be134d1f17c1d31ac3851"
       }
+    },
+    {
+      "scene": "metric_holdout_town05_s47_clearnoon_01",
+      "role": "metric_scale_test_consumed",
+      "map": "Town05",
+      "seed": 47,
+      "weather": "ClearNoon",
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "ccc5c8bf4237c70867cf2badae9594f432c6c01d7cf62e08d9268bb9f906f321",
+        "frames.csv": "fe8dbc58921fd78433c53e699b0ff9fcf9a670f3aa48637b3b29f1576d08aa10"
+      },
+      "scoring_protocol_sha256": "e9f05ed6ead061bf91b183ecf2d37016a146453f448b4709913ffb131eb61a92",
+      "not_eligible_for_untouched_tuning": true
+    },
+    {
+      "scene": "metric_holdout_town05_s48_wetcloudynoon_01",
+      "role": "metric_scale_test_consumed",
+      "map": "Town05",
+      "seed": 48,
+      "weather": "WetCloudyNoon",
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "fd31314002e2e7802f57c99b17c9bba3da381d12655773404a26d69962bfc921",
+        "frames.csv": "db049703315871bd8ebe56a27936f763a774cbec11807d0826dfed36571f4e7c"
+      },
+      "scoring_protocol_sha256": "e9f05ed6ead061bf91b183ecf2d37016a146453f448b4709913ffb131eb61a92",
+      "not_eligible_for_untouched_tuning": true
+    },
+    {
+      "scene": "metric_network_holdout_town05_s49_clearnoon_01",
+      "role": "metric_network_test_consumed",
+      "map": "Town05",
+      "seed": 49,
+      "weather": "ClearNoon",
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "bf2f770613f2588b08126f2bb6eb53b1f0682981f69c2201229fda93e2289e38",
+        "frames.csv": "6d40d3fcb594d8acfb6f23fa9cd47890886a1c522c02dac5b0ac717c3592f5ed"
+      },
+      "scoring_protocol_sha256": "b6437a5fe8b40f05313c036284749bada6744f01fc85727598fdb4582caeaddf",
+      "not_eligible_for_untouched_tuning": true
+    },
+    {
+      "scene": "metric_network_holdout_town05_s50_wetcloudynoon_01",
+      "role": "metric_network_test_consumed",
+      "map": "Town05",
+      "seed": 50,
+      "weather": "WetCloudyNoon",
+      "frames": 100,
+      "source_sha256": {
+        "metadata.json": "3409f97f088e9fc04f9e6d63f286d36ea3a0eb675a4c1800947cc17cc00fc7e4",
+        "frames.csv": "43e96c6d0657726b6a35a9bef4c6815ba3587568d3009ce0d3075e719aadee55"
+      },
+      "scoring_protocol_sha256": "b6437a5fe8b40f05313c036284749bada6744f01fc85727598fdb4582caeaddf",
+      "not_eligible_for_untouched_tuning": true
     }
   ],
   "expanded_manifest_sha256": "56ced15f36639bbfb1cf41fe6f8f03fbcdf6211f2c4bbc5e70c5b6907c361bcf",
@@ -89,5 +145,6 @@
       "a3": 0.9266061797967378
     },
     "not_eligible_for_future_untouched_tuning": true
-  }
+  },
+  "metric_supervised_fit_note": "40 original Town04 road images plus8 images from runs/metric_obstacle_diagnostic_01 are training inputs for the new supervised candidates; that original diagnostic is not a held-out test of those candidates."
 }

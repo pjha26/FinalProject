@@ -1,0 +1,57 @@
+{
+  "updated": "2026-10-27",
+  "unit_tests": 170,
+  "delivery_checks": 8,
+  "holdout_frames": 200,
+  "metric_holdout": {
+    "baseline": {
+      "mean_abs_rel": 0.20083652317523956,
+      "p95_frame_abs_rel": 0.2696891143918037,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "candidate": {
+      "mean_abs_rel": 0.1747069300338626,
+      "p95_frame_abs_rel": 0.2521364733576774,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "relative_improvement": 0.13010379152290763,
+    "scenes": {
+      "metric_network_holdout_town05_s49_clearnoon_01": {
+        "before": 0.18638771116733552,
+        "after": 0.16312653675675393,
+        "ratio": 0.8752000640766594
+      },
+      "metric_network_holdout_town05_s50_wetcloudynoon_01": {
+        "before": 0.2152853351831436,
+        "after": 0.18628732331097125,
+        "ratio": 0.8653042862975144
+      }
+    },
+    "passed": true
+  },
+  "final_kitti_eigen": {
+    "abs_rel": 0.11818808521896086,
+    "sq_rel": 0.9409511298797324,
+    "rmse": 4.884564242611288,
+    "rmse_log": 0.19474959111352186,
+    "a1": 0.8745811326611813,
+    "a2": 0.9587783262891771,
+    "a3": 0.9806565126058756
+  },
+  "default_model": "Original official pretrained Monodepth2",
+  "research_checkpoint": "runs/metric_decoder_replay_256_01/checkpoint",
+  "learned_actuation": false,
+  "stationary_unseen_object_validation": "Native failure before scoring in four attempts",
+  "reference_integration_passes": 2,
+  "reference_integration_total": 3,
+  "limits": "Shared simulator map; supervised exploratory 256-update model; improved CARLA metric error with worse KITTI. No general calibrated-object-distance or learned-control acceptance.",
+  "no_presentation_artifact_changes": true
+}

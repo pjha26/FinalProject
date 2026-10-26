@@ -35,3 +35,7 @@ Trial1 improves CARLA but fails KITTI24 regression. Predeclare one further128-up
 
 Before execution, extend the same replay recipe once to 256 updates. Keep Adam2e-6, teacher weight1.0, all fit data, seed42 and all acceptance thresholds unchanged. Freeze update256; do not select an intermediate checkpoint. This is a controlled duration extension of the rejected128-update replay candidate. If it fails development acceptance, retain the accepted original model and report the remaining work; no additional sweep is planned in this iteration.
 
+
+## Final execution status
+
+The weighted scale and final 256-update replay network pass their separately frozen fresh moving-scene tests. The network is not the general default because KITTI is slightly worse. Four unseen-object native attempts fail before scoring; one wet reference integration freshness gate fails. Learned actuation remains disabled. All 170 unit tests and eight original-demo delivery checks pass. The consumed fresh test routes are registered; no further fitting or reselection uses their scores. No PDF or presentation artifacts are committed.

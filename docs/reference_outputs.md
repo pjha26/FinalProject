@@ -28,3 +28,6 @@ The completed steps 2-9 bundle is ../outputs/research_completion_2026-10-25_01/.
 
 
 ../outputs/metric_control_extension_2026-10-26/ contains the separate rejected-scale calibration and passing simulator-reference control trials. Open index.html for actual rendered experiment videos and shadow estimates; the videos use simulation time. A SHA256 manifest covers selected files. Learned vehicle actuation is disabled, and these clips must not be presented as learned camera-only autonomous driving.
+
+
+../outputs/accuracy_validation_2026-10-27/ contains the new metric-validation reports, per-frame scores, selected RGB/reference/prediction arrays, rejected-trial summaries, full-Eigen results and research checkpoint backup. It contains no presentation/PDF artifacts. The candidate is optional and not qualified for learned actuation.

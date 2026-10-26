@@ -19,3 +19,6 @@ The original proposal remains unchanged. The new research report supplements it 
 
 
 Subsequent experimental extension: the latest integrated rerun passes 149 tests and eight checks. A separate simulator-reference controller passed clear-road and two obstacle trials; model calibration failed and learned actuation is disabled. See [extension results](metric_control_results.md). The original depth-demo scope and failed accuracy targets remain unchanged.
+
+
+27 October accuracy update: a separately supervised replay-trained candidate passes new 200-frame CARLA pixel validation with a 13.01% relative error reduction, while performing slightly worse on full KITTI. It remains an optional research checkpoint; original pretrained inference stays default and learned actuation is disabled. The final baseline delivery passes 170 tests/eight checks. Unseen-object validation is incomplete and one reference integration freshness gate failed. See [validation report](metric_model_validation.md). No PDF or presentation file is changed.
