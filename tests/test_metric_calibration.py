@@ -56,8 +56,6 @@ class MetricCalibrationTests(unittest.TestCase):
             paired_promotion(a+a,a+a)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 
@@ -117,3 +115,5 @@ class HoldoutGuardTests(unittest.TestCase):
                     run(freeze,p/"new_output")
                 load.assert_not_called()
 
+if __name__ == "__main__":
+    unittest.main()
