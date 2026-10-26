@@ -1,0 +1,53 @@
+{
+  "status": "accepted_development",
+  "scale": 14.996536494241578,
+  "selection": {
+    "baseline": {
+      "mean_abs_rel": 0.27433547750115395,
+      "p95_frame_abs_rel": 0.3584492430090904,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": false
+    },
+    "candidate": {
+      "mean_abs_rel": 0.2486676260828972,
+      "p95_frame_abs_rel": 0.33119348585605624,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "relative_improvement": 0.09356373317829003,
+    "scenes": {
+      "validation_town05_13": {
+        "before": 0.2209016777575016,
+        "after": 0.18793498650193213,
+        "ratio": 0.8507630562599927
+      },
+      "validation_town05_s43_wetcloudynoon_01": {
+        "before": 0.22469229772686958,
+        "after": 0.19842977225780487,
+        "ratio": 0.8831178205272137
+      },
+      "validation_town05_s46_clearnoon_01": {
+        "before": 0.3443694531917572,
+        "after": 0.3183454886078835,
+        "ratio": 0.9244301016171064
+      },
+      "validation_town05_s46_wetcloudynoon_01": {
+        "before": 0.3073784813284874,
+        "after": 0.28996025696396827,
+        "ratio": 0.9433329740935745
+      }
+    },
+    "passed": true
+  },
+  "fit_frames": 40,
+  "development_frames": 80,
+  "cache_integrity_verified": true,
+  "learned_actuation": false,
+  "limits": "Seen development data; postprocessing only; no new holdout scoring or network-weight change."
+}

@@ -65,3 +65,25 @@ def paired_promotion(baseline, candidate):
     return dict(baseline=before, candidate=after, relative_improvement=float(gain), scenes=scenes, passed=bool(after["passed"] and gain >= .05 and all(s["ratio"] <= 1.10 for s in scenes.values())))
 
 
+
+
+def fit_absrel_scale(predictions, references):
+    """Exact L1-relative-error scale: frame-balanced weighted median of GT/prediction."""
+    if not predictions or len(predictions) != len(references):
+        raise ValueError("Paired fit frames required")
+    ratios, weights = [], []
+    for pred, gt in zip(predictions, references):
+        pred, gt = positive_map(pred), positive_map(gt)
+        if pred.shape != gt.shape:
+            raise ValueError("Fit geometry mismatch")
+        with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
+            ratios.append((gt / pred).ravel())
+            weights.append((pred / gt).ravel() / pred.size)
+    ratios, weights = np.concatenate(ratios), np.concatenate(weights)
+    if not np.isfinite(ratios).all() or not np.isfinite(weights).all() or (weights <= 0).any() or not np.isfinite(weights.sum()):
+        raise ValueError("Unstable calibration ratios or weights")
+    order = np.argsort(ratios, kind="mergesort")
+    cumulative = np.cumsum(weights[order])
+    selected = min(int(np.searchsorted(cumulative, cumulative[-1] / 2, side="left")), len(order) - 1)
+    return float(ratios[order[selected]])
+

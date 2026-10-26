@@ -13,3 +13,8 @@ The current frozen multiplier gives 0.274335 mean Town05 development AbsRel and 
 
 The next network-training decision depends on error diagnostics. Avoid launching a large unbounded training run while the current metric failure is still unexplained.
 
+
+## Follow-up: fit the reported error objective directly
+
+The two-parameter mapping failed development gates. Before another evaluation, predeclare a simpler alternative: one scale minimizing mean per-frame pixel AbsRel on the same fit frames. For relative prediction d and reference g, |s*d-g|/g = (d/g)*|s-g/d|. Therefore fit the weighted median of g/d with weights (d/g)/pixels_in_frame. Use all fit pixels, deterministic stable sorting, no development labels in fitting, and keep all promotion thresholds unchanged. Reuse only hash-verified cached RGB predictions. The original power candidate remains rejected. Evaluate this one additional candidate on development; only a passing candidate may consume the reserved holdout.
+
