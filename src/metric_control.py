@@ -38,7 +38,7 @@ def calibration_gate(rows):
     return dict(mean_abs_rel=mean, p95_frame_abs_rel=p95, thresholds=dict(mean_abs_rel=0.25, p95_frame_abs_rel=0.50), passed=mean <= 0.25 and p95 <= 0.50)
 
 
-def corridor_clearance(depth, intrinsics, camera_height=1.7):
+def _corridor_geometry(depth, intrinsics, camera_height=1.7):
     """Optical-axis Z; flat road, level camera and 2.6 m wide corridor only."""
     depth = positive_map(depth)
     k = np.asarray(intrinsics, dtype=float)
@@ -49,10 +49,26 @@ def corridor_clearance(depth, intrinsics, camera_height=1.7):
     height = camera_height - (v - k[1, 2]) * depth / k[1, 1]
     valid = (np.abs(lateral) < 1.3) & (height > 0.4) & (height < 3.0) & (depth > 0.05) & (depth < 50)
     # shortcut: this narrow corridor assumes a level straight road; validate curved/sloped routes before expanding.
+    return depth, valid
+
+
+def corridor_clearance(depth, intrinsics, camera_height=1.7):
+    """Optical-axis reference/estimated clearance in the bounded corridor."""
+    depth, valid = _corridor_geometry(depth, intrinsics, camera_height)
     values = depth[valid]
     if values.size < 25:
         return float(values.min()) if values.size else 50.0
     return float(np.percentile(values, 10))
+
+
+def clearance_sample_mask(depth, intrinsics, camera_height=1.7):
+    """Pixels contributing to the near-decile statistic; not learned object detection."""
+    depth, valid = _corridor_geometry(depth, intrinsics, camera_height)
+    values = depth[valid]
+    if not values.size:
+        return valid
+    threshold = float(np.percentile(values, 10)) if values.size >= 25 else float(values.min())
+    return valid & (depth <= threshold)
 
 
 def steering_to_waypoint(position, yaw_degrees, target):

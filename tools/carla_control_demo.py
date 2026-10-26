@@ -20,7 +20,7 @@ from src.demo_data import checkpoint_hashes
 from src.metric_control import corridor_clearance, scaled_depth, steering_to_waypoint, bounded_control
 from src.model import load_model, predict, sha256
 from src.preprocess import preprocess_rgb, camera_intrinsics, PREPROCESSING_ID
-from src.visualize import render_frame
+from src.control_visualize import render_control_frame
 
 
 def load_calibration(path, checkpoint, actuate=False):
@@ -79,7 +79,7 @@ def run(output, calibration_path, mode="reference", obstacle=True, seed=42, weat
         if display:
             import pygame
             pygame.init()
-            window = pygame.display.set_mode((1280, 430))
+            window = pygame.display.set_mode((1280, 540))
             pygame.display.set_caption("Experimental CARLA control - simulator reference / learned shadow")
         with CarlaCapture(CaptureSettings(map="Town04", seed=seed, timeout=60, weather=weather)) as capture:
             vehicle, world = capture.vehicle, capture.world
@@ -178,8 +178,8 @@ def run(output, calibration_path, mode="reference", obstacle=True, seed=42, weat
                     writer.writerow(row)
                     stream.flush()
                     rows.append(row)
-                    caption = "SIMULATOR REFERENCE CONTROL | model estimate UNVALIDATED {:.1f}m | reference {:.1f}m | speed {:.1f}m/s | {}".format(predicted_distance, reference_distance, speed, reason)
-                    preview = render_frame(record["rgb"], inverse, caption)
+                    display_state = "Route complete" if reason == "route_goal" else command["reason"].replace("_", " ").title()
+                    preview = render_control_frame(record["rgb"], inverse, record["depth"], k, reference_distance, predicted_distance, speed, command["brake"], display_state, gap)
                     video_frame = cv2.resize(preview, (1280, round(preview.shape[0] * 1280 / preview.shape[1])))
                     if writer_video is None:
                         writer_video = cv2.VideoWriter(str(output / "simulated_time_demo.mp4"), cv2.VideoWriter_fourcc(*"mp4v"), 10, (video_frame.shape[1], video_frame.shape[0]))

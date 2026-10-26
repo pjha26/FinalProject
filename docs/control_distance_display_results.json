@@ -1,0 +1,26 @@
+{
+  "tests": 153,
+  "cases": [
+    {
+      "name": "clear_s42",
+      "frames": 211,
+      "video_decoded": true,
+      "controls_passed": true
+    },
+    {
+      "name": "obstacle_s42",
+      "frames": 100,
+      "video_decoded": true,
+      "controls_passed": true
+    },
+    {
+      "name": "obstacle_s44_wet",
+      "frames": 98,
+      "video_decoded": true,
+      "controls_passed": true
+    }
+  ],
+  "source_run": "runs/control_distance_display_02",
+  "model_actuation": false,
+  "scope": "Readable overlay; reference controller only"
+}
