@@ -1,6 +1,6 @@
 # Final demonstration and laptop handoff
 
-The project estimates **relative depth from RGB alone** using the original pretrained Monodepth2 ResNet-18 baseline or the new Depth Anything V2 Small quality option. The supported practical demonstration is real driving-video replay with depth computed for each frame. It displays RGB, estimated depth, overlay and measured FPS. It is a perception prototype, without vehicle control or calibrated distances.
+The project estimates **relative depth from RGB alone** using the original pretrained Monodepth2 ResNet-18 baseline or the new Depth Anything V2 Small quality option. The current primary demonstration is live CARLA inference, with verified driving-video replay as fallback. See [current presentation runbook](presentation_runbook.md). It displays RGB, estimated depth, overlay and measured FPS. It is a perception prototype, without vehicle control or calibrated distances.
 
 ## Architecture and completed phases
 
@@ -96,7 +96,7 @@ Read the [poster alignment review](poster_alignment.md) before presenting: the p
 
 “An ordinary camera records colour but does not directly measure distance. My project uses a pretrained monocular depth network to estimate a relative depth map from each RGB frame. I implemented a reproducible, low-memory inference pipeline, verified driving inputs, visualization, profiling and evaluation, then checked the phases together. The demonstration computes depth as the video runs. It supports perception research; it does not control a vehicle or give calibrated distances.”
 
-If asked about contribution, distinguish the pretrained model from your input preparation, integrity checks, integration, visualization optimization, measured validation and handoff tooling. Explain that no project-specific training has been completed.
+If asked about contribution, distinguish the pretrained model from your input preparation, integrity checks, integration, visualization optimization, measured validation and handoff tooling. Explain the bounded CARLA fine-tuning experiments and why their KITTI regression kept the pretrained default.
 
 If asked about accuracy, report the five-frame indoor diagnostic separately: AbsRel about **0.4960**, median-aligned RMSE about **1.4404 m**. These results expose substantial error; they are neither KITTI benchmark scores nor proof of driving accuracy. Ground-truth median alignment is available only for scoring, not deployment. The driving video has no aligned GT. See [evaluation protocol](evaluation_protocol.md).
 
@@ -104,4 +104,4 @@ If asked about accuracy, report the five-frame indoor diagnostic separately: Abs
 
 Deliver the published source, five implementation files, this guide and the implementation PDF. Keep the accepted input/checkpoint manifests and full local validation evidence with the prepared offline assets. Re-run validation after code, model, preprocessing or input changes; retain the accepted baseline while experimenting elsewhere.
 
-The local software delivery track covers Phases 1-5. Still pending: RTX 3050 rehearsal, physical webcam acceptance, successful native CARLA capture, full driving-depth benchmark, project-specific training, calibrated metre-scale inference and final academic submission. Vehicle control is outside this project's scope. Rehearsing on the actual presentation laptop is the last hardware gate, not an assumed result.
+The local software delivery track covers Phases 1-5. Completed since the prototype handoff: native CARLA capture/display, bounded project-specific fine-tuning and the full 697-frame KITTI Eigen evaluation. Still pending: other-laptop rehearsal, physical webcam acceptance, calibrated metre-scale inference, stronger cross-domain training and final academic submission. Vehicle control is outside this project's scope. Rehearsing on the actual presentation laptop is the last hardware gate, not an assumed result.

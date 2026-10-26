@@ -2,7 +2,9 @@
 
 A final-year computer vision project that estimates **relative scene depth from a single RGB image or successive video frames**. The application integrates pretrained neural networks, a desktop visualization, optional point-cloud export, runtime profiling and reproducible evaluation.
 
-**Current delivery:** image and recorded driving-video inference have been demonstrated locally. On 24 October 2026, both backends passed all eight delivery checks and 60-second displayed rehearsals on the RTX 4050 laptop; see [new-laptop validation](docs/new_laptop_validation.md) for measurements and limits. Physical webcam validation and rehearsals on any other presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
+**Presentation, 26 October 2026:** start with the [live-demo runbook](docs/presentation_runbook.md). Run `./tools/present.ps1 -Mode carla` for live simulator inference or `-Mode video` for the recorded-input fallback. The accepted baseline remains pretrained. Native CARLA measured 12.0440 FPS over 65.0114 seconds; full KITTI Eigen evaluation covers 697 frames. Accuracy targets are only partly met.
+
+**Earlier prototype delivery:** image and recorded driving-video inference have been demonstrated locally. On 24 October 2026, both backends passed all eight delivery checks and 60-second displayed rehearsals on the RTX 4050 laptop; see [new-laptop validation](docs/new_laptop_validation.md) for measurements and limits. Physical webcam validation and rehearsals on any other presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
 
 ## Features
 
@@ -55,7 +57,7 @@ Ground-truth depth is never an inference input. Supplied camera intrinsics do no
 | Output geometry | 192 × 640 arrays | Arrays resized to the supplied RGB geometry |
 | Runtime device | CPU or CUDA | CPU or CUDA |
 
-Both default backends use pretrained weights. **A separate 10-step self-supervised CARLA training sanity experiment has now completed; converged training and final candidate selection remain incomplete.** The experimental candidate improved the small CARLA validation pilot but regressed on KITTI, so it has not replaced the accepted baseline. See the [training record](docs/self_supervised_training_pilot.md). The optional model is a distinct architecture and must be identified by its actual name in presentations. Source revisions, asset hashes and preprocessing identities are pinned in the implementation and recorded in run metadata.
+Both default backends use pretrained weights. **Bounded CARLA self-supervised fine-tuning now includes three epochs, matched controls, loss ablations and seed repeats. Convergence is not established.** The experimental candidate improved the small CARLA validation pilot but regressed on KITTI, so it has not replaced the accepted baseline. See the [training record](docs/self_supervised_training_pilot.md). The optional model is a distinct architecture and must be identified by its actual name in presentations. Source revisions, asset hashes and preprocessing identities are pinned in the implementation and recorded in run metadata.
 
 Video/webcam input is decoded one frame at a time and bounded to 640 × 480 while preserving aspect ratio. Inference uses batch size one and two PyTorch CPU threads. The default video/webcam processing ceiling is 10 FPS; it is not a guaranteed minimum. Sequential replay slows when processing cannot keep up with the original video rate.
 
