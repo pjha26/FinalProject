@@ -295,3 +295,5 @@ The implementation history is recorded in the [master plan](IMPLEMENTATION_PLAN.
 - [SemanticDepth](https://github.com/pablopalafox/semantic-depth): conceptual reference supplied for the project; not the selected inference backend.
 
 Downloaded datasets, model weights, upstream source and local run evidence are excluded from Git. Their respective licenses and provenance must accompany any offline asset handoff. This repository does not grant a new license over third-party assets.
+
+Presentation preparation: [two-page pitch and viva PDF](docs/project_pitch_and_viva.pdf), [editable pitch text](docs/project_pitch.md), and [VS Code / laptop setup](docs/vscode_presentation_setup.md).
