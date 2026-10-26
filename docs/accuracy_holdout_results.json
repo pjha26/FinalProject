@@ -1,0 +1,43 @@
+{
+  "status": "holdout_pass",
+  "samples": 200,
+  "scenes": 2,
+  "selection": {
+    "baseline": {
+      "mean_abs_rel": 0.23694070361554623,
+      "p95_frame_abs_rel": 0.2870481744408607,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "candidate": {
+      "mean_abs_rel": 0.21300888910889626,
+      "p95_frame_abs_rel": 0.2515017971396446,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "relative_improvement": 0.10100339089682586,
+    "scenes": {
+      "metric_holdout_town05_s47_clearnoon_01": {
+        "before": 0.2428101570904255,
+        "after": 0.2099924187362194,
+        "ratio": 0.8648419870591149
+      },
+      "metric_holdout_town05_s48_wetcloudynoon_01": {
+        "before": 0.23107125014066696,
+        "after": 0.21602535948157311,
+        "ratio": 0.9348863579959233
+      }
+    },
+    "passed": true
+  },
+  "protocol_sha256": "e9f05ed6ead061bf91b183ecf2d37016a146453f448b4709913ffb131eb61a92",
+  "candidate_sha256": "02a3bb178ffd8a7c00a71979d981d13af7c296b87f72ef6b6cc2f3f042c42b3c",
+  "learned_actuation": false,
+  "limits": "Only two new-seed routes on shared Town05, Low rendering, 1-50m crop. No per-frame scaling. Test is now consumed; no reselecting against it. Postprocessing improvement, not a network-training or autonomous-control claim."
+}

@@ -1,0 +1,23 @@
+{
+  "status": "diagnostic_complete",
+  "summary": {
+    "original": {
+      "samples": 48,
+      "surface_mae_m": 7.75693911810716,
+      "maximum_surface_overestimate_m": 21.92439842224121,
+      "corridor_mae_m": 7.612922675410907,
+      "missed_brake_triggers": 12,
+      "passes_diagnostic_gate": false
+    },
+    "candidate": {
+      "samples": 48,
+      "surface_mae_m": 7.175016383330028,
+      "maximum_surface_overestimate_m": 19.75722312927246,
+      "corridor_mae_m": 7.929989503820738,
+      "missed_brake_triggers": 6,
+      "passes_diagnostic_gate": false
+    }
+  },
+  "learned_actuation": false,
+  "limits": "Stationary ego, fixed obstacles, one straight Town04 route, two weather presets. GT region selection is evaluation-only. Counterfactual brakes at synthetic1.6m/s are not closed-loop trials."
+}

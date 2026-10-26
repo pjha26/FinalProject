@@ -18,3 +18,10 @@ The next network-training decision depends on error diagnostics. Avoid launching
 
 The two-parameter mapping failed development gates. Before another evaluation, predeclare a simpler alternative: one scale minimizing mean per-frame pixel AbsRel on the same fit frames. For relative prediction d and reference g, |s*d-g|/g = (d/g)*|s-g/d|. Therefore fit the weighted median of g/d with weights (d/g)/pixels_in_frame. Use all fit pixels, deterministic stable sorting, no development labels in fitting, and keep all promotion thresholds unchanged. Reuse only hash-verified cached RGB predictions. The original power candidate remains rejected. Evaluate this one additional candidate on development; only a passing candidate may consume the reserved holdout.
 
+
+## One bounded supervised metric experiment
+
+The matched obstacle test confirms depth error as well as corridor-selection error. Predeclare a single exploratory network candidate: initialize official Monodepth2, freeze its encoder, train only the depth decoder for 128 updates at Adam1e-5, seed42, fixed metric multiplier14.9965364942. Alternate the 40 original Town04 fit frames and eight Town04 obstacle images saved by the diagnostic. Use only their simulator reference depth as supervision. Loss: valid1-50m log-depth L1 +0.5 matched-object-region log L1 +0.1 frozen-teacher log-depth consistency. No validation/test labels enter training. This is explicitly supervised fine-tuning, not the earlier temporal self-supervised method.
+
+Freeze the final update128 candidate; no checkpoint search. Evaluate on the same 80 Town05 development targets against the best fixed-scale baseline with the original pixel gates, >=5% relative improvement and <=10% scene regression. Also require <=5% KITTI24 development AbsRel regression; never use the full Eigen test to select it. If eligible, use newly reserved Town05 seed49/50 captures for fresh final evaluation; earlier seed47/48 holdout stays consumed. Learned actuation remains disabled regardless of this exploratory model's pixel pass. This is one short test, not a convergence or robustness claim.
+

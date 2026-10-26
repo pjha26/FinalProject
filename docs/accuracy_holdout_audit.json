@@ -1,0 +1,17 @@
+{
+  "samples": 200,
+  "valid_pixels": 27659610,
+  "maximum_recomputed_absrel_difference": 5.296398042364814e-08,
+  "exact_rgb_file_overlap_with_fit_or_development": 0,
+  "geographic_overlap": {
+    "metric_holdout_town05_s47_clearnoon_01": {
+      "frames_within_1m_of_previous_development": 0,
+      "minimum_previous_route_distance_m": 190.09395881128495
+    },
+    "metric_holdout_town05_s48_wetcloudynoon_01": {
+      "frames_within_1m_of_previous_development": 0,
+      "minimum_previous_route_distance_m": 49.76825951638255
+    }
+  },
+  "scope": "Independent saved-prediction recomputation. Shared Town05 map; pose proximity does not establish semantic independence."
+}
