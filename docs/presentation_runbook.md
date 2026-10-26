@@ -27,7 +27,7 @@ Choose an unused output name. Open its preview and point_cloud/viewer.html. The 
 
 ## Suggested 5-minute demonstration
 
-1. Explain RGB-only depth inference and show the Monodepth2 architecture slide.
+1. Explain RGB-only depth inference and explain the ResNet encoder and depth decoder.
 2. Run the live simulator for the complete 65 seconds. Explain near/far colours and live FPS.
 3. Show the saved full KITTI evaluation and training comparison. The pretrained model remains default because fine-tuning regressed on KITTI.
 4. Show one numerical map or the optional point cloud. Explain scale ambiguity.
@@ -40,8 +40,12 @@ Choose an unused output name. Open its preview and point_cloud/viewer.html. The 
 - KITTI Eigen: all 697 prescribed frames, Garg crop, 80 m maximum, per-image ground-truth median alignment, no flip postprocessing. Baseline AbsRel 0.1146166, RMSE 4.8634129, delta1 0.8774286. AbsRel/delta1 targets pass; RMSE, SqRel and log-RMSE targets miss.
 - Ground-truth median alignment is evaluation-only. Predicted distances in the live demo are not calibrated metres.
 - The held-out route is now consumed by final testing and shares the Town05 development map.
-- The integrated validator passed all eight checks and 133 tests. Physical webcam, another laptop and a physically disconnected-network run remain unverified.
+- The integrated validator passed all eight checks and 137 tests. Physical webcam, another laptop and a physically disconnected-network run remain unverified.
 
 ## Before leaving
 
 Keep checkpoints, third_party model sources/licenses, data/demo, the prepared environment, CARLA installation and selected evidence together on this laptop. GitHub stores code and summarized results, not the large runtime/data/weights. On another laptop follow demo_guide.md and rerun tools/validate_delivery.py --device cuda --display. Never assume another machine inherits these measurements.
+
+## Fresh launcher rehearsal
+
+The 26 October launcher rehearsal completed 780 frames over 65.0081 seconds at 11.9985 application FPS, with display enabled. The latest integrated delivery rerun passed 137 tests and all eight checks. Prepared asset verification also passed. Initial sandbox network-denied attempts are retained separately and are not successful runs.

@@ -22,3 +22,6 @@ The third folder, `../outputs/self_supervised_training_reference_2026-10-25_01/`
 
 
 `../outputs/temporal_augmentation_reference_2026-10-25_01/` records Step 1 of the remaining plan. Open `index.html` for actual paired-control prediction previews, selected arrays, the numerical comparison plot and a labelled replay of a logged shared colour transform. Configuration, 119-test log, checkpoint/state/scoring audits and SHA256 manifest identify 40 selected files. The colour example is a CPU illustration of actual logged parameters, not a new metric result. Full weights/datasets remain in ignored repository directories; reserved-test predictions are excluded.
+
+
+The completed steps 2-9 bundle is ../outputs/research_completion_2026-10-25_01/. Open index.html for saved previews, the report supplement, editable presentation and per-step evidence. manifest.json hashes selected files. Step 9 includes the 137-test delivery log, source-hash-verified integrated summary and fresh live launcher rehearsal. This supersedes historical statements above that training/full Eigen/reserved testing were pending. Large raw assets and full checkpoints still require separate backup.

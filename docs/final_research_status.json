@@ -1,0 +1,22 @@
+{
+  "updated": "2026-10-26",
+  "accepted_model": "Official pretrained Monodepth2 mono_640x192; experimental CARLA candidate not promoted",
+  "software_steps_2_to_9": "implemented and evidenced within the bounded protocols",
+  "tests_passed": 137,
+  "delivery_checks_passed": 8,
+  "native_launcher": {
+    "frames": 780,
+    "seconds": 65.0080665,
+    "application_fps": 11.998510984786789,
+    "headless": false
+  },
+  "full_eigen_samples": 697,
+  "unmet": [
+    "KITTI RMSE/SqRel/log-RMSE targets",
+    "Converged training and broad cross-domain robustness",
+    "Physical webcam / other-laptop / physically disconnected-network rehearsal",
+    "Calibrated metric inference"
+  ],
+  "delivery_source_hashes_verified": true,
+  "local_reference_bundle": "../outputs/research_completion_2026-10-25_01/"
+}
