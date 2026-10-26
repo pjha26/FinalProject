@@ -1,0 +1,78 @@
+{
+  "status": "development_rejected",
+  "baseline_scale": 16.162327824804848,
+  "mapping": {
+    "schema_version": 2,
+    "calibration_type": "monotonic_power",
+    "scale": 23.277887374056046,
+    "exponent": 1.324078583869454,
+    "sampled_fit_pixels": 40960,
+    "method": "Equal-size deterministic per-frame log samples; 10 Huber IRLS iterations, delta0.15",
+    "checkpoint_sha256": {
+      "encoder.pth": "f227ecc62bf4b3e1f3aa71350bad3f687005f0ed49cd84cf393754a8564c92fe",
+      "depth.pth": "7c96a7de4000c04f27c2eec65255982352485c21acf9074d1b73fc3112932b46"
+    },
+    "preprocessing_id": "rgb_bilinear_192x640_monodepth2_internal_v1",
+    "protocol_sha256": "3131e090363fe55b7b2a312170698bace9c0363ea1af865fe1c3d108814500e2",
+    "fit_frames": 40,
+    "supported_reference_range_m": [
+      1,
+      50
+    ],
+    "ground_truth_usage": "Calibration fit and evaluation only",
+    "learned_actuation": false
+  },
+  "selection": {
+    "baseline": {
+      "mean_abs_rel": 0.27433547750115395,
+      "p95_frame_abs_rel": 0.3584492430090904,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": false
+    },
+    "candidate": {
+      "mean_abs_rel": 0.26106880226983115,
+      "p95_frame_abs_rel": 0.5464882679730794,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": false
+    },
+    "relative_improvement": 0.04835931302857832,
+    "scenes": {
+      "validation_town05_13": {
+        "before": 0.2209016777575016,
+        "after": 0.23072453978408203,
+        "ratio": 1.0444671227774178
+      },
+      "validation_town05_s43_wetcloudynoon_01": {
+        "before": 0.22469229772686958,
+        "after": 0.16942103762966937,
+        "ratio": 0.7540135525055398
+      },
+      "validation_town05_s46_clearnoon_01": {
+        "before": 0.3443694531917572,
+        "after": 0.36597880513640396,
+        "ratio": 1.0627504900459737
+      },
+      "validation_town05_s46_wetcloudynoon_01": {
+        "before": 0.3073784813284874,
+        "after": 0.27815082652916934,
+        "ratio": 0.904913139420182
+      }
+    },
+    "passed": false
+  },
+  "repeatability": {
+    "exact_equal": true,
+    "max_absolute_difference": 0.0,
+    "repeats": 3
+  },
+  "fit_frames": 40,
+  "development_frames": 80,
+  "sources_unchanged": true,
+  "limits": "Already-seen correlated development scenes. Postprocessing calibration only; network weights unchanged. No holdout scoring or learned actuation yet."
+}
