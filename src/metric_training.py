@@ -17,3 +17,9 @@ def metric_supervision_loss(inverse, target_m, valid, object_mask, teacher_inver
     total = pixel + .5 * object_loss + .1 * teacher
     return total, dict(pixel=pixel, object=object_loss, teacher=teacher)
 
+
+
+def teacher_consistency_loss(inverse, teacher_inverse):
+    if inverse.shape != teacher_inverse.shape or not torch.isfinite(inverse).all() or not torch.isfinite(teacher_inverse).all() or (inverse <= 0).any() or (teacher_inverse <= 0).any():
+        raise ValueError("Aligned finite positive teacher tensors required")
+    return (torch.log(inverse) - torch.log(teacher_inverse.detach())).abs().mean()

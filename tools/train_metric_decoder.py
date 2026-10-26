@@ -16,12 +16,12 @@ from project import write_json
 from src.carla_capture import replay_scene
 from src.demo_data import checkpoint_hashes
 from src.metric_control import corridor_clearance,_corridor_geometry
-from src.metric_training import metric_supervision_loss
+from src.metric_training import metric_supervision_loss,teacher_consistency_loss
 from src.model import load_model,sha256,UPSTREAM_REVISION
 from src.preprocess import preprocess_rgb,camera_intrinsics,PREPROCESSING_ID
 
 
-def run(output):
+def run(output,real_replay=False):
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     base=ROOT/"checkpoints/baseline_mono_640x192";original=checkpoint_hashes(base)
     data=[]
@@ -38,6 +38,24 @@ def run(output):
     for sample in data:
         dataset_hash[sample["id"]]=dict(rgb=__import__("hashlib").sha256(sample["rgb"].tobytes()).hexdigest(),depth=__import__("hashlib").sha256(sample["gt"].tobytes()).hexdigest())
     config=dict(schema_version=1,supervision="CARLA GT metric depth, not temporal self-supervision",steps=128,learning_rate=1e-5,seed=42,scale=14.996536494241578,freeze_encoder=True,roads=40,obstacle_images=8,loss="logL1metric +0.5 objectlogL1 +0.1 frozen-teacher consistency",dataset_sha256=dataset_hash,parent_checkpoint_sha256=original,preprocessing_id=PREPROCESSING_ID,selection="Final128th update, no checkpoint search",learned_actuation=False)
+    replay=[]
+    if real_replay:
+        manifest=json.loads((ROOT/"data/demo/input_manifest.json").read_text(encoding="utf-8"))
+        video=ROOT/"data/demo/driving.mp4"
+        digest=sha256(video)
+        if digest!=manifest["files"]["driving.mp4"]:raise ValueError("Replay clip checksum mismatch")
+        indices=np.linspace(0,manifest["decoded_frames"]-1,16,dtype=int).tolist()
+        capture=cv2.VideoCapture(str(video))
+        try:
+            if not capture.isOpened():raise RuntimeError("Replay video could not open")
+            for index in indices:
+                capture.set(cv2.CAP_PROP_POS_FRAMES,index)
+                ok,frame=capture.read()
+                if not ok:raise RuntimeError("Replay frame missing")
+                replay.append(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+        finally:capture.release()
+        if len(replay)!=16 or sha256(video)!=digest:raise ValueError("Replay source changed")
+        config.update(learning_rate=2e-6,real_replay=dict(video_sha256=digest,frames=indices,teacher="official frozen baseline",weight=1.0),loss=config["loss"]+" +1.0 real-RGB teacher consistency")
     write_json(output/"protocol.json",config)
     random.seed(42);np.random.seed(42);torch.manual_seed(42);torch.cuda.manual_seed_all(42);torch.set_num_threads(2);torch.backends.cudnn.benchmark=False
     random.shuffle(roads);random.shuffle(objects)
@@ -46,7 +64,7 @@ def run(output):
     frozen_encoder={k:v.detach().cpu().clone() for k,v in model.encoder.state_dict().items()}
     teacher=copy.deepcopy(model.decoder).eval()
     for p in teacher.parameters():p.requires_grad_(False)
-    optimizer=torch.optim.Adam(model.decoder.parameters(),lr=1e-5)
+    optimizer=torch.optim.Adam(model.decoder.parameters(),lr=config["learning_rate"])
     rows=[];started=time.perf_counter();complete=False
     try:
         for step in range(128):
@@ -68,6 +86,14 @@ def run(output):
                 teacher_inverse=.01+9.99*teacher_disp
             disparity=model.decoder(features)[("disp",0)];inverse=.01+9.99*disparity
             objective,parts=metric_supervision_loss(inverse,target,valid,obj,teacher_inverse,config["scale"])
+            if replay:
+                real_tensor,_=preprocess_rgb(replay[step%16]);real_tensor=real_tensor.to(model.device)
+                with torch.no_grad():
+                    real_features=model.encoder(real_tensor)
+                    real_teacher=.01+9.99*teacher(real_features)[("disp",0)]
+                real_inverse=.01+9.99*model.decoder(real_features)[("disp",0)]
+                replay_loss=teacher_consistency_loss(real_inverse,real_teacher)
+                objective=objective+replay_loss;parts["real_teacher"]=replay_loss
             if not torch.isfinite(objective):raise RuntimeError("Nonfinite supervised loss")
             objective.backward()
             grad=torch.nn.utils.clip_grad_norm_(model.decoder.parameters(),1.0)
@@ -94,6 +120,6 @@ def run(output):
 
 
 if __name__=="__main__":
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--output",required=True);a=p.parse_args();run(a.output)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--output",required=True);p.add_argument("--real-replay",action="store_true");a=p.parse_args();run(a.output,a.real_replay)
 
 

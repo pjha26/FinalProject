@@ -25,3 +25,8 @@ The matched obstacle test confirms depth error as well as corridor-selection err
 
 Freeze the final update128 candidate; no checkpoint search. Evaluate on the same 80 Town05 development targets against the best fixed-scale baseline with the original pixel gates, >=5% relative improvement and <=10% scene regression. Also require <=5% KITTI24 development AbsRel regression; never use the full Eigen test to select it. If eligible, use newly reserved Town05 seed49/50 captures for fresh final evaluation; earlier seed47/48 holdout stays consumed. Learned actuation remains disabled regardless of this exploratory model's pixel pass. This is one short test, not a convergence or robustness claim.
 
+
+## Conservative real-RGB replay variant
+
+Trial1 improves CARLA but fails KITTI24 regression. Predeclare one further128-update final-checkpoint trial at Adam2e-6 with the same CARLA fit set and loss, plus weight1.0 log-inverse-depth distillation on 16 uniformly selected frames from the existing verified Udacity demo clip. The frozen official teacher supplies these real-RGB targets. KITTI RGB/GT and all evaluation scenes remain excluded from training. Record video hash, frame IDs and teacher identity. This is supervised CARLA training with teacher regularization, not a pure temporal self-supervised run. Keep all existing acceptance gates; do not tune against the final Eigen or consumed seed47/48 holdout. This bounded trial changes both rate and replay, so it is not a one-factor ablation.
+

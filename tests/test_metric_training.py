@@ -46,3 +46,18 @@ class MetricTrainingTests(unittest.TestCase):
 
 if __name__=="__main__":unittest.main()
 
+
+
+class TeacherReplayTests(unittest.TestCase):
+    def test_real_teacher_loss_is_exact_and_detached(self):
+        from src.metric_training import teacher_consistency_loss
+        inverse=torch.full((1,1,4,4),4.,requires_grad=True)
+        teacher=torch.full_like(inverse,2.,requires_grad=True)
+        loss=teacher_consistency_loss(inverse,teacher)
+        self.assertAlmostEqual(float(loss),float(torch.log(torch.tensor(2.))),places=6)
+        loss.backward()
+        self.assertTrue(torch.isfinite(inverse.grad).all())
+        self.assertIsNone(teacher.grad)
+        with self.assertRaises(ValueError):
+            teacher_consistency_loss(inverse,teacher*0)
+
