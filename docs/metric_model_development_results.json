@@ -1,0 +1,73 @@
+{
+  "status": "eligible_for_fresh_test",
+  "metric_selection": {
+    "baseline": {
+      "mean_abs_rel": 0.2486676260828972,
+      "p95_frame_abs_rel": 0.33119348585605624,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "candidate": {
+      "mean_abs_rel": 0.22695963717997075,
+      "p95_frame_abs_rel": 0.30978525429964066,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "relative_improvement": 0.08729720569130195,
+    "scenes": {
+      "validation_town05_13": {
+        "before": 0.18793498650193213,
+        "after": 0.1628739133477211,
+        "ratio": 0.8666503048704379
+      },
+      "validation_town05_s43_wetcloudynoon_01": {
+        "before": 0.19842977225780487,
+        "after": 0.1756040021777153,
+        "ratio": 0.8849680175491319
+      },
+      "validation_town05_s46_clearnoon_01": {
+        "before": 0.3183454886078835,
+        "after": 0.2979960530996323,
+        "ratio": 0.9360775125250282
+      },
+      "validation_town05_s46_wetcloudynoon_01": {
+        "before": 0.28996025696396827,
+        "after": 0.2713645800948143,
+        "ratio": 0.9358681873720895
+      }
+    },
+    "passed": true
+  },
+  "kitti24_baseline": {
+    "abs_rel": 0.09362687132453361,
+    "sq_rel": 0.6896455021779558,
+    "rmse": 4.219609616896688,
+    "rmse_log": 0.14903443240625655,
+    "a1": 0.9128543584774701,
+    "a2": 0.9752481364642772,
+    "a3": 0.9909762486532604
+  },
+  "kitti24_candidate": {
+    "abs_rel": 0.09803286963529988,
+    "sq_rel": 0.7133552045084994,
+    "rmse": 4.227125694270144,
+    "rmse_log": 0.15170383288359232,
+    "a1": 0.9126445829390638,
+    "a2": 0.975599047886647,
+    "a3": 0.9908390861303548
+  },
+  "kitti_guard_passed": true,
+  "checkpoint_sha256": {
+    "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+    "depth.pth": "4f9616b1ecfed1bbd5ac1c13d8bbdabd74fc888ebc03e816eb0966b5ecc9bed6"
+  },
+  "network_supervision": "Explicit supervised metric CARLA fine-tuning",
+  "learned_actuation": false,
+  "limits": "Seen development scenes; exploratory256-update model, not convergence. Do not use previous seed47/48 holdout for this new candidate."
+}

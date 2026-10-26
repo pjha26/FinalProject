@@ -18,6 +18,7 @@ def main():
     p.add_argument("--output", required=True)
     p.add_argument("--calibration", default="runs/metric_scale_01/calibration.json")
     p.add_argument("--headless", action="store_true")
+    p.add_argument("--checkpoint", help="Optional research checkpoint; does not enable learned control")
     a = p.parse_args()
     output = Path(a.output).resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -45,6 +46,8 @@ def main():
                     time.sleep(2)
             for case in cases:
                 command = [sys.executable, "tools/carla_control_demo.py", "--calibration", a.calibration, "--output", str(output / case["name"]), "--seed", str(case["seed"]), "--weather", case["weather"]]
+                if a.checkpoint:
+                    command += ["--checkpoint", a.checkpoint]
                 if case["clear"]:
                     command += ["--clear-road"]
                 if a.headless:

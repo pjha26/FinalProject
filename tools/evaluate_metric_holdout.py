@@ -20,10 +20,13 @@ from tools.validate_metric_accuracy import score
 def run(freeze_path, output):
     freeze_path=Path(freeze_path).resolve();output=Path(output).resolve()
     frozen=json.loads(freeze_path.read_text(encoding="utf-8"))
-    checkpoint=ROOT/"checkpoints/baseline_mono_640x192"
+    checkpoint=ROOT/frozen.get("checkpoint_path","checkpoints/baseline_mono_640x192")
+    baseline_checkpoint=ROOT/frozen.get("baseline_checkpoint_path","checkpoints/baseline_mono_640x192")
     mapping=ROOT/frozen["candidate_path"]
     if frozen.get("status")!="frozen_before_holdout_acquisition" or sha256(mapping)!=frozen["candidate_sha256"] or checkpoint_hashes(checkpoint)!=frozen["checkpoint_sha256"]:
         raise ValueError("Frozen candidate/model identity mismatch")
+    if checkpoint_hashes(baseline_checkpoint)!=frozen.get("baseline_checkpoint_sha256",frozen["checkpoint_sha256"]):
+        raise ValueError("Frozen baseline checkpoint changed")
     ledger=freeze_path.parent/"holdout_consumed.json"
     if ledger.exists():
         raise ValueError("This holdout is already consumed; do not use it for tuning/reselection")
@@ -43,17 +46,21 @@ def run(freeze_path, output):
     complete=False
     try:
         model=load_model(checkpoint,"cuda")
+        baseline_model=model if baseline_checkpoint.resolve()==checkpoint.resolve() else load_model(baseline_checkpoint,"cuda")
         for item in frozen["scenes"]:
             scene=ROOT/"data/carla"/item["name"];count=0
             for record in replay_scene(scene):
                 tensor,_=preprocess_rgb(record["rgb"],record["camera"])
                 raw=predict(model,tensor)["relative_depth"][0,0].cpu().numpy()
                 native=cv2.resize(raw,(640,480),interpolation=cv2.INTER_LINEAR)
+                baseline_raw=raw if baseline_model is model else predict(baseline_model,tensor)["relative_depth"][0,0].cpu().numpy()
+                baseline_native=cv2.resize(baseline_raw,(640,480),interpolation=cv2.INTER_LINEAR)
                 gt=record["depth"];mask=np.zeros(gt.shape,dtype=bool);mask[96:456,32:608]=True;mask&=(gt>=1)&(gt<=50)
                 if mask.sum()<100:raise ValueError("Insufficient holdout GT")
                 sample=dict(scene=item["name"],frame=record["frame_id"],prediction=native[mask][None,:],reference=gt[mask][None,:])
                 for label,scale in [("fixed_scale",frozen["baseline_scale"]),("candidate",frozen["candidate_scale"])]:
-                    rows[label].append(score(sample,sample["prediction"]*scale))
+                    values=baseline_native[mask][None,:] if label=="fixed_scale" else sample["prediction"]
+                    rows[label].append(score(sample,values*scale))
                 folder=output/"predictions"/item["name"];folder.mkdir(parents=True,exist_ok=True)
                 np.save(folder/(str(record["frame_id"])+".npy"),native,allow_pickle=False)
                 count+=1
@@ -64,12 +71,12 @@ def run(freeze_path, output):
             scene=ROOT/"data/carla"/name
             if set(files)!={p.relative_to(scene).as_posix() for p in scene.rglob("*") if p.is_file()} or any(sha256(scene/p)!=h for p,h in files.items()):
                 raise ValueError("Holdout source changed")
-        if checkpoint_hashes(checkpoint)!=frozen["checkpoint_sha256"]:raise ValueError("Checkpoint changed")
+        if checkpoint_hashes(checkpoint)!=frozen["checkpoint_sha256"] or checkpoint_hashes(baseline_checkpoint)!=frozen.get("baseline_checkpoint_sha256",frozen["checkpoint_sha256"]):raise ValueError("Checkpoint changed")
         for label,data in rows.items():
             write_json(output/(label+"_scores.json"),data)
             with (output/(label+"_scores.csv")).open("w",newline="",encoding="utf-8") as stream:
                 writer=csv.DictWriter(stream,fieldnames=list(data[0]));writer.writeheader();writer.writerows(data)
-        summary=dict(status="holdout_pass" if result["passed"] else "holdout_rejected",samples=len(rows["candidate"]),scenes=len(inventory),selection=result,protocol_sha256=sha256(output/"protocol.json"),candidate_sha256=frozen["candidate_sha256"],learned_actuation=False,limits="Only two new-seed routes on shared Town05, Low rendering, 1-50m crop. No per-frame scaling. Test is now consumed; no reselecting against it. Postprocessing improvement, not a network-training or autonomous-control claim.")
+        summary=dict(status="holdout_pass" if result["passed"] else "holdout_rejected",samples=len(rows["candidate"]),scenes=len(inventory),selection=result,protocol_sha256=sha256(output/"protocol.json"),candidate_sha256=frozen["candidate_sha256"],learned_actuation=False,limits="Only two new-seed routes on shared Town05, Low rendering, 1-50m crop. No per-frame scaling. Test is now consumed; no reselecting against it. Only the frozen candidate in this protocol is tested; no autonomous-control claim.")
         write_json(output/"summary.json",summary);complete=True
         print(json.dumps(summary,indent=2),flush=True)
     finally:

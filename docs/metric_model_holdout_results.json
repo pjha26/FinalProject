@@ -1,0 +1,43 @@
+{
+  "status": "holdout_pass",
+  "samples": 200,
+  "scenes": 2,
+  "selection": {
+    "baseline": {
+      "mean_abs_rel": 0.20083652317523956,
+      "p95_frame_abs_rel": 0.2696891143918037,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "candidate": {
+      "mean_abs_rel": 0.1747069300338626,
+      "p95_frame_abs_rel": 0.2521364733576774,
+      "thresholds": {
+        "mean_abs_rel": 0.25,
+        "p95_frame_abs_rel": 0.5
+      },
+      "passed": true
+    },
+    "relative_improvement": 0.13010379152290763,
+    "scenes": {
+      "metric_network_holdout_town05_s49_clearnoon_01": {
+        "before": 0.18638771116733552,
+        "after": 0.16312653675675393,
+        "ratio": 0.8752000640766594
+      },
+      "metric_network_holdout_town05_s50_wetcloudynoon_01": {
+        "before": 0.2152853351831436,
+        "after": 0.18628732331097125,
+        "ratio": 0.8653042862975144
+      }
+    },
+    "passed": true
+  },
+  "protocol_sha256": "b6437a5fe8b40f05313c036284749bada6744f01fc85727598fdb4582caeaddf",
+  "candidate_sha256": "eb46b33b0abdf61ed5c108565999f0ef6e614eed8c87e3d97e99ccd2b59ca85a",
+  "learned_actuation": false,
+  "limits": "Only two new-seed routes on shared Town05, Low rendering, 1-50m crop. No per-frame scaling. Test is now consumed; no reselecting against it. Only the frozen candidate in this protocol is tested; no autonomous-control claim."
+}

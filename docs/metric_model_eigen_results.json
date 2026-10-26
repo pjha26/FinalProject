@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "dataset": "KITTI Eigen 697",
+  "evaluated_samples": 697,
+  "expected_samples": 697,
+  "manifest_sha256": "27af6bf899e5c5f8842a1982017335f3dc1fc32e178875ad177fab5c6e96ac85",
+  "checkpoint_sha256": {
+    "encoder.pth": "74eba4bfc7a07b23eeaf5dd2391e76176066d7c551518256f1fdc8aba190f504",
+    "depth.pth": "4f9616b1ecfed1bbd5ac1c13d8bbdabd74fc888ebc03e816eb0966b5ecc9bed6"
+  },
+  "protocol": {
+    "min_depth": 0.001,
+    "max_depth": 80,
+    "crop": "garg",
+    "scaling": "per_image_median",
+    "input_resize": "PIL LANCZOS to 640x192; checkpoint-internal normalization",
+    "post_processing": false
+  },
+  "mean_metrics": {
+    "abs_rel": 0.11818808521896086,
+    "sq_rel": 0.9409511298797324,
+    "rmse": 4.884564242611288,
+    "rmse_log": 0.19474959111352186,
+    "a1": 0.8745811326611813,
+    "a2": 0.9587783262891771,
+    "a3": 0.9806565126058756
+  },
+  "total_valid_pixels": 11817275,
+  "limits": "Pinned full Eigen split with original sparse-LiDAR projection and LANCZOS input; no flip post-processing. Per-image GT median scaling is scoring only. Prior cropped-pilot overlap is reported separately; no test-driven retraining."
+}

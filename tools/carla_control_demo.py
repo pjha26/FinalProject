@@ -57,9 +57,9 @@ def straight_route(world_map, origin):
     raise RuntimeError("No level straight 40 m route found; preserve failure instead of changing acceptance")
 
 
-def run(output, calibration_path, mode="reference", obstacle=True, seed=42, weather="ClearNoon", display=True):
+def run(output, calibration_path, mode="reference", obstacle=True, seed=42, weather="ClearNoon", display=True, checkpoint_dir=None):
     import carla
-    checkpoint = ROOT / "checkpoints/baseline_mono_640x192"
+    checkpoint = Path(checkpoint_dir).resolve() if checkpoint_dir else ROOT / "checkpoints/baseline_mono_640x192"
     calibration = load_calibration(calibration_path, checkpoint, actuate=mode == "model")
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -225,7 +225,8 @@ if __name__ == "__main__":
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--weather", choices=["ClearNoon", "WetCloudyNoon"], default="ClearNoon")
     p.add_argument("--headless", action="store_true")
+    p.add_argument("--checkpoint", help="Optional research checkpoint; reference-only control guards remain enforced")
     a = p.parse_args()
-    run(a.output, a.calibration, a.mode, not a.clear_road, a.seed, a.weather, not a.headless)
+    run(a.output, a.calibration, a.mode, not a.clear_road, a.seed, a.weather, not a.headless, a.checkpoint)
 
 

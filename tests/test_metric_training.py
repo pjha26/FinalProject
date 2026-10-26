@@ -44,7 +44,6 @@ class MetricTrainingTests(unittest.TestCase):
         with self.assertRaises(ValueError):metric_supervision_loss(*bad,10)
 
 
-if __name__=="__main__":unittest.main()
 
 
 
@@ -61,3 +60,15 @@ class TeacherReplayTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             teacher_consistency_loss(inverse,teacher*0)
 
+
+
+class TrainingBudgetTests(unittest.TestCase):
+    def test_unbounded_update_budget_is_rejected_before_outputs(self):
+        from tools.train_metric_decoder import run
+        from unittest.mock import patch
+        with patch("pathlib.Path.mkdir") as mkdir:
+            with self.assertRaisesRegex(ValueError,"bounded"):
+                run("unused",steps=100000)
+            mkdir.assert_not_called()
+
+if __name__=="__main__":unittest.main()

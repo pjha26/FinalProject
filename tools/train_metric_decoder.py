@@ -21,7 +21,8 @@ from src.model import load_model,sha256,UPSTREAM_REVISION
 from src.preprocess import preprocess_rgb,camera_intrinsics,PREPROCESSING_ID
 
 
-def run(output,real_replay=False):
+def run(output,real_replay=False,steps=128):
+    if steps not in (128,256):raise ValueError("Only bounded128/256-update trials are supported")
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     base=ROOT/"checkpoints/baseline_mono_640x192";original=checkpoint_hashes(base)
     data=[]
@@ -37,7 +38,7 @@ def run(output,real_replay=False):
     dataset_hash={}
     for sample in data:
         dataset_hash[sample["id"]]=dict(rgb=__import__("hashlib").sha256(sample["rgb"].tobytes()).hexdigest(),depth=__import__("hashlib").sha256(sample["gt"].tobytes()).hexdigest())
-    config=dict(schema_version=1,supervision="CARLA GT metric depth, not temporal self-supervision",steps=128,learning_rate=1e-5,seed=42,scale=14.996536494241578,freeze_encoder=True,roads=40,obstacle_images=8,loss="logL1metric +0.5 objectlogL1 +0.1 frozen-teacher consistency",dataset_sha256=dataset_hash,parent_checkpoint_sha256=original,preprocessing_id=PREPROCESSING_ID,selection="Final128th update, no checkpoint search",learned_actuation=False)
+    config=dict(schema_version=1,supervision="CARLA GT metric depth, not temporal self-supervision",steps=steps,learning_rate=1e-5,seed=42,scale=14.996536494241578,freeze_encoder=True,roads=40,obstacle_images=8,loss="logL1metric +0.5 objectlogL1 +0.1 frozen-teacher consistency",dataset_sha256=dataset_hash,parent_checkpoint_sha256=original,preprocessing_id=PREPROCESSING_ID,selection="Final{}th update, no checkpoint search".format(steps),learned_actuation=False)
     replay=[]
     if real_replay:
         manifest=json.loads((ROOT/"data/demo/input_manifest.json").read_text(encoding="utf-8"))
@@ -67,7 +68,7 @@ def run(output,real_replay=False):
     optimizer=torch.optim.Adam(model.decoder.parameters(),lr=config["learning_rate"])
     rows=[];started=time.perf_counter();complete=False
     try:
-        for step in range(128):
+        for step in range(config["steps"]):
             s=objects[(step//2)%len(objects)] if step%2==0 else roads[(step//2)%len(roads)]
             rgb=s["rgb"];gt=s["gt"];tensor,_=preprocess_rgb(rgb);tensor=tensor.to(model.device)
             target=cv2.resize(gt,(640,192),interpolation=cv2.INTER_NEAREST)
@@ -110,7 +111,7 @@ def run(output,real_replay=False):
             if any(torch.is_tensor(v) and not torch.isfinite(v).all() for v in state.values()):raise RuntimeError("Nonfinite candidate")
             torch.save(state,candidate/name)
         hashes={name:sha256(candidate/name) for name in states}
-        write_json(candidate/"manifest.json",dict(schema_version=1,preprocessing_id=PREPROCESSING_ID,upstream_revision=UPSTREAM_REVISION,sha256=hashes,scope="Experimental supervised metric CARLA decoder; not accepted default",protocol_sha256=sha256(output/"protocol.json")))
+        write_json(candidate/"manifest.json",dict(schema_version=1,preprocessing_id=PREPROCESSING_ID,upstream_revision=UPSTREAM_REVISION,sha256=hashes,scope="Experimental supervised metric CARLA decoder; not accepted default",updates=steps,protocol_sha256=sha256(output/"protocol.json")))
         write_json(output/"calibration.json",dict(schema_version=1,scale=config["scale"],checkpoint_sha256=hashes,preprocessing_id=PREPROCESSING_ID,camera=dict(width=640,height=480,fov=90,mount_x=1.5,mount_z=1.7),status="unvalidated_supervised_candidate",gate=dict(passed=False),learned_actuation=False))
         complete=True
     finally:
@@ -120,6 +121,6 @@ def run(output,real_replay=False):
 
 
 if __name__=="__main__":
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--output",required=True);p.add_argument("--real-replay",action="store_true");a=p.parse_args();run(a.output,a.real_replay)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--output",required=True);p.add_argument("--real-replay",action="store_true");p.add_argument("--steps",type=int,choices=[128,256],default=128);a=p.parse_args();run(a.output,a.real_replay,a.steps)
 
 

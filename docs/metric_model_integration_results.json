@@ -1,0 +1,101 @@
+{
+  "status": "incomplete_or_failed",
+  "results": [
+    {
+      "name": "clear_s42",
+      "returncode": 0,
+      "summary": {
+        "schema_version": 1,
+        "status": "pass",
+        "reason": "route_goal",
+        "mode": "reference",
+        "obstacle": false,
+        "frames": 210,
+        "wall_seconds": 40.8016079,
+        "checks": {
+          "no_collision": true,
+          "moved": true,
+          "sensor_age_bounded": true,
+          "lane_bounded": true,
+          "stopped": true,
+          "correct_outcome": true,
+          "clearance": true
+        },
+        "maximum_speed_mps": 1.6369662056107757,
+        "maximum_progress_m": 30.31212326931073,
+        "minimum_vehicle_gap_m": null,
+        "max_sensor_age_seconds": 0.30378290149011633,
+        "collisions": [],
+        "model_clearance_mae_m": null,
+        "calibration_accepted": false,
+        "headless": true,
+        "video_timebase": "10 Hz simulation frames; not wall-clock screen recording",
+        "limitations": "Straight level route only. Reference depth controls the car; learned depth is shadow-only and unvalidated. No learned camera-only autonomous-driving claim."
+      }
+    },
+    {
+      "name": "obstacle_s42",
+      "returncode": 0,
+      "summary": {
+        "schema_version": 1,
+        "status": "pass",
+        "reason": "obstacle_stop",
+        "mode": "reference",
+        "obstacle": true,
+        "frames": 100,
+        "wall_seconds": 19.1069125,
+        "checks": {
+          "no_collision": true,
+          "moved": true,
+          "sensor_age_bounded": true,
+          "lane_bounded": true,
+          "stopped": true,
+          "correct_outcome": true,
+          "clearance": true
+        },
+        "maximum_speed_mps": 1.5964547402322884,
+        "maximum_progress_m": 12.893352047247433,
+        "minimum_vehicle_gap_m": 6.186478374911516,
+        "max_sensor_age_seconds": 0.27046010149011934,
+        "collisions": [],
+        "model_clearance_mae_m": 3.0749692928729973,
+        "calibration_accepted": false,
+        "headless": true,
+        "video_timebase": "10 Hz simulation frames; not wall-clock screen recording",
+        "limitations": "Straight level route only. Reference depth controls the car; learned depth is shadow-only and unvalidated. No learned camera-only autonomous-driving claim."
+      }
+    },
+    {
+      "name": "obstacle_s44_wet",
+      "returncode": 0,
+      "summary": {
+        "schema_version": 1,
+        "status": "failed",
+        "reason": "obstacle_stop",
+        "mode": "reference",
+        "obstacle": true,
+        "frames": 99,
+        "wall_seconds": 18.8212827,
+        "checks": {
+          "no_collision": true,
+          "moved": true,
+          "sensor_age_bounded": false,
+          "lane_bounded": true,
+          "stopped": true,
+          "correct_outcome": true,
+          "clearance": true
+        },
+        "maximum_speed_mps": 1.5875148273070077,
+        "maximum_progress_m": 13.12664028545882,
+        "minimum_vehicle_gap_m": 6.08156981449838,
+        "max_sensor_age_seconds": 0.3663429014901176,
+        "collisions": [],
+        "model_clearance_mae_m": 3.622575984860326,
+        "calibration_accepted": false,
+        "headless": true,
+        "video_timebase": "10 Hz simulation frames; not wall-clock screen recording",
+        "limitations": "Straight level route only. Reference depth controls the car; learned depth is shadow-only and unvalidated. No learned camera-only autonomous-driving claim."
+      }
+    }
+  ]
+}

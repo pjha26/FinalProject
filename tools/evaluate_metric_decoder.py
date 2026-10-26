@@ -24,7 +24,8 @@ def run(checkpoint,calibration,output):
     mapping=load_calibration(calibration,checkpoint)
     output.mkdir(parents=True,exist_ok=False)
     source=json.loads((ROOT/"runs/metric_accuracy_02/protocol.json").read_text(encoding="utf-8"))
-    protocol=dict(checkpoint_sha256=checkpoint_hashes(checkpoint),calibration_sha256=sha256(calibration),scale=mapping["scale"],scenes=VALIDATION,stride=5,pixel_gates=dict(mean_abs_rel=.25,p95_frame_abs_rel=.5,relative_improvement=.05,scene_ratio=1.10),kitti24_max_absrel_ratio=1.05,full_eigen_used=False,learned_actuation=False)
+    updates=json.loads((checkpoint/"manifest.json").read_text(encoding="utf-8")).get("updates",128)
+    protocol=dict(candidate_updates=updates,checkpoint_sha256=checkpoint_hashes(checkpoint),calibration_sha256=sha256(calibration),scale=mapping["scale"],scenes=VALIDATION,stride=5,pixel_gates=dict(mean_abs_rel=.25,p95_frame_abs_rel=.5,relative_improvement=.05,scene_ratio=1.10),kitti24_max_absrel_ratio=1.05,full_eigen_used=False,learned_actuation=False)
     write_json(output/"protocol.json",protocol)
     torch.set_num_threads(2);model=load_model(checkpoint,"cuda");rows=[]
     for name in VALIDATION:
@@ -58,7 +59,7 @@ def run(checkpoint,calibration,output):
     new=json.loads((output/"kitti24/summary.json").read_text(encoding="utf-8"))["mean_metrics"]
     guard=new["abs_rel"]<=old["abs_rel"]*1.05
     eligible=pixel["passed"] and guard
-    result=dict(status="eligible_for_fresh_test" if eligible else "development_rejected",metric_selection=pixel,kitti24_baseline=old,kitti24_candidate=new,kitti_guard_passed=guard,checkpoint_sha256=protocol["checkpoint_sha256"],network_supervision="Explicit supervised metric CARLA fine-tuning",learned_actuation=False,limits="Seen development scenes; exploratory128-update model, not convergence. Do not use previous seed47/48 holdout for this new candidate.")
+    result=dict(status="eligible_for_fresh_test" if eligible else "development_rejected",metric_selection=pixel,kitti24_baseline=old,kitti24_candidate=new,kitti_guard_passed=guard,checkpoint_sha256=protocol["checkpoint_sha256"],network_supervision="Explicit supervised metric CARLA fine-tuning",learned_actuation=False,limits="Seen development scenes; exploratory{}-update model, not convergence. Do not use previous seed47/48 holdout for this new candidate.".format(updates))
     if checkpoint_hashes(checkpoint)!=protocol["checkpoint_sha256"]:raise ValueError("Candidate changed during evaluation")
     write_json(output/"summary.json",result);print(json.dumps(result,indent=2),flush=True)
 

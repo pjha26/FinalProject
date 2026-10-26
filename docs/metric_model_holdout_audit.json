@@ -1,0 +1,7 @@
+{
+  "samples": 200,
+  "valid_pixels": 27869421,
+  "max_independent_absrel_difference": 6.971772886776861e-08,
+  "exact_rgb_overlap_with_earlier_carla_fit_development_or_scale_holdout": 0,
+  "scope": "Independent saved-prediction recomputation; shared Town05, correlated routes. No model reselection."
+}

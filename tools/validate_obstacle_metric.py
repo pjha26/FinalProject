@@ -20,17 +20,21 @@ from src.preprocess import preprocess_rgb,camera_intrinsics
 from tools.carla_control_demo import load_calibration,straight_route
 
 
-def run(calibration,output):
+def run(calibration,output,checkpoint_dir=None,map_name="Town04",seed=42,vehicle_type="vehicle.tesla.model3",device="cpu"):
     import carla
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
-    checkpoint=ROOT/"checkpoints/baseline_mono_640x192"
+    baseline_checkpoint=ROOT/"checkpoints/baseline_mono_640x192"
+    checkpoint=Path(checkpoint_dir).resolve() if checkpoint_dir else baseline_checkpoint
     mapping=load_calibration(calibration,checkpoint)
-    protocol=dict(scale=mapping["scale"],baseline_scale=16.162327824804848,calibration_sha256=sha256(calibration),checkpoint_sha256=checkpoint_hashes(checkpoint),weather=["ClearNoon","WetCloudyNoon"],route_waypoint_indices=[2,3,5,8],samples_per_pose=6,gate=dict(surface_mae_m=2,maximum_surface_overestimate_m=2,missed_brake_triggers=0),ego_control="Handbrake throughout; no model actuation",comparison="Both scales on same RGB predictions/reference sample mask. GT masks are diagnostics only, never inference inputs.")
+    protocol=dict(scale=mapping["scale"],baseline_scale=16.162327824804848,calibration_sha256=sha256(calibration),checkpoint_sha256=checkpoint_hashes(checkpoint),weather=["ClearNoon","WetCloudyNoon"],route_waypoint_indices=[2,3,5,8],samples_per_pose=6,gate=dict(surface_mae_m=2,maximum_surface_overestimate_m=2,missed_brake_triggers=0),ego_control="Handbrake throughout; no model actuation",comparison="Both models on the same RGB/reference sample mask. GT masks are diagnostics only, never inference inputs.")
+    protocol.update(map=map_name,seed=seed,vehicle=vehicle_type,inference_device=device,baseline_checkpoint_sha256=checkpoint_hashes(baseline_checkpoint))
+    if checkpoint.resolve()!=baseline_checkpoint.resolve():protocol["baseline_scale"]=14.996536494241578
     write_json(output/"protocol.json",protocol)
-    torch.set_num_threads(2);model=load_model(checkpoint,"cuda")
+    torch.set_num_threads(2);model=load_model(checkpoint,device)
+    baseline_model=model if checkpoint.resolve()==baseline_checkpoint.resolve() else load_model(baseline_checkpoint,device)
     rows=[]
     for weather in protocol["weather"]:
-        with CarlaCapture(CaptureSettings(map="Town04",seed=42,weather=weather,timeout=60)) as capture:
+        with CarlaCapture(CaptureSettings(map=map_name,seed=seed,weather=weather,timeout=60,warmup_frames=0)) as capture:
             vehicle,world=capture.vehicle,capture.world
             vehicle.set_autopilot(False,capture.settings.traffic_manager_port)
             vehicle.apply_control(carla.VehicleControl(brake=1,hand_brake=True))
@@ -40,7 +44,7 @@ def run(calibration,output):
             for index in protocol["route_waypoint_indices"]:
                 pose=route[index].transform;pose.location.z+=.5
                 if obstacle is None:
-                    obstacle=world.try_spawn_actor(world.get_blueprint_library().find("vehicle.tesla.model3"),pose)
+                    obstacle=world.try_spawn_actor(world.get_blueprint_library().find(vehicle_type),pose)
                     if obstacle is None:raise RuntimeError("Obstacle spawn failed")
                     capture.actors.append(obstacle);obstacle.set_simulate_physics(False)
                 else:obstacle.set_transform(pose)
@@ -59,8 +63,10 @@ def run(calibration,output):
                     if mask.sum()<10:raise ValueError("Insufficient matched surface pixels")
                     tensor,_=preprocess_rgb(record["rgb"]);raw=predict(model,tensor)["relative_depth"][0,0].cpu().numpy()
                     native=cv2.resize(raw,(640,480),interpolation=cv2.INTER_LINEAR)
+                    baseline_raw=raw if baseline_model is model else predict(baseline_model,tensor)["relative_depth"][0,0].cpu().numpy()
+                    baseline_native=cv2.resize(baseline_raw,(640,480),interpolation=cv2.INTER_LINEAR)
                     for label,scale in [("original",protocol["baseline_scale"]),("candidate",mapping["scale"])]:
-                        metric=native*scale
+                        metric=(baseline_native if label=="original" else native)*scale
                         estimated=corridor_clearance(metric,k)
                         surface_error=metric[mask]-gt[mask]
                         ref_stop=bounded_control(1.6,reference,.1)["brake"]==1
@@ -81,18 +87,18 @@ def run(calibration,output):
         missed=sum(r["missed_brake_trigger"] for r in data)
         aggregate[label]=dict(samples=len(data),surface_mae_m=mae,maximum_surface_overestimate_m=over,corridor_mae_m=float(np.mean([r["corridor_abs_error_m"] for r in data])),missed_brake_triggers=missed,passes_diagnostic_gate=mae<=2 and over<=2 and missed==0)
     write_json(output/"scores.json",rows)
-    summary=dict(status="diagnostic_complete",summary=aggregate,learned_actuation=False,limits="Stationary ego, fixed obstacles, one straight Town04 route, two weather presets. GT region selection is evaluation-only. Counterfactual brakes at synthetic1.6m/s are not closed-loop trials.")
+    summary=dict(status="diagnostic_complete",summary=aggregate,learned_actuation=False,limits="Stationary ego, fixed obstacles, one straight configured route, two weather presets. GT region selection is evaluation-only. Counterfactual brakes at synthetic1.6m/s are not closed-loop trials.")
     write_json(output/"summary.json",summary);print(json.dumps(summary,indent=2),flush=True)
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--calibration",required=True);p.add_argument("--output",required=True);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument("--calibration",required=True);p.add_argument("--output",required=True);p.add_argument("--checkpoint");p.add_argument("--map",choices=["Town04","Town05"],default="Town04");p.add_argument("--seed",type=int,default=42);p.add_argument("--vehicle",default="vehicle.tesla.model3");p.add_argument("--device",choices=["cpu","cuda"],default="cpu");a=p.parse_args()
     try:
         with socket.create_connection(("127.0.0.1",2000),timeout=1):raise RuntimeError("Existing CARLA server; do not disturb it")
     except (ConnectionRefusedError,socket.timeout):pass
     log_path=Path(a.output).resolve().with_suffix(".server.log");log_path.parent.mkdir(parents=True,exist_ok=True)
     with log_path.open("w",encoding="utf-8") as log:
-        server=subprocess.Popen([str(ROOT/".runtime/carla/CarlaUE4/Binaries/Win64/CarlaUE4-Win64-Shipping.exe"),"-RenderOffScreen","-quality-level=Low","-nosound","-unattended","-nosplash","-stdout"],cwd=ROOT/".runtime/carla",stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
+        server=subprocess.Popen([str(ROOT/".runtime/carla/CarlaUE4/Binaries/Win64/CarlaUE4-Win64-Shipping.exe"),"/Game/Carla/Maps/"+a.map,"-RenderOffScreen","-quality-level=Low","-nosound","-unattended","-nosplash","-stdout"],cwd=ROOT/".runtime/carla",stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
         try:
             deadline=time.monotonic()+120
             while True:
@@ -101,7 +107,7 @@ def main():
                 except RuntimeError:
                     if time.monotonic()>=deadline:raise
                     time.sleep(2)
-            run(a.calibration,a.output)
+            run(a.calibration,a.output,a.checkpoint,a.map,a.seed,a.vehicle,a.device)
         finally:
             if server.poll() is None:server.terminate();server.wait(timeout=30)
 

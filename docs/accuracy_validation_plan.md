@@ -30,3 +30,8 @@ Freeze the final update128 candidate; no checkpoint search. Evaluate on the same
 
 Trial1 improves CARLA but fails KITTI24 regression. Predeclare one further128-update final-checkpoint trial at Adam2e-6 with the same CARLA fit set and loss, plus weight1.0 log-inverse-depth distillation on 16 uniformly selected frames from the existing verified Udacity demo clip. The frozen official teacher supplies these real-RGB targets. KITTI RGB/GT and all evaluation scenes remain excluded from training. Record video hash, frame IDs and teacher identity. This is supervised CARLA training with teacher regularization, not a pure temporal self-supervised run. Keep all existing acceptance gates; do not tune against the final Eigen or consumed seed47/48 holdout. This bounded trial changes both rate and replay, so it is not a one-factor ablation.
 
+
+## Final bounded replay budget
+
+Before execution, extend the same replay recipe once to 256 updates. Keep Adam2e-6, teacher weight1.0, all fit data, seed42 and all acceptance thresholds unchanged. Freeze update256; do not select an intermediate checkpoint. This is a controlled duration extension of the rejected128-update replay candidate. If it fails development acceptance, retain the accepted original model and report the remaining work; no additional sweep is planned in this iteration.
+
