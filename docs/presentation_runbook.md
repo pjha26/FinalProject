@@ -21,7 +21,7 @@ This computes predictions while replaying verified driving footage. Describe it 
 
 For a still-image fallback and optional point cloud:
 
-    .\.venv\Scripts\python.exe project.py image --image data/demo/driving_first_frame.png --device cuda --point-cloud --output runs/presentation_image_unique
+    .\.venv\Scripts\python.exe project.py infer --image data/demo/driving_first_frame.png --device cuda --point-cloud --output runs/presentation_image_unique
 
 Choose an unused output name. Open its preview and point_cloud/viewer.html. The first-frame point cloud uses relative depth and assumed camera intrinsics.
 

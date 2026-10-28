@@ -6,6 +6,10 @@ A final-year computer vision project that estimates **relative scene depth from 
 
 **Earlier prototype delivery:** image and recorded driving-video inference have been demonstrated locally. On 24 October 2026, both backends passed all eight delivery checks and 60-second displayed rehearsals on the RTX 4050 laptop; see [new-laptop validation](docs/new_laptop_validation.md) for measurements and limits. Physical webcam validation and rehearsals on any other presentation laptop remain separate acceptance steps. Outputs indicate relative near/far structure; they are not calibrated distances or vehicle-control commands.
 
+## Presentation audit fixes (29 October 2026)
+
+The CARLA launcher now creates its log folder on a fresh checkout and refuses to start a server when the port check times out. The presentation runbook's still-image command uses the supported `infer` subcommand. Regression verification passed **172 tests**, all **seven non-displayed delivery checks**, both launcher asset preflights, and a CUDA point-cloud export. A new displayed or native CARLA rehearsal was not performed during this audit. See the [audit findings and verification limits](docs/audit_2026_10_29.md).
+
 ## Accuracy validation (27 October 2026)
 
 An optional supervised metric Monodepth2 research candidate now reduces mean error on 200 fresh CARLA frames from **0.20084 to 0.17471 (13.01% relative)**. Its final KITTI Eigen697 AbsRel is **0.11819**, versus **0.11462** for the original pretrained model. The original model remains default. Whole-image metric validation does not qualify learned vehicle control: unseen-object capture is incomplete and a wet integration trial misses the freshness gate.

@@ -40,10 +40,13 @@ def main():
         try:
             with socket.create_connection(("127.0.0.1", 2000), timeout=1):
                 raise RuntimeError("Port 2000 occupied. Close the existing CARLA server first.")
-        except (ConnectionRefusedError, socket.timeout):
+        except ConnectionRefusedError:
             pass
+        except socket.timeout as error:
+            raise RuntimeError("Cannot confirm port 2000 is free; retry or use --mode video.") from error
         sys.path.insert(0, str(ROOT))
         from src.carla_capture import create_client
+        output.parent.mkdir(parents=True, exist_ok=True)
         with output.with_name(output.name + "_server.log").open("w", encoding="utf-8") as log:
             owned = subprocess.Popen([str(server), "-RenderOffScreen", "-quality-level=Low", "-nosound", "-unattended", "-nosplash", "-stdout", "-carla-rpc-port=2000"], cwd=ROOT / ".runtime/carla", stdout=log, stderr=subprocess.STDOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             try:
