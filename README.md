@@ -181,23 +181,45 @@ Prepare the small paired reference dataset, then perform offline integrated acce
 
 The delivery validator runs tests, input verification, environment diagnostics, image inference, repeated profiling, reference evaluation, headless video and a displayed rehearsal. It performs no downloads, freezes source hashes, retains per-step logs and stops on failure. Check that the final `summary.json` has `status: pass` and `displayed_rehearsal: pass`. Use `--model depth-anything --input-size 294` for a separate optional-model acceptance run. Omit `--display` only when intentionally leaving displayed acceptance pending.
 
-Measured local observations on 21 October 2026:
+### Current presentation-laptop observations (updated 31 October 2026)
+
+Device: **NVIDIA GeForce RTX 4050 Laptop GPU, 6 GB class**, using Python 3.8.20, PyTorch 2.0.1 + CUDA 11.8, batch size one and two PyTorch CPU threads. The default is the original pretrained Monodepth2 ResNet-18 `mono_640x192`; these timings do not describe the experimental fine-tuned checkpoint.
+
+| Workload / evidence date | Device | Observed result | Scope / acceptance |
+|---|---|---|---|
+| Monodepth2 recorded driving-video inference, 650 frames, 10 FPS ceiling; 31 October | RTX 4050 Laptop, CUDA | **9.58 FPS over 67.85 s**; 35.25 ms median model time | Display enabled; 60-second duration gate **passed**; review exports every 200 frames; no point cloud; no aligned GT |
+| Monodepth2 live CARLA Town04, 711 frames; accepted earlier rehearsal | RTX 4050 Laptop, CUDA | **10.94 FPS over 65.02 s** | Display enabled; 60-second duration gate **passed**; live simulator input, distinct from recorded footage |
+| Monodepth2 live CARLA Town04 on RPC port 2100, 556 frames; 30 October | RTX 4050 Laptop, CUDA | **11.19 FPS over 49.71 s** | Viewer visibly updated, but the run ended early: duration gate **needs review**, not a completed accepted rehearsal |
+| Depth Anything V2 Small-294 recorded-video rehearsal, 650 frames, 10 FPS ceiling; 24 October | RTX 4050 Laptop, CUDA | **9.68 FPS over 67.16 s**; 35.20 ms median model time | Separate optional-model rehearsal; 60-second display gate **passed**; not a fresh 31 October result |
+
+Local provenance: the first three rows come from `summary.json` in `runs/presentation_video_cbde47350687458883be863daa4d72c9/`, `runs/presentation_carla_d52cbeb624ef427da7ad613b16e3d8be/` and `runs/presentation_carla_port2100_37f22bdd817b4cd5993dc328b1422b3b/`, respectively. Raw runs remain local and ignored by Git. The optional-model result and hardware details are recorded in [new-laptop validation](docs/new_laptop_validation.md).
+
+**Measurement rules:** completed FPS is processed frames divided by measured frame-loop seconds. It includes display, first-frame overhead, periodic exports and video pacing, but excludes model loading, manifest verification and final report writes. A 10 FPS ceiling is a pacing limit, not maximum model speed or a guaranteed minimum. These different runs are not controlled GPU or model speed comparisons. A passed duration gate establishes runtime evidence only, not accuracy, calibrated distances or autonomous-driving safety. Recorded-video mode performs inference on stored footage; it is not a live camera or simulator feed.
+
+Accuracy is reported separately in [metric model validation](docs/metric_model_validation.md): full KITTI Eigen697 AbsRel is **0.11462** for the baseline versus **0.11819** for the final metric research candidate (lower is better). The candidate's **13.01% relative error reduction** on 200 CARLA frames is specific to that evaluation and is not an overall accuracy percentage. GT-median-aligned KITTI scoring does not establish deployment metre scale; learned vehicle actuation remains disabled.
+
+<details>
+<summary>Historical GTX 1650 / CPU observations and earlier acceptance evidence</summary>
+
+Historical local observations on 21 October 2026:
 
 | Workload | Device | Observed result | Scope |
 |---|---|---|---|
 | Monodepth2, 30 measured frames/repeat, two repeats | CPU, two threads | 1.57 / 1.56 FPS; 578.29 ms median model time | Headless pipeline; excludes setup/warmup |
 | Monodepth2, 650-frame driving replay, 30 FPS ceiling | GTX 1650 4 GB | 9.96 FPS over 65.27 s; 28.49 ms median model time | Displayed pipeline, with optional first-frame cloud and periodic exports |
-| Monodepth2, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 9.10 FPS over 71.42 s; displayed duration gate passed | Current reliability update; periodic review exports, no cloud |
+| Monodepth2, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 9.10 FPS over 71.42 s; displayed duration gate passed | Historical reliability update; periodic review exports, no cloud |
 | Depth Anything V2 Small-294, reliability rehearsal, 650 frames, 10 FPS ceiling | GTX 1650 4 GB | 8.37 FPS over 77.66 s; displayed duration gate passed | Periodic review exports and a 10,000-point first-frame cloud |
 | Depth Anything V2 Small-294, five indoor reference frames | GTX 1650 | AbsRel 0.2033 versus baseline 0.4960 | Small GT-median-aligned diagnostic; not a driving benchmark |
 
-These are observations, not hardware guarantees or controlled comparisons between unlike workloads. Earlier run history is retained in the phase documents and reports. Source clip rate, CPU processing, rendering, exports, pacing and system load affect completed FPS. GPU model latency alone is not displayed throughput. The RTX 3050 remains untested; RTX 4050 results are recorded separately in the [24 October validation](docs/new_laptop_validation.md); **14–20 FPS on CPU is not an established project result**.
+These are observations, not hardware guarantees or controlled comparisons between unlike workloads. Earlier run history is retained in the phase documents and reports. Source clip rate, CPU processing, rendering, exports, pacing and system load affect completed FPS. GPU model latency alone is not displayed throughput. The RTX 3050 remains untested; RTX 4050 results are summarized above and in the [24 October validation](docs/new_laptop_validation.md); **14–20 FPS on CPU is not an established project result**.
 
-The reliability update passed **87 automated tests and all eight baseline delivery checks**, with unchanged source during validation. The local evidence is retained in ignored `runs/presentation_reliability_delivery_01/`; a fresh clone must produce its own run evidence. Software acceptance on this development laptop does not replace the presentation-machine rehearsal.
+That historical reliability update passed **87 automated tests and all eight baseline delivery checks**, with unchanged source during validation. The local evidence is retained in ignored `runs/presentation_reliability_delivery_01/`; a fresh clone must produce its own run evidence. Software acceptance on this development laptop does not replace the presentation-machine rehearsal.
 
 The optional backend's separate displayed rehearsal also passed, including point-cloud export (`runs/presentation_reliability_quality_01/`). These two rehearsals establish integration and duration acceptance; neither supplies driving-depth accuracy ground truth.
 
 The five reference frames are correlated indoor samples from Open3D/Redwood. GT median alignment uses information unavailable during deployment; aligned errors do not establish calibrated output distances. The driving sample has no aligned GT. Read the [evaluation protocol](docs/evaluation_protocol.md), [accuracy report](docs/accuracy_report.md) and [poster alignment review](docs/poster_alignment.md) before reporting performance or accuracy.
+
+</details>
 
 ## KITTI cropped-validation pilot
 
